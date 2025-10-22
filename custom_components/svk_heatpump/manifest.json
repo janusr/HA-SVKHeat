@@ -7,7 +7,7 @@
   "codeowners": ["@janusr"],
   "iot_class": "local_polling",
   "loggers": ["custom_components.svk_heatpump"],
-  "requirements": ["beautifulsoup4>=4.9.0", "lxml>=4.6.0", "aiohttp-digest-auth>=0.15"],
+  "requirements": ["beautifulsoup4>=4.9.0", "lxml>=4.6.0"],
   "config_flow": true,
   "icon": "/custom_components/svk_heatpump/logo.png"
 }
