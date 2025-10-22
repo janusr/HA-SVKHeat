@@ -1,0 +1,233 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "SVK Varmepumpe",
+        "description": "Forbind til din SVK LMC320 varmepumpecontroller med LOM320 webmodul.",
+        "data": {
+          "host": "IP-adresse",
+          "username": "Brugernavn",
+          "password": "Adgangskode",
+          "id_list": "ID-liste (Avanceret)",
+          "allow_basic_auth": "Tillad Basic Auth (Forældet)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Genautentificer SVK Varmepumpe",
+        "description": "SVK Varmepumpe integrationen kunne ikke autentificeres. Opdater venligst dine loginoplysninger.",
+        "data": {
+          "username": "Brugernavn",
+          "password": "Adgangskode",
+          "allow_basic_auth": "Tillad Basic Auth (Forældet)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Ugyldigt brugernavn eller adgangskode",
+      "cannot_connect": "Kunne ikke forbinde",
+      "invalid_response": "Ugyldigt svar fra enhed",
+      "invalid_id_list": "Ugyldigt ID-liste format. Brug semikolon-separerede tal (f.eks. 299;255;256)",
+      "unexpected_auth_scheme": "Uventet auth-skema fra enhed.",
+      "unknown": "Ukendt fejl",
+      "readonly_select": "Denne select-enhed er skrivebeskyttet",
+      "readonly_monitor": "Dette er en skrivebeskyttet monitor-enhed",
+      "write_controls_disabled": "Skrivekontroller er deaktiveret i indstillingerne",
+      "json_parse_failed": "JSON-parsing mislykkedes: {err}",
+      "no_valid_items": "Ingen gyldige elementer kunne parses fra JSON-svar",
+      "no_valid_data": "Ingen gyldige data kunne parses fra JSON-svar",
+      "invalid_json_response": "Ugyldigt JSON-svar: {text}"
+    },
+    "abort": {
+      "reauth_successful": "Genautentificering succesfuld"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "SVK Varmepumpe Indstillinger",
+        "description": "Konfigurer indstillinger for SVK Varmepumpe integrationen. ID-liste feltet lader avancerede brugere tilpasse, hvilke datapunkter der skal hentes fra varmepumpen. Brug semikolon- eller komma-separerede ID'er. Lad feltet være tomt for at bruge standard ID'er: {default_ids}",
+        "data": {
+          "scan_interval": "Scanningsinterval (sekunder)",
+          "enable_solar": "Aktiver Sol-entiteter",
+          "enable_counters": "Aktiver Driftstidstællere",
+          "enable_writes": "Aktiver Skrivekontrol (Avanceret)",
+          "id_list": "ID-liste (Avanceret)"
+        }
+      }
+    },
+    "error": {
+      "invalid_scan_interval": "Scanningsinterval skal være mellem 10 og 120 sekunder",
+      "invalid_id_list": "Ugyldigt ID-liste format. Brug semikolon- eller komma-separerede tal (f.eks. {id_list_example}). Alle ID'er skal være gyldige og eksistere på enheden."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "heating_supply_temp": {
+        "name": "Fremløbstemperatur"
+      },
+      "heating_return_temp": {
+        "name": "Returtemperatur"
+      },
+      "water_tank_temp": {
+        "name": "Vandtanktemperatur"
+      },
+      "ambient_temp": {
+        "name": "Omgivelsestemperatur"
+      },
+      "room_temp": {
+        "name": "Rumtemperatur"
+      },
+      "heating_tank_temp": {
+        "name": "Varmetanktemperatur"
+      },
+      "cold_side_supply_temp": {
+        "name": "Kold side fremløb"
+      },
+      "cold_side_return_temp": {
+        "name": "Kold side retur"
+      },
+      "cold_supply_temp": {
+        "name": "Kold Side Fremløbstemp"
+      },
+      "cold_return_temp": {
+        "name": "Kold Side Returtemp"
+      },
+      "evaporator_temp": {
+        "name": "Fordampertemperatur"
+      },
+      "solar_collector_temp": {
+        "name": "Solkollektortemperatur"
+      },
+      "solar_water_temp": {
+        "name": "Sol-vandtemperatur"
+      },
+      "solar_panel_temp": {
+        "name": "Solpanel Temp"
+      },
+      "heating_setpoint": {
+        "name": "Varmesættemp"
+      },
+      "hot_water_setpoint": {
+        "name": "Brugsvandssættemp"
+      },
+      "hot_water_setpoint_actual": {
+        "name": "Varmtvand Sættemp Faktisk"
+      },
+      "compressor_speed_v": {
+        "name": "Kompressorhastighed"
+      },
+      "compressor_speed_percent": {
+        "name": "Kompressorhastighed"
+      },
+      "cold_pump_speed": {
+        "name": "Kold pumpehastighed"
+      },
+      "requested_capacity": {
+        "name": "Anmodet Kapacitet"
+      },
+      "capacity_requested": {
+        "name": "Anmodet Kapacitet"
+      },
+      "actual_capacity": {
+        "name": "Faktisk Kapacitet"
+      },
+      "capacity_actual": {
+        "name": "Faktisk Kapacitet"
+      },
+      "compressor_runtime": {
+        "name": "Kompressor Driftstid"
+      },
+      "heater_runtime": {
+        "name": "Varmeelement Driftstid"
+      },
+      "pump_runtime": {
+        "name": "Pumpe Driftstid"
+      },
+      "ip_address": {
+        "name": "IP-adresse"
+      },
+      "software_version": {
+        "name": "Softwareversion"
+      },
+      "log_interval": {
+        "name": "Loginterval"
+      },
+      "alarm_count": {
+        "name": "Alarmantal"
+      },
+      "last_update_sensor": {
+        "name": "Sidste Opdatering"
+      }
+    },
+    "binary_sensor": {
+      "alarm_active": {
+        "name": "Alarm Aktiv"
+      },
+      "system_active": {
+        "name": "System Aktivt"
+      },
+      "online_status": {
+        "name": "Online Status"
+      }
+    },
+    "select": {
+      "heatpump_state": {
+        "name": "Varmepumpetilstand",
+        "state": {
+          "off": "Slukket",
+          "ready": "Klar",
+          "start_up": "Opstart",
+          "heating": "Opvarmning",
+          "hot_water": "Brugsvand",
+          "el_heating": "El-opvarmning",
+          "defrost": "Afisning",
+          "drip_delay": "Dryp-forsinkelse",
+          "total_stop": "Total stop",
+          "pump_exercise": "Pumpeøvelse",
+          "forced_running": "Tvungen drift",
+          "manual": "Manuel"
+        }
+      },
+      "solar_panel_state": {
+        "name": "Solpanel Tilstand",
+        "state": {
+          "off": "Slukket",
+          "running": "Kører",
+          "forced_stop": "Tvunget Stop"
+        }
+      },
+      "season_mode": {
+        "name": "Sæson Tilstand",
+        "state": {
+          "summer": "Sommer",
+          "winter": "Vinter",
+          "auto": "Auto"
+        }
+      },
+      "system_status": {
+        "name": "System Status",
+        "state": {
+          "off": "Slukket",
+          "standby": "Standby",
+          "active": "Aktiv",
+          "alarm": "Alarm",
+          "unknown": "Ukendt"
+        }
+      }
+    },
+    "number": {
+      "hot_water_setpoint": {
+        "name": "Brugsvandssættemp"
+      },
+      "room_setpoint": {
+        "name": "Rumsættemp"
+      },
+      "heating_setpoint_monitor": {
+        "name": "Varmesættemp"
+      },
+      "compressor_speed_monitor": {
+        "name": "Kompressorhastighed Monitor"
+      }
+    }
+  }
+}

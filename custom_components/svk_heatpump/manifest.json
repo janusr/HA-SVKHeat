@@ -1,0 +1,12 @@
+{
+  "domain": "svk_heatpump",
+  "name": "SVK Heatpump",
+  "version": "0.0.1",
+  "documentation": "https://github.com/YOUR_GITHUB_USERNAME/svk-heatpump#readme",
+  "issue_tracker": "https://github.com/YOUR_GITHUB_USERNAME/svk-heatpump/issues",
+  "codeowners": ["@YOUR_GITHUB_USERNAME"],
+  "iot_class": "local_polling",
+  "loggers": ["custom_components.svk_heatpump"],
+  "requirements": ["beautifulsoup4>=4.9.0", "lxml>=4.6.0", "aiohttp-digest-auth>=0.15"],
+  "config_flow": true
+}

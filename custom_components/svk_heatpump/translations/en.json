@@ -1,0 +1,233 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "SVK Heatpump",
+        "description": "Connect to your SVK LMC320 heat pump controller with LOM320 web module.",
+        "data": {
+          "host": "IP Address",
+          "username": "Username",
+          "password": "Password",
+          "id_list": "ID List (Advanced)",
+          "allow_basic_auth": "Allow Basic Auth (Legacy)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate SVK Heatpump",
+        "description": "The SVK Heatpump integration failed to authenticate. Please update your credentials.",
+        "data": {
+          "username": "Username",
+          "password": "Password",
+          "allow_basic_auth": "Allow Basic Auth (Legacy)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid username or password",
+      "cannot_connect": "Failed to connect",
+      "invalid_response": "Invalid response from device",
+      "invalid_id_list": "Invalid ID list format. Use semicolon-separated numbers (e.g., 299;255;256)",
+      "unexpected_auth_scheme": "Unexpected auth scheme from device.",
+      "unknown": "Unknown error",
+      "readonly_select": "This select entity is read-only",
+      "readonly_monitor": "This is a read-only monitor entity",
+      "write_controls_disabled": "Write controls are disabled in options",
+      "json_parse_failed": "JSON parsing failed: {err}",
+      "no_valid_items": "No valid items could be parsed from JSON response",
+      "no_valid_data": "No valid data could be parsed from JSON response",
+      "invalid_json_response": "Invalid JSON response: {text}"
+    },
+    "abort": {
+      "reauth_successful": "Reauthentication successful"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "SVK Heatpump Options",
+        "description": "Configure the SVK Heatpump integration settings. The ID List field allows advanced users to customize which data points to fetch from the heat pump. Use semicolon or comma-separated IDs. Leave empty to use default IDs: {default_ids}",
+        "data": {
+          "scan_interval": "Scan Interval (seconds)",
+          "enable_solar": "Enable Solar Entities",
+          "enable_counters": "Enable Runtime Counters",
+          "enable_writes": "Enable Write Controls (Advanced)",
+          "id_list": "ID List (Advanced)"
+        }
+      }
+    },
+    "error": {
+      "invalid_scan_interval": "Scan interval must be between 10 and 120 seconds",
+      "invalid_id_list": "Invalid ID list format. Use semicolon or comma-separated numbers (e.g., {id_list_example}). All IDs must be valid and exist in the device."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "heating_supply_temp": {
+        "name": "Heating Supply Temp"
+      },
+      "heating_return_temp": {
+        "name": "Heating Return Temp"
+      },
+      "water_tank_temp": {
+        "name": "Water Tank Temp"
+      },
+      "ambient_temp": {
+        "name": "Ambient Temp"
+      },
+      "room_temp": {
+        "name": "Room Temp"
+      },
+      "heating_tank_temp": {
+        "name": "Heating Tank Temp"
+      },
+      "cold_side_supply_temp": {
+        "name": "Cold Side Supply Temp"
+      },
+      "cold_side_return_temp": {
+        "name": "Cold Side Return Temp"
+      },
+      "cold_supply_temp": {
+        "name": "Cold Side Supply Temp"
+      },
+      "cold_return_temp": {
+        "name": "Cold Side Return Temp"
+      },
+      "evaporator_temp": {
+        "name": "Evaporator Temp"
+      },
+      "solar_collector_temp": {
+        "name": "Solar Collector Temp"
+      },
+      "solar_water_temp": {
+        "name": "Solar Water Temp"
+      },
+      "solar_panel_temp": {
+        "name": "Solar Panel Temp"
+      },
+      "heating_setpoint": {
+        "name": "Heating Set Point"
+      },
+      "hot_water_setpoint": {
+        "name": "Hot Water Set Point"
+      },
+      "hot_water_setpoint_actual": {
+        "name": "Hot Water Set Point Actual"
+      },
+      "compressor_speed_v": {
+        "name": "Compressor Speed"
+      },
+      "compressor_speed_percent": {
+        "name": "Compressor Speed"
+      },
+      "cold_pump_speed": {
+        "name": "Cold Pump Speed"
+      },
+      "requested_capacity": {
+        "name": "Requested Capacity"
+      },
+      "capacity_requested": {
+        "name": "Requested Capacity"
+      },
+      "actual_capacity": {
+        "name": "Actual Capacity"
+      },
+      "capacity_actual": {
+        "name": "Actual Capacity"
+      },
+      "compressor_runtime": {
+        "name": "Compressor Runtime"
+      },
+      "heater_runtime": {
+        "name": "Heater Runtime"
+      },
+      "pump_runtime": {
+        "name": "Pump Runtime"
+      },
+      "ip_address": {
+        "name": "IP Address"
+      },
+      "software_version": {
+        "name": "Software Version"
+      },
+      "log_interval": {
+        "name": "Log Interval"
+      },
+      "alarm_count": {
+        "name": "Alarm Count"
+      },
+      "last_update_sensor": {
+        "name": "Last Update"
+      }
+    },
+    "binary_sensor": {
+      "alarm_active": {
+        "name": "Alarm Active"
+      },
+      "system_active": {
+        "name": "System Active"
+      },
+      "online_status": {
+        "name": "Online Status"
+      }
+    },
+    "select": {
+      "heatpump_state": {
+        "name": "Heat Pump State",
+        "state": {
+          "off": "Off",
+          "ready": "Ready",
+          "start_up": "Start up",
+          "heating": "Heating",
+          "hot_water": "Hot water",
+          "el_heating": "El heating",
+          "defrost": "Defrost",
+          "drip_delay": "Drip delay",
+          "total_stop": "Total stop",
+          "pump_exercise": "Pump exercise",
+          "forced_running": "Forced running",
+          "manual": "Manual"
+        }
+      },
+      "solar_panel_state": {
+        "name": "Solar Panel State",
+        "state": {
+          "off": "Off",
+          "running": "Running",
+          "forced_stop": "Forced Stop"
+        }
+      },
+      "season_mode": {
+        "name": "Season Mode",
+        "state": {
+          "summer": "Summer",
+          "winter": "Winter",
+          "auto": "Auto"
+        }
+      },
+      "system_status": {
+        "name": "System Status",
+        "state": {
+          "off": "Off",
+          "standby": "Standby",
+          "active": "Active",
+          "alarm": "Alarm",
+          "unknown": "Unknown"
+        }
+      }
+    },
+    "number": {
+      "hot_water_setpoint": {
+        "name": "Hot Water Set Point"
+      },
+      "room_setpoint": {
+        "name": "Room Set Point"
+      },
+      "heating_setpoint_monitor": {
+        "name": "Heating Set Point"
+      },
+      "compressor_speed_monitor": {
+        "name": "Compressor Speed Monitor"
+      }
+    }
+  }
+}
