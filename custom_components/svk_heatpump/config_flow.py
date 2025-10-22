@@ -229,6 +229,32 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
         """Initialize options flow."""
         self.config_entry = config_entry
     
+    def _get_options_schema(self) -> vol.Schema:
+        """Get the options schema."""
+        options = self.config_entry.options
+        return vol.Schema({
+            vol.Optional(
+                CONF_SCAN_INTERVAL,
+                default=options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+            ): int,
+            vol.Optional(
+                CONF_ENABLE_SOLAR,
+                default=options.get(CONF_ENABLE_SOLAR, True)
+            ): bool,
+            vol.Optional(
+                CONF_ENABLE_COUNTERS,
+                default=options.get(CONF_ENABLE_COUNTERS, True)
+            ): bool,
+            vol.Optional(
+                CONF_ENABLE_WRITES,
+                default=options.get(CONF_ENABLE_WRITES, False)
+            ): bool,
+            vol.Optional(
+                CONF_ID_LIST,
+                default=options.get(CONF_ID_LIST, DEFAULT_IDS)
+            ): str,
+        })
+    
     async def async_step_init(
         self, user_input: Optional[Dict[str, Any]] = None
     ) -> FlowResult:
@@ -236,61 +262,55 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
         errors: Dict[str, str] = {}
         
         if user_input is not None:
-            # Validate scan interval
-            scan_interval = user_input.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
-            if not 10 <= scan_interval <= 120:
-                errors[CONF_SCAN_INTERVAL] = "invalid_scan_interval"
-            
-            # Handle ID list
-            id_list_str = user_input.get(CONF_ID_LIST, "").strip()
-            
-            # If empty, use default
-            if not id_list_str:
-                id_list_str = DEFAULT_IDS
-                user_input[CONF_ID_LIST] = DEFAULT_IDS
-            
-            # Validate ID list format if provided
-            if id_list_str and not validate_id_list(id_list_str):
-                errors[CONF_ID_LIST] = "invalid_id_list"
-            
-            if not errors:
-                # Save options
-                result = self.async_create_entry(
-                    title="",
-                    data=user_input,
-                )
+            try:
+                # Validate scan interval
+                scan_interval = user_input.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+                if not isinstance(scan_interval, int) or not 10 <= scan_interval <= 120:
+                    errors[CONF_SCAN_INTERVAL] = "invalid_scan_interval"
                 
-                # Trigger coordinator reload to apply new ID list
-                await self.hass.config_entries.async_reload(self.config_entry.entry_id)
+                # Handle ID list
+                id_list_str = user_input.get(CONF_ID_LIST, "").strip()
                 
-                return result
-        
-        options = self.config_entry.options
+                # If empty, use default
+                if not id_list_str:
+                    id_list_str = DEFAULT_IDS
+                    user_input[CONF_ID_LIST] = DEFAULT_IDS
+                
+                # Validate ID list format if provided
+                if id_list_str and not validate_id_list(id_list_str):
+                    errors[CONF_ID_LIST] = "invalid_id_list"
+                
+                if not errors:
+                    # Save options
+                    result = self.async_create_entry(
+                        title="",
+                        data=user_input,
+                    )
+                    
+                    # Trigger coordinator reload to apply new ID list
+                    try:
+                        await self.hass.config_entries.async_reload(self.config_entry.entry_id)
+                    except Exception as ex:
+                        _LOGGER.error("Failed to reload config entry: %s", ex)
+                        errors["base"] = "reload_failed"
+                        return self.async_show_form(
+                            step_id="init",
+                            data_schema=self._get_options_schema(),
+                            errors=errors,
+                            description_placeholders={
+                                "default_ids": DEFAULT_IDS,
+                                "id_list_example": "299;255;256"
+                            }
+                        )
+                    
+                    return result
+            except Exception as ex:
+                _LOGGER.exception("Unexpected error in options flow: %s", ex)
+                errors["base"] = "unknown"
         
         return self.async_show_form(
             step_id="init",
-            data_schema=vol.Schema({
-                vol.Optional(
-                    CONF_SCAN_INTERVAL,
-                    default=options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
-                ): int,
-                vol.Optional(
-                    CONF_ENABLE_SOLAR,
-                    default=options.get(CONF_ENABLE_SOLAR, True)
-                ): bool,
-                vol.Optional(
-                    CONF_ENABLE_COUNTERS,
-                    default=options.get(CONF_ENABLE_COUNTERS, True)
-                ): bool,
-                vol.Optional(
-                    CONF_ENABLE_WRITES,
-                    default=options.get(CONF_ENABLE_WRITES, False)
-                ): bool,
-                vol.Optional(
-                    CONF_ID_LIST,
-                    default=options.get(CONF_ID_LIST, DEFAULT_IDS)
-                ): str,
-            }),
+            data_schema=self._get_options_schema(),
             errors=errors,
             description_placeholders={
                 "default_ids": DEFAULT_IDS,

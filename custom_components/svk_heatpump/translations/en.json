@@ -57,7 +57,8 @@
     },
     "error": {
       "invalid_scan_interval": "Scan interval must be between 10 and 120 seconds",
-      "invalid_id_list": "Invalid ID list format. Use semicolon or comma-separated numbers (e.g., {id_list_example}). All IDs must be valid and exist in the device."
+      "invalid_id_list": "Invalid ID list format. Use semicolon or comma-separated numbers (e.g., {id_list_example}). All IDs must be valid and exist in the device.",
+      "reload_failed": "Failed to reload the configuration. Please check the logs for more details."
     }
   },
   "entity": {

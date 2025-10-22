@@ -57,7 +57,8 @@
     },
     "error": {
       "invalid_scan_interval": "Scanningsinterval skal være mellem 10 og 120 sekunder",
-      "invalid_id_list": "Ugyldigt ID-liste format. Brug semikolon- eller komma-separerede tal (f.eks. {id_list_example}). Alle ID'er skal være gyldige og eksistere på enheden."
+      "invalid_id_list": "Ugyldigt ID-liste format. Brug semikolon- eller komma-separerede tal (f.eks. {id_list_example}). Alle ID'er skal være gyldige og eksistere på enheden.",
+      "reload_failed": "Kunne ikke genindlæse konfigurationen. Tjek venligst logfilerne for flere detaljer."
     }
   },
   "entity": {
