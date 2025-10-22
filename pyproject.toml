@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "svk-heatpump"
-version = "0.0.1"
+version = "0.1.0"
 description = "Home Assistant custom component for SVK LMC320 heat pump controllers"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -45,10 +45,10 @@ dev = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/YOUR_GITHUB_USERNAME/svk-heatpump"
-"Bug Reports" = "https://github.com/YOUR_GITHUB_USERNAME/svk-heatpump/issues"
-"Source" = "https://github.com/YOUR_GITHUB_USERNAME/svk-heatpump"
-"Documentation" = "https://github.com/YOUR_GITHUB_USERNAME/svk-heatpump#readme"
+"Homepage" = "https://github.com/janusr/HA-SVKHeat"
+"Bug Reports" = "https://github.com/janusr/HA-SVKHeat/issues"
+"Source" = "https://github.com/janusr/HA-SVKHeat"
+"Documentation" = "https://github.com/janusr/HA-SVKHeat#readme"
 
 [tool.setuptools.packages.find]
 where = ["custom_components"]
