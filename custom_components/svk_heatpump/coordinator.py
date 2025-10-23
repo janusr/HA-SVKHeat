@@ -44,6 +44,41 @@ def _get_constants():
 
 _LOGGER = logging.getLogger(__name__)
 
+# Essential IDs that should be loaded first during startup
+# These are the core entities needed for basic functionality
+ESSENTIAL_IDS = [
+    # Core temperature sensors
+    253,  # heating_supply_temp
+    254,  # heating_return_temp
+    255,  # water_tank_temp
+    256,  # ambient_temp
+    257,  # room_temp
+    
+    # Heat pump state and status
+    297,  # heatpump_state
+    296,  # heatpump_season_state
+    299,  # capacity_actual
+    300,  # capacity_requested
+    
+    # Essential setpoints
+    193,  # room_setpoint
+    383,  # hot_water_setpoint
+    386,  # hot_water_setpoint_actual
+    420,  # heating_setpoint_actual
+    
+    # Operating mode
+    278,  # season_mode
+    
+    # Important binary outputs
+    220,  # hot_tap_water_output
+    228,  # alarm_output
+    
+    # Solar panel state (if available)
+    364,  # solar_panel_state
+    
+    # Hot water source
+    380,  # hot_water_source
+]
 
 class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the SVK Heatpump."""
@@ -99,6 +134,11 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             self.last_json_timestamp = None
             self.parsing_errors = []
             self.parsing_warnings = []
+            
+            # Track if this is the first refresh for progressive loading
+            self.is_first_refresh = True
+            # Track if first refresh has been attempted to avoid duplicate attempts
+            self.first_refresh_attempted = False
         
         super().__init__(
             hass,
@@ -118,16 +158,70 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Update data via library."""
         try:
+            start_time = datetime.now()
             _LOGGER.debug("Starting data update cycle")
+            
             # Add overall timeout protection to prevent blocking the event loop
-            # Reduced timeout to 30 seconds to prevent long blocking periods
-            return await asyncio.wait_for(
+            # Use 30 seconds for both first and subsequent refreshes for consistency
+            timeout = 30.0
+            _LOGGER.debug("Using timeout of %.1f seconds for %s refresh", timeout, "first" if self.is_first_refresh else "subsequent")
+            
+            # Add detailed timing diagnostics
+            if self.is_json_client:
+                id_count = len(ESSENTIAL_IDS) if self.is_first_refresh else len(self.id_list)
+                _LOGGER.info("PERFORMANCE: Requesting %d IDs via JSON API (%s refresh)", id_count, "first" if self.is_first_refresh else "subsequent")
+                
+                # Log chunking configuration
+                if hasattr(self.client, '_enable_chunking'):
+                    chunk_size = getattr(self.client, '_chunk_size', 50)
+                    chunks_needed = (id_count + chunk_size - 1) // chunk_size
+                    _LOGGER.info("PERFORMANCE: Chunking enabled - size=%d, chunks_needed=%d", chunk_size, chunks_needed)
+                else:
+                    _LOGGER.info("PERFORMANCE: Chunking disabled - single request for all IDs")
+            
+            result = await asyncio.wait_for(
                 self._async_update_data_internal(),
-                timeout=30.0  # 30 second timeout for full update cycle
+                timeout=timeout
             )
+            
+            # Log timing information
+            end_time = datetime.now()
+            duration = (end_time - start_time).total_seconds()
+            _LOGGER.info("Data update completed in %.2f seconds (%s refresh)", duration, "first" if self.is_first_refresh else "subsequent")
+            
+            # Performance warning if approaching timeout
+            if duration > timeout * 0.8:  # 80% of timeout
+                _LOGGER.warning("PERFORMANCE: Update took %.2fs (%.1f%% of timeout) - may indicate performance issue",
+                             duration, (duration / timeout) * 100)
+            
+            # Mark first refresh as complete
+            if self.is_first_refresh:
+                self.is_first_refresh = False
+                self.first_refresh_attempted = True
+                _LOGGER.info("First refresh completed, switching to full ID list for subsequent updates")
+            
+            return result
         except asyncio.TimeoutError:
-            _LOGGER.error("Data update timed out after 30 seconds - this may be blocking Home Assistant")
-            raise UpdateFailed("Data update timeout after 30 seconds - heat pump may be unreachable")
+            _LOGGER.error("Data update timed out after %.1f seconds - this may be blocking Home Assistant", timeout)
+            
+            # Add timeout diagnostics
+            if self.is_json_client:
+                _LOGGER.error("TIMEOUT: JSON API request timed out after %.1f seconds", timeout)
+                _LOGGER.error("TIMEOUT: This may be caused by:")
+                _LOGGER.error("TIMEOUT: 1) Network latency to heat pump")
+                _LOGGER.error("TIMEOUT: 2) Heat pump processing too many IDs in single request")
+                _LOGGER.error("TIMEOUT: 3) Authentication delays (multiple round-trips)")
+                _LOGGER.error("TIMEOUT: 4) Chunking inefficiency (too many small requests)")
+                
+                # Log current configuration for debugging
+                if hasattr(self.client, '_enable_chunking'):
+                    _LOGGER.error("TIMEOUT: Chunking: enabled=%s, chunk_size=%d",
+                                 getattr(self.client, '_enable_chunking', False),
+                                 getattr(self.client, '_chunk_size', 50))
+                _LOGGER.error("TIMEOUT: Total IDs requested: %d",
+                             len(ESSENTIAL_IDS) if self.is_first_refresh else len(self.id_list))
+            
+            raise UpdateFailed(f"Data update timeout after {timeout:.1f} seconds - heat pump may be unreachable")
     
     async def _async_update_data_internal(self):
         """Internal method for data update with retry logic."""
@@ -173,12 +267,19 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             self.parsing_errors = []
             self.parsing_warnings = []
             
-            _LOGGER.info("Starting JSON data update with %d IDs", len(self.id_list))
-            _LOGGER.debug("Requesting IDs: %s", self.id_list[:20])  # Log first 20 IDs
+            # Use progressive loading for first refresh
+            if self.is_first_refresh:
+                ids_to_request = ESSENTIAL_IDS
+                _LOGGER.info("Starting first JSON data update with %d essential IDs (30 second timeout)", len(ids_to_request))
+                _LOGGER.debug("Requesting essential IDs: %s", ids_to_request)
+            else:
+                ids_to_request = self.id_list
+                _LOGGER.info("Starting JSON data update with %d IDs (30 second timeout)", len(ids_to_request))
+                _LOGGER.debug("Requesting IDs: %s", ids_to_request[:20])  # Log first 20 IDs
             
-            # Read all available entities from DEFAULT_IDS
+            # Read entities based on whether this is first refresh or not
             _LOGGER.debug("About to call client.read_values - this is a potential blocking point")
-            json_data = await self.client.read_values(self.id_list)
+            json_data = await self.client.read_values(ids_to_request)
             _LOGGER.debug("Returned from client.read_values - got %d items", len(json_data) if json_data else 0)
             
             _LOGGER.info("Received raw JSON data with %d items", len(json_data) if json_data else 0)
@@ -282,7 +383,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             
             # Store parsing statistics for diagnostics
             data["parsing_stats"] = {
-                "total_ids_requested": len(self.id_list),
+                "total_ids_requested": len(ids_to_request),
                 "total_ids_received": len(json_data) if isinstance(json_data, list) else 0,
                 "total_ids_fetched": len(ids_fetched),
                 "unknown_ids_count": len(unknown_ids),
@@ -290,7 +391,8 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                 "clamped_percentages_count": len(clamped_percentages),
                 "successful_parses": len([k for k, v in data.items() if v is not None and not k.startswith("last_") and not k.startswith("ids_") and not k.startswith("parsing_")]),
                 "enabled_entities_count": len([eid for eid in self.id_to_entity_map if self.is_entity_enabled(eid)]),
-                "disabled_entities_count": len([eid for eid in self.id_to_entity_map if not self.is_entity_enabled(eid)])
+                "disabled_entities_count": len([eid for eid in self.id_to_entity_map if not self.is_entity_enabled(eid)]),
+                "is_first_refresh": self.is_first_refresh
             }
             
             # Store detailed parsing information for diagnostics

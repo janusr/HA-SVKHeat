@@ -96,12 +96,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.debug("Stored coordinator and client in hass.data")
     
     # Perform first data refresh with timeout to prevent blocking
-    _LOGGER.info("Performing first data refresh with timeout protection")
+    _LOGGER.info("Performing first data refresh with 30 second timeout protection")
     try:
         # Use asyncio.wait_for to prevent blocking during startup
-        # Match the timeout with the coordinator timeout for consistency
-        from .const import DEFAULT_TIMEOUT
-        await asyncio.wait_for(coordinator.async_config_entry_first_refresh(), timeout=DEFAULT_TIMEOUT * 2)
+        # Use 30 seconds for first refresh to match coordinator timeout
+        await asyncio.wait_for(coordinator.async_config_entry_first_refresh(), timeout=30)
         _LOGGER.info("First data refresh completed successfully")
     except asyncio.TimeoutError as err:
         _LOGGER.error("First data refresh timed out during startup - this may be blocking Home Assistant")

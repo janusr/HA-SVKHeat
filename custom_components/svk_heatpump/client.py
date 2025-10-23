@@ -605,7 +605,7 @@ class LOMJsonClient:
         self._password = password
         self._allow_basic_auth = allow_basic_auth
         self._session: Optional[aiohttp.ClientSession] = None
-        self._timeout = aiohttp.ClientTimeout(total=timeout, connect=3.0, sock_read=5.0)
+        self._timeout = aiohttp.ClientTimeout(total=timeout, connect=5.0, sock_read=10.0)
         # Handle backward compatibility for optional parameters
         if chunk_size is None:
             from .const import DEFAULT_CHUNK_SIZE
@@ -857,7 +857,10 @@ class LOMJsonClient:
     
     async def _request_with_digest_auth(self, path: str, ids: List[int]) -> List[Dict[str, Any]]:
         """Make a request with Digest authentication."""
-        _LOGGER.debug("_request_with_digest_auth called for %d IDs", len(ids))
+        import time
+        start_time = time.time()
+        
+        _LOGGER.debug("PERFORMANCE: _request_with_digest_auth called for %d IDs", len(ids))
         
         if not self._session:
             _LOGGER.debug("Starting new session for digest auth")
@@ -872,54 +875,70 @@ class LOMJsonClient:
         # For GET requests with query parameters
         query_params = f"ids={','.join(map(str, ids))}"
         get_url = self._base.with_path("/cgi-bin/json_values.cgi").with_query(query_params)
-        _LOGGER.info("Making digest auth request to: %s", get_url)
+        _LOGGER.info("PERFORMANCE: Making digest auth request to: %s", get_url)
         _LOGGER.debug("Requesting %d IDs: %s", len(ids), ids[:10])  # Log first 10 IDs
         
         try:
             # Add overall timeout protection to prevent infinite retry loops
-            _LOGGER.debug("Starting digest auth with 15 second timeout")
-            return await asyncio.wait_for(
+            _LOGGER.debug("PERFORMANCE: Starting digest auth with 30 second timeout")
+            auth_start = time.time()
+            result = await asyncio.wait_for(
                 self._request_with_digest_auth_internal(path, ids, get_url, payload),
-                timeout=15.0  # 15 second timeout for network operations
+                timeout=30.0  # 30 second timeout for network operations
             )
+            auth_duration = time.time() - auth_start
+            total_duration = time.time() - start_time
+            _LOGGER.info("PERFORMANCE: Digest auth completed in %.2fs (auth=%.2fs, total=%.2fs) for %d IDs",
+                       total_duration, auth_duration, total_duration, len(ids))
+            return result
         except asyncio.TimeoutError:
-            _LOGGER.error("CRITICAL: Digest auth request to %s timed out after 15 seconds - this is blocking Home Assistant", get_url)
-            raise SVKTimeoutError(f"Request timeout after 15 seconds for {path}")
+            total_duration = time.time() - start_time
+            _LOGGER.error("CRITICAL: Digest auth request to %s timed out after 30 seconds (total=%.2fs) - this is blocking Home Assistant",
+                        get_url, total_duration)
+            raise SVKTimeoutError(f"Request timeout after 30 seconds for {path}")
     
     async def _request_with_digest_auth_internal(self, path: str, ids: List[int], get_url: URL, payload: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Internal method for Digest authentication with retry logic."""
-        _LOGGER.debug("Starting digest auth internal method with %d max retries", self._max_retries)
+        import time
+        attempt_start = time.time()
+        
+        _LOGGER.debug("PERFORMANCE: Starting digest auth internal method with %d max retries", self._max_retries)
         
         for attempt in range(self._max_retries + 1):  # Add 1 to ensure at least one attempt
             try:
                 # Calculate exponential backoff delay
                 if attempt > 0:
                     delay = self._retry_delay * (2 ** (attempt - 1))  # Exponential backoff
-                    _LOGGER.debug("Retrying after %.1f seconds (attempt %d/%d)", delay, attempt + 1, self._max_retries + 1)
+                    _LOGGER.debug("PERFORMANCE: Retrying after %.1f seconds (attempt %d/%d)", delay, attempt + 1, self._max_retries + 1)
                     await asyncio.sleep(delay)
                 
                 # First, send an unauthenticated GET request
-                _LOGGER.info("Attempt %d/%d: Making unauthenticated request to %s", attempt + 1, self._max_retries + 1, get_url)
+                _LOGGER.info("PERFORMANCE: Attempt %d/%d: Making unauthenticated request to %s", attempt + 1, self._max_retries + 1, get_url)
                 headers = {}
-                _LOGGER.debug("About to make HTTP GET request - potential blocking point")
+                _LOGGER.debug("PERFORMANCE: About to make HTTP GET request - potential blocking point")
+                request_start = time.time()
                 resp = await self._session.get(get_url, headers=headers, allow_redirects=False)
+                request_duration = time.time() - request_start
                 self._last_status_code = resp.status
-                _LOGGER.info("Response status: %d", resp.status)
+                _LOGGER.info("PERFORMANCE: Initial request completed in %.2fs, status: %d", request_duration, resp.status)
                 
                 try:
                     # Handle 401 - Need authentication
                     if resp.status == 401:
                         auth_header = resp.headers.get('WWW-Authenticate', '')
-                        _LOGGER.info("Received 401 - WWW-Authenticate header: %s", auth_header)
+                        _LOGGER.info("PERFORMANCE: Received 401 - WWW-Authenticate header: %s", auth_header)
                         if not auth_header.startswith('Digest '):
                             # Check if Basic Auth is allowed as fallback
                             if self._allow_basic_auth and auth_header.startswith('Basic '):
-                                _LOGGER.warning("Falling back to Basic authentication as Digest is not supported")
+                                _LOGGER.warning("PERFORMANCE: Falling back to Basic authentication as Digest is not supported")
                                 # Retry with Basic Auth
                                 if self._basic_auth:
                                     headers["Authorization"] = self._basic_auth.encode()
+                                    auth_start = time.time()
                                     resp = await self._session.get(get_url, headers=headers, allow_redirects=False)
+                                    auth_duration = time.time() - auth_start
                                     self._last_status_code = resp.status
+                                    _LOGGER.info("PERFORMANCE: Basic auth request completed in %.2fs, status: %d", auth_duration, resp.status)
                                 else:
                                     _LOGGER.error("Server requires Basic authentication but no credentials provided")
                                     raise SVKAuthenticationError("Server requires Basic authentication but no credentials provided")
@@ -929,12 +948,12 @@ class LOMJsonClient:
                         
                         # Parse WWW-Authenticate header
                         auth_params = _parse_www_authenticate(auth_header)
-                        _LOGGER.debug("Parsed auth params: %s", auth_params)
+                        _LOGGER.debug("PERFORMANCE: Parsed auth params: %s", auth_params)
                         
                         # Check for stale=true
                         is_stale = auth_params.get('stale', '').lower() == 'true'
                         if is_stale:
-                            _LOGGER.debug("Server indicated stale nonce")
+                            _LOGGER.debug("PERFORMANCE: Server indicated stale nonce")
                         
                         # Update stored digest parameters
                         self._digest_nonce = auth_params.get('nonce')
@@ -958,7 +977,7 @@ class LOMJsonClient:
                         # Compute Digest authorization header
                         # Use the exact same URI that will be used in the request
                         uri = str(get_url.relative())
-                        _LOGGER.debug("Digest auth URI: %s", uri)
+                        _LOGGER.debug("PERFORMANCE: Digest auth URI: %s", uri)
                         auth_header = _compute_digest_response(
                             method="GET",
                             uri=uri,
@@ -974,11 +993,13 @@ class LOMJsonClient:
                         )
                         
                         # Retry with Digest authentication
-                        _LOGGER.debug("Retrying with Digest authentication")
+                        _LOGGER.debug("PERFORMANCE: Retrying with Digest authentication")
                         headers["Authorization"] = auth_header
+                        auth_start = time.time()
                         resp = await self._session.get(get_url, headers=headers, allow_redirects=False)
+                        auth_duration = time.time() - auth_start
                         self._last_status_code = resp.status
-                        _LOGGER.debug("Digest auth response status: %d", resp.status)
+                        _LOGGER.info("PERFORMANCE: Digest auth request completed in %.2fs, status: %d", auth_duration, resp.status)
                         
                         # Handle 401 with stale=true - retry once with new nonce
                         if resp.status == 401 and not is_stale:
@@ -1094,30 +1115,42 @@ class LOMJsonClient:
                     resp.release()
             
             except asyncio.TimeoutError as err:
+                attempt_duration = time.time() - attempt_start
                 if attempt < self._max_retries:
                     # Exponential backoff is already handled at the start of the loop
-                    _LOGGER.debug("Timeout on attempt %d, will retry with exponential backoff", attempt + 1)
+                    _LOGGER.debug("PERFORMANCE: Timeout on attempt %d after %.2fs, will retry with exponential backoff",
+                                attempt + 1, attempt_duration)
                     continue
-                _LOGGER.error("Timeout connecting to %s after %d attempts", self.host, attempt + 1)
+                _LOGGER.error("PERFORMANCE: Timeout connecting to %s after %d attempts (total %.2fs)",
+                             self.host, attempt + 1, attempt_duration)
                 raise SVKTimeoutError(f"Timeout connecting to {self.host}") from err
             
             except aiohttp.ClientError as err:
+                attempt_duration = time.time() - attempt_start
                 if attempt < self._max_retries:
                     # Exponential backoff is already handled at the start of the loop
-                    _LOGGER.debug("Client error on attempt %d, will retry with exponential backoff: %s", attempt + 1, err)
+                    _LOGGER.debug("PERFORMANCE: Client error on attempt %d after %.2fs, will retry with exponential backoff: %s",
+                                attempt + 1, attempt_duration, err)
                     continue
-                _LOGGER.error("Client error connecting to %s after %d attempts: %s", self.host, attempt + 1, err)
+                _LOGGER.error("PERFORMANCE: Client error connecting to %s after %d attempts (total %.2fs): %s",
+                             self.host, attempt + 1, attempt_duration, err)
                 raise SVKConnectionError(f"Failed to fetch {path}: {err}") from err
         
+            total_attempt_duration = time.time() - attempt_start
+            _LOGGER.error("PERFORMANCE: Max retries exceeded for %s after %.2fs", path, total_attempt_duration)
             raise SVKConnectionError(f"Max retries exceeded for {path}")
     
     async def _request_individual_ids(self, path: str, ids: List[int]) -> List[Dict[str, Any]]:
         """Make individual requests for each ID as a fallback mechanism."""
-        _LOGGER.info("Using individual requests fallback for %d IDs", len(ids))
+        import time
+        start_time = time.time()
+        
+        _LOGGER.info("PERFORMANCE: Using individual requests fallback for %d IDs", len(ids))
         results = []
         failed_ids = []
+        request_times = []
         
-        for entity_id in ids:
+        for i, entity_id in enumerate(ids):
             # Skip if this ID is known to be unsupported
             if entity_id in self._unsupported_ids:
                 _LOGGER.debug("Skipping known unsupported ID %d", entity_id)
@@ -1129,16 +1162,22 @@ class LOMJsonClient:
                 continue
                 
             try:
-                _LOGGER.debug("Making individual request for ID %d", entity_id)
+                _LOGGER.debug("PERFORMANCE: Making individual request %d/%d for ID %d", i+1, len(ids), entity_id)
+                request_start = time.time()
                 result = await self._request_with_retry(path, [entity_id])
+                request_duration = time.time() - request_start
+                request_times.append(request_duration)
+                
                 if result:
                     results.extend(result)
-                    _LOGGER.debug("Successfully retrieved ID %d", entity_id)
+                    _LOGGER.debug("PERFORMANCE: Successfully retrieved ID %d in %.2fs", entity_id, request_duration)
                 else:
-                    _LOGGER.warning("No data returned for ID %d", entity_id)
+                    _LOGGER.warning("PERFORMANCE: No data returned for ID %d in %.2fs", entity_id, request_duration)
                     failed_ids.append(entity_id)
             except Exception as err:
-                _LOGGER.warning("Failed to retrieve ID %d individually: %s", entity_id, err)
+                request_duration = time.time() - request_start
+                request_times.append(request_duration)
+                _LOGGER.warning("PERFORMANCE: Failed to retrieve ID %d individually after %.2fs: %s", entity_id, request_duration, err)
                 failed_ids.append(entity_id)
                 
                 # If we consistently fail for this ID, mark it as unsupported
@@ -1148,9 +1187,26 @@ class LOMJsonClient:
                 else:
                     self._failed_ids.add(entity_id)
         
-        _LOGGER.info("Individual requests completed: %d successful, %d failed", len(results), len(failed_ids))
+        total_duration = time.time() - start_time
+        
+        # Log performance summary
+        if request_times:
+            avg_request_time = sum(request_times) / len(request_times)
+            max_request_time = max(request_times)
+            min_request_time = min(request_times)
+            _LOGGER.info("PERFORMANCE: Individual request timing summary - avg=%.2fs, min=%.2fs, max=%.2fs (%d requests)",
+                        avg_request_time, min_request_time, max_request_time, len(request_times))
+        
+        _LOGGER.info("PERFORMANCE: Individual requests completed in %.2fs total: %d successful, %d failed",
+                    total_duration, len(results), len(failed_ids))
+        
         if failed_ids:
             _LOGGER.debug("Failed IDs: %s", failed_ids[:20])  # Log first 20 failed IDs
+        
+        # Performance warning if individual requests are taking too long
+        if total_duration > 15:  # 15 seconds for individual requests is concerning
+            _LOGGER.warning("PERFORMANCE WARNING: Individual requests took %.2fs - this is very inefficient", total_duration)
+            _LOGGER.warning("PERFORMANCE WARNING: Consider increasing chunk size or checking network connectivity")
         
         return results
 
@@ -1243,7 +1299,10 @@ class LOMJsonClient:
         Returns:
             List of dictionaries with 'id', 'name', and 'value' fields
         """
-        _LOGGER.info("read_values called with %d IDs", len(ids))
+        import time
+        start_time = time.time()
+        
+        _LOGGER.info("PERFORMANCE: read_values called with %d IDs", len(ids))
         _LOGGER.debug("Requesting IDs: %s", ids[:20])  # Log first 20 IDs
         
         if not ids:
@@ -1265,12 +1324,17 @@ class LOMJsonClient:
             _LOGGER.warning("No valid IDs remaining after filtering")
             return []
         
+        _LOGGER.info("PERFORMANCE: Processing %d IDs after filtering", len(filtered_ids))
+        
         # If chunking is disabled, make a single request with all IDs
         if not self._enable_chunking:
-            _LOGGER.info("Chunking disabled, making single request for %d IDs", len(filtered_ids))
+            _LOGGER.info("PERFORMANCE: Chunking disabled, making single request for %d IDs", len(filtered_ids))
+            single_start = time.time()
             try:
                 result = await self._request_with_retry("/cgi-bin/json_values.cgi", filtered_ids)
-                _LOGGER.info("Single request returned %d items", len(result) if result else 0)
+                single_duration = time.time() - single_start
+                _LOGGER.info("PERFORMANCE: Single request completed in %.2fs, returned %d items",
+                           single_duration, len(result) if result else 0)
                 return result or []
             except Exception as err:
                 _LOGGER.error("Single request failed: %s", err)
@@ -1280,11 +1344,14 @@ class LOMJsonClient:
         
         # If the number of IDs is small, make a single request
         if len(filtered_ids) <= self._chunk_size:
-            _LOGGER.info("Making single request for %d IDs (below chunk size threshold)", len(filtered_ids))
+            _LOGGER.info("PERFORMANCE: Making single request for %d IDs (below chunk size threshold)", len(filtered_ids))
+            single_start = time.time()
             try:
                 result = await self._request_with_retry("/cgi-bin/json_values.cgi", filtered_ids)
+                single_duration = time.time() - single_start
                 items_returned = len(result) if result else 0
-                _LOGGER.info("Single request returned %d items", items_returned)
+                _LOGGER.info("PERFORMANCE: Single request completed in %.2fs, returned %d items",
+                           single_duration, items_returned)
                 
                 # Check if we got significantly fewer items than expected
                 if items_returned < len(filtered_ids) * 0.5:  # Less than 50% success rate
@@ -1300,60 +1367,117 @@ class LOMJsonClient:
                 return await self._request_individual_ids("/cgi-bin/json_values.cgi", filtered_ids)
         
         # For larger ID lists, split into chunks with enhanced logging
-        _LOGGER.info("Splitting %d IDs into chunks of %d", len(filtered_ids), self._chunk_size)
+        total_chunks = (len(filtered_ids) + self._chunk_size - 1) // self._chunk_size
+        _LOGGER.info("PERFORMANCE: Splitting %d IDs into %d chunks of %d", len(filtered_ids), total_chunks, self._chunk_size)
         results = []
         failed_chunks = []
         successful_chunks = 0
+        chunk_times = []
         
+        # Process chunks in parallel to reduce total time
+        import asyncio
+        semaphore = asyncio.Semaphore(3)  # Limit to 3 concurrent requests to avoid overwhelming the device
+        
+        async def process_chunk(chunk, chunk_num):
+            chunk_start = time.time()
+            try:
+                chunk_results = await self._request_with_retry("/cgi-bin/json_values.cgi", chunk)
+                chunk_duration = time.time() - chunk_start
+                items_returned = len(chunk_results) if chunk_results else 0
+                _LOGGER.info("PERFORMANCE: Chunk %d/%d completed in %.2fs, returned %d items",
+                           chunk_num, total_chunks, chunk_duration, items_returned)
+                return chunk_results, chunk_duration
+            except Exception as err:
+                chunk_duration = time.time() - chunk_start
+                _LOGGER.error("PERFORMANCE: Chunk %d/%d failed after %.2fs: %s", chunk_num, total_chunks, chunk_duration, err)
+                return None, chunk_duration
+        
+        # Create tasks for all chunks
+        chunk_tasks = []
         for i in range(0, len(filtered_ids), self._chunk_size):
             chunk = filtered_ids[i:i + self._chunk_size]
             chunk_num = i // self._chunk_size + 1
-            total_chunks = (len(filtered_ids) + self._chunk_size - 1) // self._chunk_size
             
-            _LOGGER.info("Processing chunk %d/%d (IDs %d-%d): %s",
+            _LOGGER.info("PERFORMANCE: Processing chunk %d/%d (IDs %d-%d): %s",
                         chunk_num, total_chunks, i, i + len(chunk) - 1, chunk)
             
-            try:
-                chunk_results = await self._request_with_retry("/cgi-bin/json_values.cgi", chunk)
-                items_returned = len(chunk_results) if chunk_results else 0
-                _LOGGER.info("Chunk %d/%d returned %d items", chunk_num, total_chunks, items_returned)
-                
-                # Check if this chunk had a low success rate
-                if items_returned < len(chunk) * 0.5:  # Less than 50% success rate
-                    _LOGGER.warning("Chunk %d/%d has low success rate (%d/%d), will retry individually",
-                                  chunk_num, total_chunks, items_returned, len(chunk))
-                    failed_chunks.append(chunk)
-                else:
+            # Create task for this chunk
+            task = asyncio.create_task(process_chunk(chunk, chunk_num))
+            chunk_tasks.append(task)
+        
+        # Wait for all chunks to complete (with timeout)
+        try:
+            _LOGGER.info("PERFORMANCE: Waiting for %d chunks to complete with 25 second timeout", len(chunk_tasks))
+            chunk_results_list = await asyncio.wait_for(
+                asyncio.gather(*chunk_tasks, return_exceptions=True),
+                timeout=25.0  # 25 second timeout for all chunks
+            )
+        except asyncio.TimeoutError:
+            _LOGGER.error("PERFORMANCE: Parallel chunk processing timed out after 25 seconds")
+            # Cancel any remaining tasks
+            for task in chunk_tasks:
+                if not task.done():
+                    task.cancel()
+        
+        # Process results
+        for i, task_result in enumerate(chunk_results_list):
+            if isinstance(task_result, Exception):
+                _LOGGER.error("PERFORMANCE: Chunk %d/%d failed with exception: %s", i+1, total_chunks, task_result)
+                failed_chunks.append(i)
+            else:
+                chunk_results, chunk_duration = task_result
+                if chunk_results:
+                    chunk_times.append(chunk_duration)
                     successful_chunks += 1
                     # Extend the results list with the new items
                     if isinstance(chunk_results, list):
                         results.extend(chunk_results)
                     else:
                         _LOGGER.warning("Unexpected response format for chunk %d/%d: expected list, got %s",
-                                      chunk_num, total_chunks, type(chunk_results))
-                        failed_chunks.append(chunk)
-                        
-            except Exception as err:
-                _LOGGER.error("Failed to read chunk %d/%d: %s", chunk_num, total_chunks, err)
-                failed_chunks.append(chunk)
+                                      i+1, total_chunks, type(chunk_results))
+                        failed_chunks.append(i)
         
-        _LOGGER.info("Chunk processing completed: %d successful, %d failed chunks",
+        # Log chunk performance summary
+        if chunk_times:
+            avg_chunk_time = sum(chunk_times) / len(chunk_times)
+            max_chunk_time = max(chunk_times)
+            min_chunk_time = min(chunk_times)
+            _LOGGER.info("PERFORMANCE: Parallel chunk timing summary - avg=%.2fs, min=%.2fs, max=%.2fs (%d chunks)",
+                        avg_chunk_time, min_chunk_time, max_chunk_time, len(chunk_times))
+        
+        _LOGGER.info("PERFORMANCE: Parallel chunk processing completed: %d successful, %d failed chunks",
                     successful_chunks, len(failed_chunks))
         
         # If we have failed chunks, try individual requests for those IDs
         if failed_chunks:
-            failed_ids = [entity_id for chunk in failed_chunks for entity_id in chunk]
-            _LOGGER.info("Attempting individual requests for %d IDs from failed chunks", len(failed_ids))
+            failed_ids = []
+            for i, chunk_index in enumerate(failed_chunks):
+                if chunk_index < len(filtered_ids):
+                    chunk = filtered_ids[chunk_index:chunk_index + self._chunk_size]
+                    failed_ids.extend(chunk)
+            
+            _LOGGER.info("PERFORMANCE: Attempting individual requests for %d IDs from failed chunks", len(failed_ids))
+            individual_start = time.time()
             
             try:
                 individual_results = await self._request_individual_ids("/cgi-bin/json_values.cgi", failed_ids)
+                individual_duration = time.time() - individual_start
                 results.extend(individual_results)
-                _LOGGER.info("Individual requests recovered %d additional items", len(individual_results))
+                _LOGGER.info("PERFORMANCE: Individual requests completed in %.2fs, recovered %d additional items",
+                           individual_duration, len(individual_results))
             except Exception as err:
-                _LOGGER.error("Individual requests also failed: %s", err)
+                individual_duration = time.time() - individual_start
+                _LOGGER.error("PERFORMANCE: Individual requests failed after %.2fs: %s", individual_duration, err)
         
-        _LOGGER.info("read_values completed with total of %d items from %d requested IDs",
-                    len(results), len(filtered_ids))
+        total_duration = time.time() - start_time
+        _LOGGER.info("PERFORMANCE: read_values completed in %.2fs total, returned %d items from %d requested IDs",
+                    total_duration, len(results), len(filtered_ids))
+        
+        # Performance warning if taking too long
+        if total_duration > 20:  # 20 seconds is getting close to 30s timeout
+            _LOGGER.warning("PERFORMANCE WARNING: read_values took %.2fs - this may cause timeouts", total_duration)
+            _LOGGER.warning("PERFORMANCE WARNING: Consider reducing chunk size further or checking network connectivity")
+        
         return results
     
     async def write_value(self, id: int, value: Any) -> bool:
