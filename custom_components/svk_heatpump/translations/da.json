@@ -32,6 +32,8 @@
       "invalid_id_list": "Ugyldigt ID-liste format. Brug semikolon-separerede tal (f.eks. 299;255;256)",
       "unexpected_auth_scheme": "Uventet auth-skema fra enhed.",
       "unknown": "Ukendt fejl",
+      "timeout": "Forbindelsestimeout. Enheden svarer ikke.",
+      "parse_error": "Kunne ikke parse svar fra enhed. Ugyldigt dataformat.",
       "readonly_select": "Denne select-enhed er skrivebeskyttet",
       "readonly_monitor": "Dette er en skrivebeskyttet monitor-enhed",
       "write_controls_disabled": "Skrivekontroller er deaktiveret i indstillingerne",

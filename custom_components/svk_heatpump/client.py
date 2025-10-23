@@ -642,14 +642,17 @@ class LOMJsonClient:
         for attempt in range(self._max_retries):
             try:
                 # First, send an unauthenticated GET request
+                _LOGGER.debug("Attempt %d: Making unauthenticated request to %s", attempt + 1, get_url)
                 headers = {}
                 resp = await self._session.get(get_url, headers=headers, allow_redirects=False)
                 self._last_status_code = resp.status
+                _LOGGER.debug("Response status: %d", resp.status)
                 
                 try:
                     # Handle 401 - Need authentication
                     if resp.status == 401:
                         auth_header = resp.headers.get('WWW-Authenticate', '')
+                        _LOGGER.debug("Received WWW-Authenticate header: %s", auth_header)
                         if not auth_header.startswith('Digest '):
                             # Check if Basic Auth is allowed as fallback
                             if self._allow_basic_auth and auth_header.startswith('Basic '):
@@ -666,9 +669,12 @@ class LOMJsonClient:
                         
                         # Parse WWW-Authenticate header
                         auth_params = _parse_www_authenticate(auth_header)
+                        _LOGGER.debug("Parsed auth params: %s", auth_params)
                         
                         # Check for stale=true
                         is_stale = auth_params.get('stale', '').lower() == 'true'
+                        if is_stale:
+                            _LOGGER.debug("Server indicated stale nonce")
                         
                         # Update stored digest parameters
                         self._digest_nonce = auth_params.get('nonce')
@@ -688,7 +694,9 @@ class LOMJsonClient:
                         cnonce = hashlib.md5(f"{time.time()}{random.random()}".encode()).hexdigest()[:16]
                         
                         # Compute Digest authorization header
-                        uri = f"/cgi-bin/json_values.cgi?{query_params}"
+                        # Use the exact same URI that will be used in the request
+                        uri = str(get_url.relative())
+                        _LOGGER.debug("Digest auth URI: %s", uri)
                         auth_header = _compute_digest_response(
                             method="GET",
                             uri=uri,
@@ -704,14 +712,18 @@ class LOMJsonClient:
                         )
                         
                         # Retry with Digest authentication
+                        _LOGGER.debug("Retrying with Digest authentication")
                         headers["Authorization"] = auth_header
                         resp = await self._session.get(get_url, headers=headers, allow_redirects=False)
                         self._last_status_code = resp.status
+                        _LOGGER.debug("Digest auth response status: %d", resp.status)
                         
                         # Handle 401 with stale=true - retry once with new nonce
                         if resp.status == 401 and not is_stale:
+                            _LOGGER.debug("Digest authentication failed, checking for stale nonce")
                             resp_text = await resp.text(errors="ignore")
                             new_auth_header = resp.headers.get('WWW-Authenticate', '')
+                            _LOGGER.debug("New WWW-Authenticate header: %s", new_auth_header)
                             if new_auth_header.startswith('Digest '):
                                 new_auth_params = _parse_www_authenticate(new_auth_header)
                                 if new_auth_params.get('stale', '').lower() == 'true':
@@ -723,7 +735,7 @@ class LOMJsonClient:
                                     
                                     auth_header = _compute_digest_response(
                                         method="GET",
-                                        uri=uri,
+                                        uri=str(get_url.relative()),
                                         username=self._username,
                                         password=self._password,
                                         realm=self._digest_realm,
@@ -751,9 +763,11 @@ class LOMJsonClient:
                     
                     # Check for success
                     if resp.status == 200:
+                        _LOGGER.debug("Successfully authenticated and received response")
                         # Parse JSON response
                         try:
                             data = await resp.json()
+                            _LOGGER.debug("Received JSON data with %d items", len(data) if isinstance(data, list) else "unknown")
                             
                             # Check for empty or blank response
                             if not data:
@@ -954,14 +968,17 @@ class LOMJsonClient:
         
         try:
             # First, send an unauthenticated POST request
+            _LOGGER.debug("Making unauthenticated POST request to %s", url)
             headers = {}
             resp = await self._session.post(url, json=payload, headers=headers, allow_redirects=False)
             self._last_status_code = resp.status
+            _LOGGER.debug("POST response status: %d", resp.status)
             
             try:
                 # Handle 401 - Need authentication
                 if resp.status == 401:
                     auth_header = resp.headers.get('WWW-Authenticate', '')
+                    _LOGGER.debug("POST request received WWW-Authenticate header: %s", auth_header)
                     if not auth_header.startswith('Digest '):
                         # Check if Basic Auth is allowed as fallback
                         if self._allow_basic_auth and auth_header.startswith('Basic '):
@@ -997,7 +1014,9 @@ class LOMJsonClient:
                     cnonce = hashlib.md5(f"{time.time()}{random.random()}".encode()).hexdigest()[:16]
                     
                     # Compute Digest authorization header
-                    uri = "/cgi-bin/json_values.cgi"
+                    # Use the exact same URI that will be used in the request
+                    uri = str(url.relative())
+                    _LOGGER.debug("Digest auth URI for POST: %s", uri)
                     auth_header = _compute_digest_response(
                         method="POST",
                         uri=uri,
@@ -1013,9 +1032,11 @@ class LOMJsonClient:
                     )
                     
                     # Retry with Digest authentication
+                    _LOGGER.debug("Retrying POST with Digest authentication")
                     headers["Authorization"] = auth_header
                     resp = await self._session.post(url, json=payload, headers=headers, allow_redirects=False)
                     self._last_status_code = resp.status
+                    _LOGGER.debug("POST Digest auth response status: %d", resp.status)
                     
                     # Handle redirects manually and re-attach Digest header
                     if resp.status in (302, 303, 307, 308):

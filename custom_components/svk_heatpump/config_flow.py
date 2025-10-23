@@ -8,7 +8,7 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_USERNAME, CONF_PASSWORD
 from homeassistant.data_entry_flow import FlowResult
 
-from .client import LOMJsonClient, SVKConnectionError, SVKAuthenticationError
+from .client import LOMJsonClient, SVKConnectionError, SVKAuthenticationError, SVKTimeoutError, SVKParseError
 from .const import (
     CONF_ENABLE_COUNTERS,
     CONF_ENABLE_SOLAR,
@@ -80,10 +80,30 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 
                 if json_data is None:
                     errors["base"] = "invalid_response"
+                elif not json_data:
+                    errors["base"] = "invalid_response"
+                    _LOGGER.error("Empty data response from host %s", self._host)
+                elif not isinstance(json_data, list):
+                    errors["base"] = "invalid_response"
+                    _LOGGER.error("Invalid response format from host %s: expected list, got %s", self._host, type(json_data))
+                elif len(json_data) == 0:
+                    errors["base"] = "invalid_response"
+                    _LOGGER.error("No data items returned from host %s", self._host)
                 else:
-                    # Connection successful, proceed to entity management explanation
-                    self._client = client
-                    return await self.async_step_entity_management()
+                    # Validate that response contains expected structure
+                    valid_items = 0
+                    for item in json_data:
+                        if isinstance(item, dict) and 'id' in item and 'value' in item:
+                            valid_items += 1
+                    
+                    if valid_items == 0:
+                        errors["base"] = "invalid_response"
+                        _LOGGER.error("No valid items found in response from host %s", self._host)
+                    else:
+                        _LOGGER.debug("Successfully validated connection to %s: %d valid items", self._host, valid_items)
+                        # Connection successful, proceed to entity management explanation
+                        self._client = client
+                        return await self.async_step_entity_management()
                     
             except SVKAuthenticationError as auth_err:
                 # Check if this is a Digest authentication issue
@@ -97,8 +117,15 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 else:
                     errors["base"] = "invalid_auth"
                     _LOGGER.error("Authentication failed for host %s: %s", self._host, error_msg)
-            except SVKConnectionError:
+            except SVKTimeoutError as timeout_err:
+                errors["base"] = "timeout"
+                _LOGGER.error("Connection timeout for host %s: %s", self._host, timeout_err)
+            except SVKParseError as parse_err:
+                errors["base"] = "parse_error"
+                _LOGGER.error("Failed to parse response from host %s: %s", self._host, parse_err)
+            except SVKConnectionError as conn_err:
                 errors["base"] = "cannot_connect"
+                _LOGGER.error("Connection error for host %s: %s", self._host, conn_err)
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
@@ -182,20 +209,40 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 
                 if json_data is None:
                     errors["base"] = "invalid_response"
+                elif not json_data:
+                    errors["base"] = "invalid_response"
+                    _LOGGER.error("Empty data response from host %s during reauth", host)
+                elif not isinstance(json_data, list):
+                    errors["base"] = "invalid_response"
+                    _LOGGER.error("Invalid response format from host %s during reauth: expected list, got %s", host, type(json_data))
+                elif len(json_data) == 0:
+                    errors["base"] = "invalid_response"
+                    _LOGGER.error("No data items returned from host %s during reauth", host)
                 else:
-                    # Update entry with new credentials
-                    self.hass.config_entries.async_update_entry(
-                        self._reauth_entry,
-                        data={
-                            **self._reauth_entry.data,
-                            CONF_USERNAME: username,
-                            CONF_PASSWORD: password,
-                        }
-                    )
-                    await self.hass.config_entries.async_reload(
-                        self._reauth_entry.entry_id
-                    )
-                    return self.async_abort(reason="reauth_successful")
+                    # Validate that response contains expected structure
+                    valid_items = 0
+                    for item in json_data:
+                        if isinstance(item, dict) and 'id' in item and 'value' in item:
+                            valid_items += 1
+                    
+                    if valid_items == 0:
+                        errors["base"] = "invalid_response"
+                        _LOGGER.error("No valid items found in response from host %s during reauth", host)
+                    else:
+                        _LOGGER.debug("Successfully validated connection to %s during reauth: %d valid items", host, valid_items)
+                        # Update entry with new credentials
+                        self.hass.config_entries.async_update_entry(
+                            self._reauth_entry,
+                            data={
+                                **self._reauth_entry.data,
+                                CONF_USERNAME: username,
+                                CONF_PASSWORD: password,
+                            }
+                        )
+                        await self.hass.config_entries.async_reload(
+                            self._reauth_entry.entry_id
+                        )
+                        return self.async_abort(reason="reauth_successful")
                     
             except SVKAuthenticationError as auth_err:
                 # Check if this is a Digest authentication issue
@@ -209,8 +256,15 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 else:
                     errors["base"] = "invalid_auth"
                     _LOGGER.error("Authentication failed during reauth for host %s: %s", host, error_msg)
-            except SVKConnectionError:
+            except SVKTimeoutError as timeout_err:
+                errors["base"] = "timeout"
+                _LOGGER.error("Connection timeout during reauth for host %s: %s", host, timeout_err)
+            except SVKParseError as parse_err:
+                errors["base"] = "parse_error"
+                _LOGGER.error("Failed to parse response during reauth for host %s: %s", host, parse_err)
+            except SVKConnectionError as conn_err:
                 errors["base"] = "cannot_connect"
+                _LOGGER.error("Connection error during reauth for host %s: %s", host, conn_err)
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"

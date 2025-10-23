@@ -77,7 +77,6 @@ After adding the integration, you can configure additional options:
 * **Enable Solar**: Include solar panel entities (default: enabled)
 * **Enable Counters**: Include runtime counters and statistics (default: enabled)
 * **Enable Writes**: Allow control of setpoints and modes (default: disabled)
-* **ID List**: Custom list of entity IDs to monitor (advanced users)
 
 .. note::
    The **Enable Writes** option allows you to control your heat pump from Home Assistant.
