@@ -177,9 +177,9 @@ async def async_setup_entry(
             if registry_entry and not enabled_by_default and registry_entry.disabled_by is None:
                 entity_registry.async_update_entity(entity_id_str, disabled_by=DISABLED_INTEGRATION)
             
-            # Only add enabled entities to the platform
-            if enabled_by_default or (registry_entry and registry_entry.disabled_by is None):
-                sensors.append(sensor)
+            # Always add all entities to the platform
+            # Entities not in DEFAULT_ENABLED_ENTITIES will be disabled by default
+            sensors.append(sensor)
     else:
         # Fall back to HTML scraping entities for backward compatibility
         # This would need to be implemented based on the old structure
