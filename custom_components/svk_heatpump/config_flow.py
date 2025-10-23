@@ -332,7 +332,6 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
     
     def __init__(self, config_entry: config_entries.ConfigEntry):
         """Initialize options flow."""
-        self.config_entry = config_entry
     
     def _get_options_schema(self) -> vol.Schema:
         """Get the options schema."""

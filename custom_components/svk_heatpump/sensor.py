@@ -20,12 +20,12 @@ from homeassistant.helpers.entity import DeviceInfo, EntityRegistry
 from homeassistant.helpers.entity_registry import DISABLED_INTEGRATION
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from ..const import (
-    DOMAIN,
-    ID_MAP,
-    DEFAULT_ENABLED_ENTITIES,
-)
-from ..coordinator import SVKHeatpumpDataCoordinator
+from . import const
+from . import coordinator
+
+# Import specific items from modules
+from .const import DOMAIN, ID_MAP, DEFAULT_ENABLED_ENTITIES
+from .coordinator import SVKHeatpumpDataCoordinator
 
 
 class SVKHeatpumpSensor(CoordinatorEntity, SensorEntity):
