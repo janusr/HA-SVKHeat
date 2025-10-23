@@ -12,8 +12,14 @@ from . import const
 from . import coordinator
 
 # Import specific items from modules
-from .const import DOMAIN, ID_MAP, SEASON_MODES_REVERSE, DEFAULT_ENABLED_ENTITIES
+from .const import DOMAIN
 from .coordinator import SVKHeatpumpDataCoordinator
+
+
+def _get_constants():
+    """Lazy import of constants to prevent blocking during async setup."""
+    from .const import ID_MAP, SEASON_MODES_REVERSE, DEFAULT_ENABLED_ENTITIES
+    return ID_MAP, SEASON_MODES_REVERSE, DEFAULT_ENABLED_ENTITIES
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,6 +45,7 @@ class SVKHeatpumpSelect(CoordinatorEntity, SelectEntity):
         self._attr_enabled_by_default = enabled_by_default
         
         # Get entity info from ID_MAP (5-element structure)
+        ID_MAP, _, _ = _get_constants()
         entity_info = ID_MAP.get(entity_id, ("", "", None, None, ""))
         self._entity_key, self._unit, self._device_class, self._state_class, self._original_name = entity_info
         
@@ -48,6 +55,7 @@ class SVKHeatpumpSelect(CoordinatorEntity, SelectEntity):
         
         if entity_key == "season_mode":
             options = ["Summer", "Winter", "Auto"]
+            _, SEASON_MODES_REVERSE, _ = _get_constants()
             mappings = SEASON_MODES_REVERSE
         elif entity_key == "heatpump_state":
             # This is read-only, but we'll include options for completeness
@@ -169,6 +177,9 @@ async def async_setup_entry(
     
     # Create select entities based on ID_MAP for JSON API
     if coordinator.is_json_client:
+        # Get constants using lazy import
+        ID_MAP, _, DEFAULT_ENABLED_ENTITIES = _get_constants()
+        
         # Create all possible entities from DEFAULT_IDS
         for entity_id, (entity_key, unit, device_class, state_class, original_name) in ID_MAP.items():
             # Only include select entities

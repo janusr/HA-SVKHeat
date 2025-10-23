@@ -24,8 +24,14 @@ from . import const
 from . import coordinator
 
 # Import specific items from modules
-from .const import DOMAIN, ID_MAP, DEFAULT_ENABLED_ENTITIES
+from .const import DOMAIN
 from .coordinator import SVKHeatpumpDataCoordinator
+
+
+def _get_constants():
+    """Lazy import of constants to prevent blocking during async setup."""
+    from .const import ID_MAP, DEFAULT_ENABLED_ENTITIES
+    return ID_MAP, DEFAULT_ENABLED_ENTITIES
 
 
 class SVKHeatpumpSensor(CoordinatorEntity, SensorEntity):
@@ -47,6 +53,7 @@ class SVKHeatpumpSensor(CoordinatorEntity, SensorEntity):
         self._attr_enabled_by_default = enabled_by_default
         
         # Get entity info from ID_MAP (5-element structure)
+        ID_MAP, _ = _get_constants()
         entity_info = ID_MAP.get(entity_id, ("", "", None, None, ""))
         self._entity_key, self._unit, self._device_class, self._state_class, self._original_name = entity_info
         
@@ -137,6 +144,9 @@ async def async_setup_entry(
     
     # Create sensors based on ID_MAP for JSON API
     if coordinator.is_json_client:
+        # Get constants using lazy import
+        ID_MAP, DEFAULT_ENABLED_ENTITIES = _get_constants()
+        
         # Create all possible entities from DEFAULT_IDS
         for entity_id, (entity_key, unit, device_class, state_class, original_name) in ID_MAP.items():
             # Skip binary sensor entities (IDs 222-225 are digital outputs)

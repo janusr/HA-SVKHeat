@@ -19,16 +19,20 @@ from .const import (
     CONF_ENABLE_WRITES,
     CONF_ID_LIST,
     DEFAULT_IDS,
-    DEFAULT_ENABLED_ENTITIES,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     PAGES,
-    ID_MAP,
     HEATPUMP_STATES,
     SEASON_MODES,
     parse_id_list,
     parse_items,
 )
+
+
+def _get_constants():
+    """Lazy import of constants to prevent blocking during async setup."""
+    from .const import ID_MAP, DEFAULT_ENABLED_ENTITIES
+    return ID_MAP, DEFAULT_ENABLED_ENTITIES
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -70,6 +74,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             
             # Create reverse mapping for efficient lookups
             self.id_to_entity_map = {}
+            ID_MAP, _ = _get_constants()
             for entity_id, (entity_key, unit, device_class, state_class, original_name) in ID_MAP.items():
                 self.id_to_entity_map[entity_id] = {
                     "key": entity_key,
@@ -487,6 +492,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                         enabled_entities.append(entity_key)
             else:
                 # Use DEFAULT_ENABLED_ENTITIES as the default enabled entities
+                _, DEFAULT_ENABLED_ENTITIES = _get_constants()
                 for entity_id in DEFAULT_ENABLED_ENTITIES:
                     if entity_id in self.id_to_entity_map:
                         entity_key = self.id_to_entity_map[entity_id]["key"]
@@ -579,6 +585,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             return entity_id in self.user_configured_ids
         
         # Otherwise, check if the entity is in DEFAULT_ENABLED_ENTITIES
+        _, DEFAULT_ENABLED_ENTITIES = _get_constants()
         return entity_id in DEFAULT_ENABLED_ENTITIES
     
     def get_entity_value(self, entity_key: str):
