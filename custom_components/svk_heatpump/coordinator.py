@@ -112,14 +112,16 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Update data via library."""
         try:
+            _LOGGER.debug("Starting data update cycle")
             # Add overall timeout protection to prevent blocking the event loop
+            # Reduced timeout to 30 seconds to prevent long blocking periods
             return await asyncio.wait_for(
                 self._async_update_data_internal(),
-                timeout=60.0  # 60 second timeout for full update cycle
+                timeout=30.0  # 30 second timeout for full update cycle
             )
         except asyncio.TimeoutError:
-            _LOGGER.warning("Data update timed out after 60 seconds")
-            raise UpdateFailed("Data update timeout after 60 seconds")
+            _LOGGER.error("Data update timed out after 30 seconds - this may be blocking Home Assistant")
+            raise UpdateFailed("Data update timeout after 30 seconds - heat pump may be unreachable")
     
     async def _async_update_data_internal(self):
         """Internal method for data update with retry logic."""
@@ -169,30 +171,18 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             _LOGGER.debug("Requesting IDs: %s", self.id_list[:20])  # Log first 20 IDs
             
             # Read all available entities from DEFAULT_IDS
+            _LOGGER.debug("About to call client.read_values - this is a potential blocking point")
             json_data = await self.client.read_values(self.id_list)
+            _LOGGER.debug("Returned from client.read_values - got %d items", len(json_data) if json_data else 0)
             
             _LOGGER.info("Received raw JSON data with %d items", len(json_data) if json_data else 0)
             _LOGGER.debug("Raw JSON data sample: %s", json_data[:5] if json_data and len(json_data) > 0 else "None")
             
             if not json_data:
-                _LOGGER.warning("No data received from JSON API, returning empty data to allow entity creation")
-                # Return empty data instead of raising UpdateFailed to allow entity creation
-                data = {}
-                data["last_update"] = datetime.now(timezone.utc)
-                data["ids_fetched"] = []
-                data["parsing_stats"] = {
-                    "total_ids_requested": len(self.id_list),
-                    "total_ids_received": 0,
-                    "total_ids_fetched": 0,
-                    "unknown_ids_count": 0,
-                    "sentinel_temps_count": 0,
-                    "clamped_percentages_count": 0,
-                    "successful_parses": 0,
-                    "enabled_entities_count": len([eid for eid in self.id_to_entity_map if self.is_entity_enabled(eid)]),
-                    "disabled_entities_count": len([eid for eid in self.id_to_entity_map if not self.is_entity_enabled(eid)])
-                }
-                self.parsing_errors.append("No data received from JSON API")
-                return data
+                _LOGGER.error("CRITICAL: No data received from JSON API - this indicates a communication or authentication failure")
+                _LOGGER.error("This is likely the root cause of entities not updating")
+                # Instead of returning empty data, raise UpdateFailed to trigger proper error handling
+                raise UpdateFailed("No data received from JSON API - check authentication and network connectivity")
             
             # Store raw JSON data for diagnostics (redact only credentials)
             self.last_raw_json = json_data
@@ -207,24 +197,10 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             
             if not parsed_items:
                 self.parsing_errors.append("No valid items could be parsed from JSON response")
-                _LOGGER.error("No valid items could be parsed from JSON response. Raw data: %s", json_data[:10] if json_data else "None")
-                # Don't raise UpdateFailed immediately - try to continue with empty data
-                # This allows entities to be created even if data fetching fails initially
-                data = {}
-                data["last_update"] = datetime.now(timezone.utc)
-                data["ids_fetched"] = []
-                data["parsing_stats"] = {
-                    "total_ids_requested": len(self.id_list),
-                    "total_ids_received": len(json_data) if isinstance(json_data, list) else 0,
-                    "total_ids_fetched": 0,
-                    "unknown_ids_count": 0,
-                    "sentinel_temps_count": 0,
-                    "clamped_percentages_count": 0,
-                    "successful_parses": 0,
-                    "enabled_entities_count": len([eid for eid in self.id_to_entity_map if self.is_entity_enabled(eid)]),
-                    "disabled_entities_count": len([eid for eid in self.id_to_entity_map if not self.is_entity_enabled(eid)])
-                }
-                return data
+                _LOGGER.error("CRITICAL: No valid items could be parsed from JSON response. Raw data: %s", json_data[:10] if json_data else "None")
+                _LOGGER.error("This indicates either a JSON parsing failure or unexpected data format from the heat pump")
+                # Raise UpdateFailed instead of returning empty data to ensure proper error reporting
+                raise UpdateFailed("No valid items could be parsed from JSON response - check heat pump compatibility")
             
             # Map parsed items to entity data
             data = {}
@@ -320,23 +296,9 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             
             if not data:
                 self.parsing_errors.append("No valid data could be parsed from JSON response")
-                _LOGGER.warning("No valid data could be parsed from JSON response, returning empty data to allow entity creation")
-                # Return empty data instead of raising UpdateFailed to allow entity creation
-                data = {}
-                data["last_update"] = datetime.now(timezone.utc)
-                data["ids_fetched"] = []
-                data["parsing_stats"] = {
-                    "total_ids_requested": len(self.id_list),
-                    "total_ids_received": len(json_data) if isinstance(json_data, list) else 0,
-                    "total_ids_fetched": 0,
-                    "unknown_ids_count": 0,
-                    "sentinel_temps_count": 0,
-                    "clamped_percentages_count": 0,
-                    "successful_parses": 0,
-                    "enabled_entities_count": len([eid for eid in self.id_to_entity_map if self.is_entity_enabled(eid)]),
-                    "disabled_entities_count": len([eid for eid in self.id_to_entity_map if not self.is_entity_enabled(eid)])
-                }
-                return data
+                _LOGGER.error("No valid data could be parsed from JSON response - raising UpdateFailed to ensure proper error reporting")
+                # Raise UpdateFailed instead of returning empty data to ensure proper error reporting
+                raise UpdateFailed("No valid data could be parsed from JSON response - all entities unavailable")
             
             _LOGGER.info("Successfully parsed %d entities from JSON data", len(data))
             _LOGGER.debug("Parsed entities: %s", list(data.keys())[:20])  # Log first 20 entity keys
@@ -344,24 +306,10 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             
         except Exception as err:
             _LOGGER.error("JSON API update failed: %s", err)
-            _LOGGER.warning("Returning empty data due to JSON API failure to allow entity creation")
-            # Return empty data instead of raising UpdateFailed to allow entity creation
-            data = {}
-            data["last_update"] = datetime.now(timezone.utc)
-            data["ids_fetched"] = []
-            data["parsing_stats"] = {
-                "total_ids_requested": len(self.id_list),
-                "total_ids_received": 0,
-                "total_ids_fetched": 0,
-                "unknown_ids_count": 0,
-                "sentinel_temps_count": 0,
-                "clamped_percentages_count": 0,
-                "successful_parses": 0,
-                "enabled_entities_count": len([eid for eid in self.id_to_entity_map if self.is_entity_enabled(eid)]),
-                "disabled_entities_count": len([eid for eid in self.id_to_entity_map if not self.is_entity_enabled(eid)])
-            }
+            _LOGGER.error("Raising UpdateFailed to ensure proper error reporting instead of returning empty data")
             self.parsing_errors.append(f"JSON API update failed: {err}")
-            return data
+            # Raise UpdateFailed instead of returning empty data to ensure proper error reporting
+            raise UpdateFailed(f"JSON API update failed: {err}") from err
     
     async def _update_data_html(self):
         """Update data using HTML scraping (backward compatibility)."""

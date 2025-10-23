@@ -125,18 +125,29 @@ class SVKHeatpumpSensor(SVKHeatpumpBaseEntity, SensorEntity):
         """Return the state of the sensor."""
         value = self.coordinator.get_entity_value(self._entity_key)
         
+        # Log value retrieval for debugging
+        if value is None:
+            _LOGGER.debug("Sensor %s (ID: %s) returned None value", self._entity_key, self._entity_id)
+        else:
+            _LOGGER.debug("Sensor %s (ID: %s) returned value: %s", self._entity_key, self._entity_id, value)
+        
         # Apply special handling for temperature sentinel rule
         if self._device_class == "temperature" and value is not None:
             if isinstance(value, (int, float)) and value <= -50.0:
                 # Temperature sentinel rule: ≤ -50.0°C marks entity unavailable
+                _LOGGER.debug("Sensor %s temperature %s°C is below sentinel threshold, marking unavailable", self._entity_key, value)
                 return None
         
         # Apply percentage clamping for percentage values
         if self._unit == "%" and value is not None:
             try:
                 if isinstance(value, (int, float)):
-                    return max(0, min(100, float(value)))
+                    clamped_value = max(0, min(100, float(value)))
+                    if clamped_value != float(value):
+                        _LOGGER.debug("Sensor %s percentage value clamped from %s to %s", self._entity_key, value, clamped_value)
+                    return clamped_value
             except (ValueError, TypeError):
+                _LOGGER.debug("Sensor %s failed to clamp percentage value %s", self._entity_key, value)
                 pass
         
         return value
@@ -147,14 +158,21 @@ class SVKHeatpumpSensor(SVKHeatpumpBaseEntity, SensorEntity):
         # For JSON API, entities should be available even if data fetching fails initially
         if self.coordinator.is_json_client:
             is_available = self.coordinator.is_entity_available(self._entity_key)
-            _LOGGER.debug("JSON API Sensor %s availability: %s (entity exists in mapping)",
-                         self._entity_key, is_available)
+            value = self.coordinator.get_entity_value(self._entity_key)
+            _LOGGER.info("JSON API Sensor %s availability: %s (entity exists in mapping, current value: %s)",
+                         self._entity_key, is_available, value)
+            # Add additional diagnostic info
+            if not is_available:
+                _LOGGER.warning("Entity %s is not available - this may indicate a data fetching or parsing issue", self._entity_key)
+            elif value is None:
+                _LOGGER.warning("Entity %s is available but has no value - likely a parsing or data issue", self._entity_key)
             return is_available
         else:
             # For HTML scraping, require successful update
             is_available = self.coordinator.last_update_success and self.coordinator.is_entity_available(self._entity_key)
-            _LOGGER.debug("HTML API Sensor %s availability: %s (last_update_success: %s)",
-                         self._entity_key, is_available, self.coordinator.last_update_success)
+            value = self.coordinator.get_entity_value(self._entity_key)
+            _LOGGER.info("HTML API Sensor %s availability: %s (last_update_success: %s, current value: %s)",
+                         self._entity_key, is_available, self.coordinator.last_update_success, value)
             return is_available
 
 

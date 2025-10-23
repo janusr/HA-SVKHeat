@@ -604,10 +604,10 @@ class LOMJsonClient:
         self._password = password
         self._allow_basic_auth = allow_basic_auth
         self._session: Optional[aiohttp.ClientSession] = None
-        self._timeout = aiohttp.ClientTimeout(total=timeout)
+        self._timeout = aiohttp.ClientTimeout(total=timeout, connect=3.0, sock_read=5.0)
         self._chunk_size = 50  # Maximum number of IDs to request in one batch
-        self._max_retries = 3  # Maximum number of retries for failed requests
-        self._retry_delay = 1.0  # Initial retry delay in seconds
+        self._max_retries = 1  # Further reduced maximum number of retries for failed requests
+        self._retry_delay = 0.2  # Further reduced initial retry delay in seconds
         self._digest_nonce = None  # Store nonce for subsequent requests
         self._digest_opaque = None  # Store opaque for subsequent requests
         self._digest_realm = None  # Store realm for subsequent requests
@@ -827,7 +827,10 @@ class LOMJsonClient:
     
     async def _request_with_digest_auth(self, path: str, ids: List[int]) -> List[Dict[str, Any]]:
         """Make a request with Digest authentication."""
+        _LOGGER.debug("_request_with_digest_auth called for %d IDs", len(ids))
+        
         if not self._session:
+            _LOGGER.debug("Starting new session for digest auth")
             await self.start()
         
         assert self._session is not None
@@ -839,48 +842,54 @@ class LOMJsonClient:
         # For GET requests with query parameters
         query_params = f"ids={','.join(map(str, ids))}"
         get_url = self._base.with_path("/cgi-bin/json_values.cgi").with_query(query_params)
-        _LOGGER.debug("Making request to: %s", get_url)
+        _LOGGER.info("Making digest auth request to: %s", get_url)
         _LOGGER.debug("Requesting %d IDs: %s", len(ids), ids[:10])  # Log first 10 IDs
         
         try:
             # Add overall timeout protection to prevent infinite retry loops
+            _LOGGER.debug("Starting digest auth with 15 second timeout")
             return await asyncio.wait_for(
                 self._request_with_digest_auth_internal(path, ids, get_url, payload),
-                timeout=30.0  # 30 second timeout for network operations
+                timeout=15.0  # 15 second timeout for network operations
             )
         except asyncio.TimeoutError:
-            _LOGGER.warning("Request to %s timed out after 30 seconds", get_url)
-            raise SVKTimeoutError(f"Request timeout after 30 seconds for {path}")
+            _LOGGER.error("CRITICAL: Digest auth request to %s timed out after 15 seconds - this is blocking Home Assistant", get_url)
+            raise SVKTimeoutError(f"Request timeout after 15 seconds for {path}")
     
     async def _request_with_digest_auth_internal(self, path: str, ids: List[int], get_url: URL, payload: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Internal method for Digest authentication with retry logic."""
-        for attempt in range(self._max_retries):
+        _LOGGER.debug("Starting digest auth internal method with %d max retries", self._max_retries)
+        
+        for attempt in range(self._max_retries + 1):  # Add 1 to ensure at least one attempt
             try:
                 # First, send an unauthenticated GET request
-                _LOGGER.debug("Attempt %d: Making unauthenticated request to %s", attempt + 1, get_url)
+                _LOGGER.info("Attempt %d/%d: Making unauthenticated request to %s", attempt + 1, self._max_retries, get_url)
                 headers = {}
+                _LOGGER.debug("About to make HTTP GET request - potential blocking point")
                 resp = await self._session.get(get_url, headers=headers, allow_redirects=False)
                 self._last_status_code = resp.status
-                _LOGGER.debug("Response status: %d", resp.status)
+                _LOGGER.info("Response status: %d", resp.status)
                 
                 try:
                     # Handle 401 - Need authentication
                     if resp.status == 401:
                         auth_header = resp.headers.get('WWW-Authenticate', '')
-                        _LOGGER.debug("Received WWW-Authenticate header: %s", auth_header)
+                        _LOGGER.info("Received 401 - WWW-Authenticate header: %s", auth_header)
                         if not auth_header.startswith('Digest '):
                             # Check if Basic Auth is allowed as fallback
                             if self._allow_basic_auth and auth_header.startswith('Basic '):
-                                _LOGGER.debug("Falling back to Basic authentication as Digest is not supported")
+                                _LOGGER.warning("Falling back to Basic authentication as Digest is not supported")
                                 # Retry with Basic Auth
                                 if self._basic_auth:
                                     headers["Authorization"] = self._basic_auth.encode()
                                     resp = await self._session.get(get_url, headers=headers, allow_redirects=False)
                                     self._last_status_code = resp.status
                                 else:
+                                    _LOGGER.error("Server requires Basic authentication but no credentials provided")
                                     raise SVKAuthenticationError("Server requires Basic authentication but no credentials provided")
                             else:
-                                raise SVKAuthenticationError("Server does not support Digest authentication")
+                                _LOGGER.error("Server does not support Digest authentication - auth scheme: %s", auth_header[:50])
+                                raise SVKAuthenticationError("Server does not support Digest authentication. Please check if your device supports Digest authentication or enable 'Allow Basic Auth (Legacy)' option.")
                         
                         # Parse WWW-Authenticate header
                         auth_params = _parse_www_authenticate(auth_header)
@@ -899,7 +908,9 @@ class LOMJsonClient:
                         self._digest_algorithm = auth_params.get('algorithm', 'MD5')
                         
                         if not self._digest_nonce or not self._digest_realm:
-                            raise SVKAuthenticationError("Invalid Digest authentication parameters")
+                            _LOGGER.error("Missing required Digest authentication parameters: nonce=%s, realm=%s",
+                                        bool(self._digest_nonce), bool(self._digest_realm))
+                            raise SVKAuthenticationError("Invalid Digest authentication parameters received from server")
                         
                         # Increment nonce count
                         self._digest_nc += 1
@@ -1027,28 +1038,43 @@ class LOMJsonClient:
                     
                     # Handle other errors
                     if resp.status == 401:
+                        _LOGGER.error("Authentication failed after Digest auth attempt - invalid credentials")
                         raise SVKAuthenticationError("Invalid username or password")
+                    elif resp.status == 403:
+                        _LOGGER.error("Access forbidden - check user permissions")
+                        raise SVKAuthenticationError("Access forbidden - user may not have required permissions")
+                    elif resp.status == 404:
+                        _LOGGER.error("JSON API endpoint not found - device may not support JSON API")
+                        raise SVKConnectionError("JSON API endpoint not found - device may not support this API")
+                    elif resp.status >= 500:
+                        _LOGGER.error("Server error %d - device may be experiencing issues", resp.status)
+                        raise SVKConnectionError(f"Server error {resp.status} - device may be experiencing issues")
                     
                     text = await resp.text(errors="ignore")
+                    _LOGGER.error("HTTP error %d from %s: %s", resp.status, get_url, text[:160])
                     raise SVKConnectionError(f"HTTP {resp.status} {get_url}: {text[:160]}")
                 
                 finally:
                     resp.release()
             
             except asyncio.TimeoutError as err:
-                if attempt < self._max_retries - 1:
-                    # Exponential backoff
-                    delay = self._retry_delay * (2 ** attempt)
+                if attempt < self._max_retries:
+                    # Minimal backoff to prevent blocking
+                    delay = self._retry_delay
+                    _LOGGER.debug("Timeout on attempt %d, retrying after %.1f seconds", attempt + 1, delay)
                     await asyncio.sleep(delay)
                     continue
+                _LOGGER.error("Timeout connecting to %s after %d attempts", self.host, attempt + 1)
                 raise SVKTimeoutError(f"Timeout connecting to {self.host}") from err
             
             except aiohttp.ClientError as err:
-                if attempt < self._max_retries - 1:
-                    # Exponential backoff
-                    delay = self._retry_delay * (2 ** attempt)
+                if attempt < self._max_retries:
+                    # Minimal backoff to prevent blocking
+                    delay = self._retry_delay
+                    _LOGGER.debug("Client error on attempt %d, retrying after %.1f seconds: %s", attempt + 1, delay, err)
                     await asyncio.sleep(delay)
                     continue
+                _LOGGER.error("Client error connecting to %s after %d attempts: %s", self.host, attempt + 1, err)
                 raise SVKConnectionError(f"Failed to fetch {path}: {err}") from err
         
             raise SVKConnectionError(f"Max retries exceeded for {path}")
@@ -1142,7 +1168,10 @@ class LOMJsonClient:
         Returns:
             List of dictionaries with 'id', 'name', and 'value' fields
         """
+        _LOGGER.debug("read_values called with %d IDs: %s", len(ids), ids[:10])
+        
         if not ids:
+            _LOGGER.warning("read_values called with empty ID list")
             return []
         
         # Convert to list if needed
@@ -1150,14 +1179,33 @@ class LOMJsonClient:
         
         # If the number of IDs is small, make a single request
         if len(id_list) <= self._chunk_size:
-            return await self._request_with_retry("/cgi-bin/json_values.cgi", id_list)
+            _LOGGER.debug("Making single request for %d IDs", len(id_list))
+            try:
+                result = await self._request_with_retry("/cgi-bin/json_values.cgi", id_list)
+                _LOGGER.debug("Single request returned %d items", len(result) if result else 0)
+                return result
+            except SVKConnectionError as err:
+                _LOGGER.error("Connection failed during single request: %s", err)
+                raise
+            except SVKAuthenticationError as err:
+                _LOGGER.error("Authentication failed during single request: %s", err)
+                raise
+            except SVKTimeoutError as err:
+                _LOGGER.error("Timeout during single request: %s", err)
+                raise
+            except Exception as err:
+                _LOGGER.error("Unexpected error during single request: %s", err)
+                raise SVKConnectionError(f"Unexpected error during request: {err}") from err
         
         # For larger ID lists, split into chunks
+        _LOGGER.debug("Splitting %d IDs into chunks of %d", len(id_list), self._chunk_size)
         results = []
         for i in range(0, len(id_list), self._chunk_size):
             chunk = id_list[i:i + self._chunk_size]
+            _LOGGER.debug("Processing chunk %d-%d: %s", i, i + len(chunk), chunk)
             try:
                 chunk_results = await self._request_with_retry("/cgi-bin/json_values.cgi", chunk)
+                _LOGGER.debug("Chunk %d-%d returned %d items", i, i + len(chunk), len(chunk_results) if chunk_results else 0)
                 # Extend the results list with the new items
                 if isinstance(chunk_results, list):
                     results.extend(chunk_results)
@@ -1165,9 +1213,19 @@ class LOMJsonClient:
                     _LOGGER.warning("Unexpected response format for chunk %s-%s: expected list, got %s",
                                   i, i + len(chunk), type(chunk_results))
             except SVKConnectionError as err:
-                _LOGGER.warning("Failed to read chunk %s-%s: %s", i, i + len(chunk), err)
+                _LOGGER.error("Failed to read chunk %s-%s: %s", i, i + len(chunk), err)
+                # Continue with other chunks even if one fails
+            except SVKAuthenticationError as err:
+                _LOGGER.error("Authentication failed while reading chunk %s-%s: %s", i, i + len(chunk), err)
+                # Continue with other chunks even if one fails
+            except SVKTimeoutError as err:
+                _LOGGER.error("Timeout while reading chunk %s-%s: %s", i, i + len(chunk), err)
+                # Continue with other chunks even if one fails
+            except Exception as err:
+                _LOGGER.error("Unexpected error while reading chunk %s-%s: %s", i, i + len(chunk), err)
                 # Continue with other chunks even if one fails
         
+        _LOGGER.debug("read_values completed with total of %d items", len(results))
         return results
     
     async def write_value(self, id: int, value: Any) -> bool:

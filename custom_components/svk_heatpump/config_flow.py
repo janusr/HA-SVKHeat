@@ -1,4 +1,5 @@
 """Config flow for SVK Heatpump integration."""
+import asyncio
 import logging
 from typing import Any, Dict, Optional
 
@@ -85,7 +86,28 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 # Validate connection by calling read_values with test IDs
                 # Accept any successful JSON response as validation
                 _LOGGER.debug("Testing connection with %d test IDs: %s", len(test_ids), test_ids[:5])  # Log first 5 IDs
-                json_data = await client.read_values(test_ids)
+                
+                # Add timeout protection to prevent blocking Home Assistant startup
+                try:
+                    json_data = await asyncio.wait_for(
+                        client.read_values(test_ids),
+                        timeout=15.0  # 15 second timeout for connection test
+                    )
+                except asyncio.TimeoutError:
+                    _LOGGER.error("Connection test timed out after 15 seconds for host %s", self._host)
+                    errors["base"] = "timeout"
+                    await client.close()
+                    return self.async_show_form(
+                        step_id="user",
+                        data_schema=vol.Schema({
+                            vol.Required(CONF_HOST): str,
+                            vol.Optional(CONF_USERNAME, default=""): str,
+                            vol.Optional(CONF_PASSWORD, default=""): str,
+                            vol.Optional(CONF_ALLOW_BASIC_AUTH, default=False): bool,
+                        }),
+                        errors=errors,
+                    )
+                
                 _LOGGER.debug("Received response type: %s, length: %d", type(json_data), len(json_data) if json_data else 0)
                 
                 if json_data is None:
@@ -229,7 +251,27 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 
                 # Validate connection by calling read_values with test IDs
                 _LOGGER.debug("Testing connection during reauth with %d test IDs: %s", len(test_ids), test_ids[:5])  # Log first 5 IDs
-                json_data = await client.read_values(test_ids)
+                
+                # Add timeout protection to prevent blocking Home Assistant startup
+                try:
+                    json_data = await asyncio.wait_for(
+                        client.read_values(test_ids),
+                        timeout=15.0  # 15 second timeout for connection test
+                    )
+                except asyncio.TimeoutError:
+                    _LOGGER.error("Connection test timed out after 15 seconds during reauth for host %s", host)
+                    errors["base"] = "timeout"
+                    await client.close()
+                    return self.async_show_form(
+                        step_id="reauth_confirm",
+                        data_schema=vol.Schema({
+                            vol.Optional(CONF_USERNAME, default=""): str,
+                            vol.Optional(CONF_PASSWORD, default=""): str,
+                            vol.Optional(CONF_ALLOW_BASIC_AUTH, default=False): bool,
+                        }),
+                        errors=errors,
+                    )
+                
                 _LOGGER.debug("Received response type during reauth: %s, length: %d", type(json_data), len(json_data) if json_data else 0)
                 
                 if json_data is None:

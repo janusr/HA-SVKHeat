@@ -36,19 +36,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                  host, username if username else "none", allow_basic_auth)
     
     # Create JSON client with Digest authentication
-    client = LOMJsonClient(host, username, password, allow_basic_auth=allow_basic_auth)
-    _LOGGER.debug("Created LOMJsonClient for %s", host)
+    # Use DEFAULT_TIMEOUT from const.py to ensure consistent timeout behavior
+    from .const import DEFAULT_TIMEOUT
+    client = LOMJsonClient(host, username, password, DEFAULT_TIMEOUT, allow_basic_auth=allow_basic_auth)
+    _LOGGER.debug("Created LOMJsonClient for %s with timeout %d seconds", host, DEFAULT_TIMEOUT)
     
     # Test connection
     try:
-        _LOGGER.debug("Starting client session and testing connection...")
+        _LOGGER.info("Starting client session and testing connection - this may block Home Assistant startup")
         await client.start()
-        _LOGGER.debug("Client session started successfully")
+        _LOGGER.info("Client session started successfully")
         
         # Test with a simple read operation to validate connection
-        _LOGGER.debug("Testing connection with read operation...")
+        _LOGGER.info("Testing connection with read operation - this is a potential blocking point for Google Assistant")
         test_data = await client.read_values([299])  # Test with a common ID
         _LOGGER.info("Connection test successful, received test data: %s", test_data)
+        if not test_data:
+            _LOGGER.warning("Connection test returned empty data - this may indicate authentication or communication issues")
     except SVKAuthenticationError as err:
         _LOGGER.error("Authentication failed for SVK Heatpump at %s: %s", host, err)
         _LOGGER.error("Please check your credentials and authentication settings")
@@ -77,14 +81,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     }
     _LOGGER.debug("Stored coordinator and client in hass.data")
     
-    # Perform first data refresh
-    _LOGGER.info("Performing first data refresh...")
+    # Perform first data refresh with timeout to prevent blocking
+    _LOGGER.info("Performing first data refresh with timeout protection")
     try:
-        await coordinator.async_config_entry_first_refresh()
+        # Use asyncio.wait_for to prevent blocking during startup
+        # Match the timeout with the coordinator timeout for consistency
+        from .const import DEFAULT_TIMEOUT
+        await asyncio.wait_for(coordinator.async_config_entry_first_refresh(), timeout=DEFAULT_TIMEOUT * 2)
         _LOGGER.info("First data refresh completed successfully")
+    except asyncio.TimeoutError as err:
+        _LOGGER.error("First data refresh timed out during startup - this may be blocking Home Assistant")
+        _LOGGER.error("Consider increasing scan interval or checking heat pump responsiveness")
+        # Continue with setup even if refresh times out to allow entities to be created
     except Exception as err:
-        _LOGGER.warning("First data refresh failed, but continuing setup: %s", err)
+        _LOGGER.error("First data refresh failed with error: %s", err)
+        _LOGGER.error("This failure may be causing entities to be present but not updating")
         _LOGGER.debug("First refresh failure details:", exc_info=True)
+        # Continue with setup even if refresh fails to allow entities to be created
     
     # Setup platforms
     _LOGGER.info("Setting up platforms: %s", [p.value for p in PLATFORMS])
