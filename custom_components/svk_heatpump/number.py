@@ -11,7 +11,7 @@ from homeassistant.components.number import (
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
-from homeassistant.helpers.entity import DISABLED_INTEGRATION
+from .compat import DISABLED_INTEGRATION
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import const
