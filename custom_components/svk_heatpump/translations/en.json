@@ -34,13 +34,19 @@
       "unknown": "Unknown error",
       "timeout": "Connection timeout. The device is not responding.",
       "parse_error": "Failed to parse response from device. Invalid data format.",
+      "invalid_data_format": "Invalid data format from device. The device returned an unexpected format.",
+      "html_error_response": "Device returned an HTML error page instead of JSON data. This may indicate an authentication or server error.",
       "readonly_select": "This select entity is read-only",
       "readonly_monitor": "This is a read-only monitor entity",
       "write_controls_disabled": "Write controls are disabled in options",
       "json_parse_failed": "JSON parsing failed: {err}",
       "no_valid_items": "No valid items could be parsed from JSON response",
       "no_valid_data": "No valid data could be parsed from JSON response",
-      "invalid_json_response": "Invalid JSON response: {text}"
+      "invalid_json_response": "Invalid JSON response: {text}",
+      "response_format_mismatch": "Response format mismatch. Expected {expected}, received {received}.",
+      "unsupported_response_type": "Unsupported response type: {response_type}. The device may use a different API version.",
+      "empty_response_body": "Empty response body received from device.",
+      "html_error_page_received": "Received HTML error page: {error_title}"
     },
     "abort": {
       "reauth_successful": "Reauthentication successful"

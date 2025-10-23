@@ -54,6 +54,24 @@ class SVKParseError(Exception):
         super().__init__(f"Failed to parse {page}: {message}")
 
 
+class SVKInvalidDataFormatError(SVKParseError):
+    """Invalid data format error."""
+    def __init__(self, expected: str, received: str, details: str = ""):
+        message = f"Expected {expected}, received {received}"
+        if details:
+            message += f": {details}"
+        super().__init__("json", message)
+
+
+class SVKHTMLResponseError(SVKParseError):
+    """HTML error page received instead of JSON."""
+    def __init__(self, status_code: int, title: str = ""):
+        message = f"Received HTML error page (status {status_code})"
+        if title:
+            message += f": {title}"
+        super().__init__("json", message)
+
+
 class SVKWriteError(Exception):
     """Write operation failed."""
     def __init__(self, parameter: str, value: Any, message: str):
@@ -599,6 +617,189 @@ class LOMJsonClient:
         self._basic_auth = aiohttp.BasicAuth(username, password) if (username or password) else None
         self._last_status_code = None  # Track last HTTP status code for diagnostics
     
+    def _parse_json_response_flexible(self, data: Any, response_text: str = "") -> List[Dict[str, Any]]:
+        """
+        Parse JSON response with flexible format handling.
+        
+        Args:
+            data: The parsed JSON data
+            response_text: Raw response text for debugging
+            
+        Returns:
+            List of dictionaries with 'id', 'name', and 'value' fields
+            
+        Raises:
+            SVKInvalidDataFormatError: If the data format is not supported
+        """
+        _LOGGER.debug("Parsing JSON response with flexible format handling")
+        _LOGGER.debug("Response data type: %s", type(data))
+        if isinstance(data, (list, dict)):
+            _LOGGER.debug("Response data size: %d items", len(data))
+        
+        # Log a sample of the raw data for debugging (only first few items to avoid log spam)
+        if isinstance(data, list) and len(data) > 0:
+            _LOGGER.debug("Sample response data (first 2 items): %s", data[:2])
+        elif isinstance(data, dict) and len(data) > 0:
+            sample_keys = list(data.keys())[:3]
+            sample_items = {k: data[k] for k in sample_keys}
+            _LOGGER.debug("Sample response data (first 3 keys): %s", sample_items)
+        
+        # Handle list format (expected format)
+        if isinstance(data, list):
+            _LOGGER.debug("Processing list format with %d items", len(data))
+            valid_items = 0
+            for item in data:
+                if isinstance(item, dict) and 'id' in item:
+                    valid_items += 1
+            
+            if valid_items > 0:
+                _LOGGER.debug("Found %d valid items in list format", valid_items)
+                return data
+            else:
+                raise SVKInvalidDataFormatError(
+                    "list with dictionaries containing 'id' field",
+                    "list without valid items",
+                    f"List has {len(data)} items but none contain 'id' field"
+                )
+        
+        # Handle dict format (alternative format)
+        elif isinstance(data, dict):
+            _LOGGER.debug("Processing dict format with %d keys", len(data))
+            
+            # Check if it's an error response first
+            if any(key.lower() in ['error', 'message', 'code', 'status'] for key in data.keys()):
+                raise SVKInvalidDataFormatError(
+                    "list or dict with recognizable structure",
+                    f"dict with error-like keys: {list(data.keys())}",
+                    "Response appears to be an error message rather than data"
+                )
+            
+            # Check if it's a simple key-value format
+            if all(isinstance(k, (str, int, float)) for k in data.keys()):
+                _LOGGER.debug("Converting simple dict format to list")
+                items = []
+                for id_val, value in data.items():
+                    items.append({
+                        "id": str(id_val),
+                        "name": f"item_{id_val}",
+                        "value": str(value)
+                    })
+                _LOGGER.debug("Converted dict to list with %d items", len(items))
+                return items
+            
+            # Check if it's a nested format with items under a key
+            for possible_key in ['data', 'items', 'values', 'result']:
+                if possible_key in data and isinstance(data[possible_key], list):
+                    _LOGGER.debug("Found nested list under key '%s'", possible_key)
+                    nested_data = data[possible_key]
+                    if nested_data:  # Non-empty list
+                        return self._parse_json_response_flexible(nested_data, response_text)
+            
+            
+            
+            # Check if it's a single item format
+            if 'id' in data and 'value' in data:
+                _LOGGER.debug("Found single item format, converting to list")
+                return [data]
+            
+            # Try to extract any numeric keys as IDs
+            numeric_items = []
+            for key, value in data.items():
+                try:
+                    int_key = int(key)
+                    numeric_items.append({
+                        "id": str(int_key),
+                        "name": f"item_{int_key}",
+                        "value": str(value)
+                    })
+                except (ValueError, TypeError):
+                    continue
+            
+            if numeric_items:
+                _LOGGER.debug("Extracted %d numeric-key items from dict", len(numeric_items))
+                return numeric_items
+            
+            raise SVKInvalidDataFormatError(
+                "list or dict with recognizable structure",
+                f"dict with keys: {list(data.keys())[:5]}",
+                "Dict format not recognized. Expected list, simple dict, or nested dict with 'data'/'items' key"
+            )
+        
+        # Handle single value (unlikely but possible)
+        elif isinstance(data, (str, int, float, bool)):
+            _LOGGER.debug("Processing single value format: %s", data)
+            return [{
+                "id": "0",
+                "name": "single_value",
+                "value": str(data)
+            }]
+        
+        else:
+            raise SVKInvalidDataFormatError(
+                "list, dict, or single value",
+                f"{type(data).__name__}",
+                f"Unsupported data type: {type(data).__name__}"
+            )
+    
+    def _detect_html_error_page(self, text: str) -> Optional[str]:
+        """
+        Detect if the response is an HTML error page and extract error information.
+        
+        Args:
+            text: Response text to analyze
+            
+        Returns:
+            Error title if HTML error page detected, None otherwise
+        """
+        if not text or not text.strip():
+            return None
+        
+        text = text.strip()
+        
+        # Check for HTML doctype or html tag
+        if not (text.startswith('<!DOCTYPE') or text.startswith('<html')):
+            return None
+        
+        _LOGGER.debug("Detected HTML response, checking for error indicators")
+        
+        # Look for common error indicators in HTML
+        error_patterns = [
+            r'<title[^>]*>([^<]+Error[^<]*)</title>',
+            r'<title[^>]*>([^<]+Unauthorized[^<]*)</title>',
+            r'<title[^>]*>([^<]+Forbidden[^<]*)</title>',
+            r'<title[^>]*>([^<]+Not Found[^<]*)</title>',
+            r'<title[^>]*>([^<]+Internal Server Error[^<]*)</title>',
+            r'<h1[^>]*>([^<]+Error[^<]*)</h1>',
+            r'<h1[^>]*>([^<]+Unauthorized[^<]*)</h1>',
+            r'<h1[^>]*>([^<]+Forbidden[^<]*)</h1>',
+            r'<h1[^>]*>([^<]+Not Found[^<]*)</h1>',
+            r'<h1[^>]*>([^<]+Internal Server Error[^<]*)</h1>',
+        ]
+        
+        import re
+        for pattern in error_patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                error_title = match.group(1).strip()
+                _LOGGER.debug("Found HTML error: %s", error_title)
+                return error_title
+        
+        # Look for error messages in common patterns
+        error_msg_patterns = [
+            r'error[:\s]+([^\n<]+)',
+            r'error code[:\s]+(\d+)',
+            r'status[:\s]+([^\n<]+)',
+        ]
+        
+        for pattern in error_msg_patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                error_msg = match.group(1).strip()
+                _LOGGER.debug("Found HTML error message: %s", error_msg)
+                return f"Error: {error_msg}"
+        
+        return "HTML Error Page"
+    
     async def start(self):
         """Start the client session."""
         if self._session:
@@ -638,6 +839,8 @@ class LOMJsonClient:
         # For GET requests with query parameters
         query_params = f"ids={','.join(map(str, ids))}"
         get_url = self._base.with_path("/cgi-bin/json_values.cgi").with_query(query_params)
+        _LOGGER.debug("Making request to: %s", get_url)
+        _LOGGER.debug("Requesting %d IDs: %s", len(ids), ids[:10])  # Log first 10 IDs
         
         for attempt in range(self._max_retries):
             try:
@@ -764,39 +967,51 @@ class LOMJsonClient:
                     # Check for success
                     if resp.status == 200:
                         _LOGGER.debug("Successfully authenticated and received response")
-                        # Parse JSON response
+                        _LOGGER.debug("Response headers: %s", dict(resp.headers))
+                        _LOGGER.debug("Content-Type: %s", resp.headers.get('Content-Type', 'unknown'))
+                        
+                        # Parse JSON response with enhanced error handling
                         try:
-                            data = await resp.json()
+                            # Read raw response first for debugging
+                            response_text = await resp.text()
+                            _LOGGER.debug("Raw response (first 200 chars): %s", response_text[:200])
+                            
+                            # Parse JSON from the text
+                            import json
+                            data = json.loads(response_text)
                             _LOGGER.debug("Received JSON data with %d items", len(data) if isinstance(data, list) else "unknown")
+                            _LOGGER.debug("Raw JSON response type: %s", type(data))
                             
                             # Check for empty or blank response
                             if not data:
+                                _LOGGER.error("Empty JSON response received")
                                 raise SVKConnectionError("Empty response body")
                             
-                            # Ensure we have a list of items
-                            if not isinstance(data, list):
-                                _LOGGER.warning("Unexpected response format: expected list, got %s", type(data))
-                                # Convert to list if it's a dict (for backward compatibility)
-                                if isinstance(data, dict):
-                                    # Convert dict to list of items
-                                    items = []
-                                    for id_val, value in data.items():
-                                        items.append({
-                                            "id": str(id_val),
-                                            "name": f"item_{id_val}",
-                                            "value": str(value)
-                                        })
-                                    return items
-                                else:
-                                    raise SVKParseError("json", f"Expected list of items, got {type(data)}")
+                            # Use flexible parsing to handle different response formats
+                            try:
+                                result = self._parse_json_response_flexible(data, response_text)
+                                _LOGGER.debug("Successfully parsed response, returning %d items", len(result))
+                                return result
+                            except SVKInvalidDataFormatError as format_err:
+                                _LOGGER.error("Data format error: %s", format_err.message)
+                                _LOGGER.debug("Full response that caused format error: %s", response_text[:1000])
+                                raise
                             
-                            return data
-                        except (aiohttp.ContentTypeError, ValueError) as err:
-                            # Try to get text response for debugging
-                            text = await resp.text(errors="ignore")
-                            if not text.strip():
+                        except (aiohttp.ContentTypeError, ValueError, json.JSONDecodeError) as err:
+                            # We already have the response_text from above
+                            if not response_text.strip():
                                 raise SVKConnectionError("Blank response body") from err
-                            raise SVKParseError("json", f"Invalid JSON response: {text[:100]}") from err
+                            
+                            # Log the full response for debugging
+                            _LOGGER.error("Invalid JSON response received. Status: %d, Content-Type: %s, Response (first 500 chars): %s",
+                                         resp.status, resp.headers.get('Content-Type', 'unknown'), response_text[:500])
+                            
+                            # Check if it's an HTML error page
+                            html_error = self._detect_html_error_page(response_text)
+                            if html_error:
+                                raise SVKHTMLResponseError(resp.status, html_error)
+                            
+                            raise SVKParseError("json", f"Invalid JSON response: {response_text[:100]}") from err
                     
                     # Handle other errors
                     if resp.status == 401:
@@ -847,43 +1062,60 @@ class LOMJsonClient:
         payload = {"ids": ids}
         
         try:
+            _LOGGER.debug("Making unauthenticated POST request to: %s", url)
+            _LOGGER.debug("Request payload: %s", payload)
+            
             async with self._session.post(url, json=payload) as resp:
+                _LOGGER.debug("Unauthenticated response status: %d", resp.status)
+                _LOGGER.debug("Response headers: %s", dict(resp.headers))
+                
                 if resp.status != 200:
                     text = await resp.text(errors="ignore")
+                    _LOGGER.error("Unauthenticated request failed with status %d: %s", resp.status, text[:160])
                     raise SVKConnectionError(f"HTTP {resp.status} {url}: {text[:160]}")
                 
-                # Parse JSON response
+                # Parse JSON response with enhanced error handling
                 try:
-                    data = await resp.json()
+                    # Read raw response first for debugging
+                    response_text = await resp.text()
+                    _LOGGER.debug("Raw unauthenticated response (first 200 chars): %s", response_text[:200])
+                    
+                    # Parse JSON from the text
+                    import json
+                    data = json.loads(response_text)
+                    _LOGGER.debug("Received JSON data (unauthenticated) with %d items", len(data) if isinstance(data, list) else "unknown")
+                    _LOGGER.debug("Raw JSON response type (unauthenticated): %s", type(data))
                     
                     # Check for empty or blank response
                     if not data:
+                        _LOGGER.error("Empty JSON response received (unauthenticated)")
                         raise SVKConnectionError("Empty response body")
                     
-                    # Ensure we have a list of items
-                    if not isinstance(data, list):
-                        _LOGGER.warning("Unexpected response format: expected list, got %s", type(data))
-                        # Convert to list if it's a dict (for backward compatibility)
-                        if isinstance(data, dict):
-                            # Convert dict to list of items
-                            items = []
-                            for id_val, value in data.items():
-                                items.append({
-                                    "id": str(id_val),
-                                    "name": f"item_{id_val}",
-                                    "value": str(value)
-                                })
-                            return items
-                        else:
-                            raise SVKParseError("json", f"Expected list of items, got {type(data)}")
+                    # Use flexible parsing to handle different response formats
+                    try:
+                        result = self._parse_json_response_flexible(data, response_text)
+                        _LOGGER.debug("Successfully parsed unauthenticated response, returning %d items", len(result))
+                        return result
+                    except SVKInvalidDataFormatError as format_err:
+                        _LOGGER.error("Data format error (unauthenticated): %s", format_err.message)
+                        _LOGGER.debug("Full response that caused format error: %s", response_text[:1000])
+                        raise
                     
-                    return data
-                except (aiohttp.ContentTypeError, ValueError) as err:
-                    # Try to get text response for debugging
-                    text = await resp.text(errors="ignore")
-                    if not text.strip():
+                except (aiohttp.ContentTypeError, ValueError, json.JSONDecodeError) as err:
+                    # We already have the response_text from above
+                    if not response_text.strip():
                         raise SVKConnectionError("Blank response body") from err
-                    raise SVKParseError("json", f"Invalid JSON response: {text[:100]}") from err
+                    
+                    # Log the full response for debugging
+                    _LOGGER.error("Invalid JSON response (unauthenticated). Status: %d, Content-Type: %s, Response (first 500 chars): %s",
+                                 resp.status, resp.headers.get('Content-Type', 'unknown'), response_text[:500])
+                    
+                    # Check if it's an HTML error page
+                    html_error = self._detect_html_error_page(response_text)
+                    if html_error:
+                        raise SVKHTMLResponseError(resp.status, html_error)
+                    
+                    raise SVKParseError("json", f"Invalid JSON response: {response_text[:100]}") from err
         
         except (asyncio.TimeoutError, aiohttp.ClientError) as err:
             raise SVKConnectionError(f"Failed to fetch {path}: {err}") from err

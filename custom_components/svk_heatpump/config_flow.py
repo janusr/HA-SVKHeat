@@ -8,7 +8,15 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_USERNAME, CONF_PASSWORD
 from homeassistant.data_entry_flow import FlowResult
 
-from .client import LOMJsonClient, SVKConnectionError, SVKAuthenticationError, SVKTimeoutError, SVKParseError
+from .client import (
+    LOMJsonClient,
+    SVKConnectionError,
+    SVKAuthenticationError,
+    SVKTimeoutError,
+    SVKParseError,
+    SVKInvalidDataFormatError,
+    SVKHTMLResponseError
+)
 from .const import (
     CONF_ENABLE_COUNTERS,
     CONF_ENABLE_SOLAR,
@@ -76,7 +84,9 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 
                 # Validate connection by calling read_values with test IDs
                 # Accept any successful JSON response as validation
+                _LOGGER.debug("Testing connection with %d test IDs: %s", len(test_ids), test_ids[:5])  # Log first 5 IDs
                 json_data = await client.read_values(test_ids)
+                _LOGGER.debug("Received response type: %s, length: %d", type(json_data), len(json_data) if json_data else 0)
                 
                 if json_data is None:
                     errors["base"] = "invalid_response"
@@ -92,15 +102,20 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 else:
                     # Validate that response contains expected structure
                     valid_items = 0
+                    sample_items = []  # Store a few sample items for debugging
                     for item in json_data:
                         if isinstance(item, dict) and 'id' in item and 'value' in item:
                             valid_items += 1
+                            if len(sample_items) < 3:  # Store first 3 valid items
+                                sample_items.append(item)
                     
                     if valid_items == 0:
                         errors["base"] = "invalid_response"
                         _LOGGER.error("No valid items found in response from host %s", self._host)
+                        _LOGGER.debug("Response items: %s", json_data[:5])  # Log first 5 items for debugging
                     else:
                         _LOGGER.debug("Successfully validated connection to %s: %d valid items", self._host, valid_items)
+                        _LOGGER.debug("Sample items: %s", sample_items)
                         # Connection successful, proceed to entity management explanation
                         self._client = client
                         return await self.async_step_entity_management()
@@ -121,8 +136,16 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "timeout"
                 _LOGGER.error("Connection timeout for host %s: %s", self._host, timeout_err)
             except SVKParseError as parse_err:
-                errors["base"] = "parse_error"
-                _LOGGER.error("Failed to parse response from host %s: %s", self._host, parse_err)
+                # Handle different types of parse errors with specific messages
+                if isinstance(parse_err, SVKInvalidDataFormatError):
+                    errors["base"] = "invalid_data_format"
+                    _LOGGER.error("Invalid data format from host %s: %s", self._host, parse_err.message)
+                elif isinstance(parse_err, SVKHTMLResponseError):
+                    errors["base"] = "html_error_response"
+                    _LOGGER.error("Received HTML error page from host %s: %s", self._host, parse_err.message)
+                else:
+                    errors["base"] = "parse_error"
+                    _LOGGER.error("Failed to parse response from host %s: %s", self._host, parse_err)
             except SVKConnectionError as conn_err:
                 errors["base"] = "cannot_connect"
                 _LOGGER.error("Connection error for host %s: %s", self._host, conn_err)
@@ -205,7 +228,9 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 test_ids = parse_id_list(id_list_str)
                 
                 # Validate connection by calling read_values with test IDs
+                _LOGGER.debug("Testing connection during reauth with %d test IDs: %s", len(test_ids), test_ids[:5])  # Log first 5 IDs
                 json_data = await client.read_values(test_ids)
+                _LOGGER.debug("Received response type during reauth: %s, length: %d", type(json_data), len(json_data) if json_data else 0)
                 
                 if json_data is None:
                     errors["base"] = "invalid_response"
@@ -221,15 +246,20 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 else:
                     # Validate that response contains expected structure
                     valid_items = 0
+                    sample_items = []  # Store a few sample items for debugging
                     for item in json_data:
                         if isinstance(item, dict) and 'id' in item and 'value' in item:
                             valid_items += 1
+                            if len(sample_items) < 3:  # Store first 3 valid items
+                                sample_items.append(item)
                     
                     if valid_items == 0:
                         errors["base"] = "invalid_response"
                         _LOGGER.error("No valid items found in response from host %s during reauth", host)
+                        _LOGGER.debug("Response items during reauth: %s", json_data[:5])  # Log first 5 items for debugging
                     else:
                         _LOGGER.debug("Successfully validated connection to %s during reauth: %d valid items", host, valid_items)
+                        _LOGGER.debug("Sample items during reauth: %s", sample_items)
                         # Update entry with new credentials
                         self.hass.config_entries.async_update_entry(
                             self._reauth_entry,
@@ -260,8 +290,16 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "timeout"
                 _LOGGER.error("Connection timeout during reauth for host %s: %s", host, timeout_err)
             except SVKParseError as parse_err:
-                errors["base"] = "parse_error"
-                _LOGGER.error("Failed to parse response during reauth for host %s: %s", host, parse_err)
+                # Handle different types of parse errors with specific messages
+                if isinstance(parse_err, SVKInvalidDataFormatError):
+                    errors["base"] = "invalid_data_format"
+                    _LOGGER.error("Invalid data format during reauth for host %s: %s", host, parse_err.message)
+                elif isinstance(parse_err, SVKHTMLResponseError):
+                    errors["base"] = "html_error_response"
+                    _LOGGER.error("Received HTML error page during reauth for host %s: %s", host, parse_err.message)
+                else:
+                    errors["base"] = "parse_error"
+                    _LOGGER.error("Failed to parse response during reauth for host %s: %s", host, parse_err)
             except SVKConnectionError as conn_err:
                 errors["base"] = "cannot_connect"
                 _LOGGER.error("Connection error during reauth for host %s: %s", host, conn_err)
