@@ -16,8 +16,8 @@ from homeassistant.const import (
     UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo, EntityRegistry
-from homeassistant.helpers.entity_registry import DISABLED_INTEGRATION
+from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import DISABLED_INTEGRATION
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import const

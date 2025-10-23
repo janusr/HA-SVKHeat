@@ -7,8 +7,8 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntityDescription,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo, EntityRegistry
-from homeassistant.helpers.entity_registry import DISABLED_INTEGRATION
+from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import DISABLED_INTEGRATION
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import const
