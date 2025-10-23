@@ -1,4 +1,5 @@
 """Binary sensor platform for SVK Heatpump integration."""
+import logging
 from typing import Any
 
 from homeassistant.components.binary_sensor import (
@@ -16,6 +17,8 @@ from . import coordinator
 # Import specific items from modules
 from .const import DOMAIN
 from .coordinator import SVKHeatpumpDataCoordinator
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def _get_constants():

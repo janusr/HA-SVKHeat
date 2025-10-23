@@ -1,7 +1,7 @@
 """Data coordinator for SVK Heatpump integration."""
 import asyncio
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
@@ -166,7 +166,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                 _LOGGER.warning("No data received from JSON API, returning empty data to allow entity creation")
                 # Return empty data instead of raising UpdateFailed to allow entity creation
                 data = {}
-                data["last_update"] = asyncio.get_event_loop().time()
+                data["last_update"] = datetime.now(timezone.utc)
                 data["ids_fetched"] = []
                 data["parsing_stats"] = {
                     "total_ids_requested": len(self.id_list),
@@ -184,7 +184,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             
             # Store raw JSON data for diagnostics (redact only credentials)
             self.last_raw_json = json_data
-            self.last_json_timestamp = asyncio.get_event_loop().time()
+            self.last_json_timestamp = datetime.now(timezone.utc)
             
             # Parse the array of items using the new parse_items function
             try:
@@ -199,7 +199,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                 # Don't raise UpdateFailed immediately - try to continue with empty data
                 # This allows entities to be created even if data fetching fails initially
                 data = {}
-                data["last_update"] = asyncio.get_event_loop().time()
+                data["last_update"] = datetime.now(timezone.utc)
                 data["ids_fetched"] = []
                 data["parsing_stats"] = {
                     "total_ids_requested": len(self.id_list),
@@ -283,7 +283,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                     self.last_good_values[entity_key] = data[entity_key]
             
             # Add metadata
-            data["last_update"] = asyncio.get_event_loop().time()
+            data["last_update"] = datetime.now(timezone.utc)
             data["ids_fetched"] = ids_fetched
             
             # Store parsing statistics for diagnostics
@@ -311,7 +311,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                 _LOGGER.warning("No valid data could be parsed from JSON response, returning empty data to allow entity creation")
                 # Return empty data instead of raising UpdateFailed to allow entity creation
                 data = {}
-                data["last_update"] = asyncio.get_event_loop().time()
+                data["last_update"] = datetime.now(timezone.utc)
                 data["ids_fetched"] = []
                 data["parsing_stats"] = {
                     "total_ids_requested": len(self.id_list),
@@ -335,7 +335,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             _LOGGER.warning("Returning empty data due to JSON API failure to allow entity creation")
             # Return empty data instead of raising UpdateFailed to allow entity creation
             data = {}
-            data["last_update"] = asyncio.get_event_loop().time()
+            data["last_update"] = datetime.now(timezone.utc)
             data["ids_fetched"] = []
             data["parsing_stats"] = {
                 "total_ids_requested": len(self.id_list),
@@ -466,7 +466,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                 _LOGGER.error("Failed to parse hot water page: %s", err)
         
         # Add metadata
-        data["last_update"] = asyncio.get_event_loop().time()
+        data["last_update"] = datetime.now(timezone.utc)
         data["pages_fetched"] = list(pages_html.keys())
         
         if not data:

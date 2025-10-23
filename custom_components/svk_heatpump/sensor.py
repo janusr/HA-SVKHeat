@@ -1,5 +1,6 @@
 """Sensor platform for SVK Heatpump integration."""
 import logging
+from datetime import datetime, timezone
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -299,7 +300,16 @@ async def async_setup_entry(
         def native_value(self) -> Any:
             """Return the last update timestamp."""
             if self.coordinator.data:
-                return self.coordinator.data.get("last_update")
+                value = self.coordinator.data.get("last_update")
+                # Ensure we always return a datetime object with timezone
+                if isinstance(value, (int, float)):
+                    # Convert Unix timestamp to datetime with timezone
+                    return datetime.fromtimestamp(value, timezone.utc)
+                elif isinstance(value, datetime):
+                    # Ensure datetime has timezone info
+                    if value.tzinfo is None:
+                        return value.replace(tzinfo=timezone.utc)
+                    return value
             return None
     
     # Last update sensor is enabled by default
