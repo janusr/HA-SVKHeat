@@ -176,6 +176,9 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][config_entry.entry_id]["coordinator"]
     entity_registry = hass.helpers.entity_registry.async_get(hass)
     
+    _LOGGER.info("Setting up SVK Heatpump select entities for entry %s", config_entry.entry_id)
+    _LOGGER.info("Coordinator is_json_client: %s", coordinator.is_json_client)
+    
     select_entities = []
     
     # Create select entities based on ID_MAP for JSON API
@@ -222,6 +225,8 @@ async def async_setup_entry(
                 # Always add all entities to the platform
                 # Entities not in DEFAULT_ENABLED_ENTITIES will be disabled by default
                 select_entities.append(select_entity)
+                _LOGGER.debug("Added select entity: %s (ID: %s, enabled_by_default: %s)",
+                             entity_key, entity_id, enabled_by_default)
     else:
         # Fall back to HTML scraping entities for backward compatibility
         # This would need to be implemented based on the old structure
@@ -273,5 +278,6 @@ async def async_setup_entry(
     )
     select_entities.append(system_status_entity)
     
+    _LOGGER.info("Created %d select entities", len(select_entities))
     if select_entities:
         async_add_entities(select_entities, True)

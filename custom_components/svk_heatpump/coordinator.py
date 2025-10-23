@@ -153,11 +153,34 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             self.parsing_errors = []
             self.parsing_warnings = []
             
+            _LOGGER.info("Starting JSON data update with %d IDs", len(self.id_list))
+            _LOGGER.debug("Requesting IDs: %s", self.id_list[:20])  # Log first 20 IDs
+            
             # Read all available entities from DEFAULT_IDS
             json_data = await self.client.read_values(self.id_list)
             
+            _LOGGER.info("Received raw JSON data with %d items", len(json_data) if json_data else 0)
+            _LOGGER.debug("Raw JSON data sample: %s", json_data[:5] if json_data and len(json_data) > 0 else "None")
+            
             if not json_data:
-                raise UpdateFailed("No data received from JSON API")
+                _LOGGER.warning("No data received from JSON API, returning empty data to allow entity creation")
+                # Return empty data instead of raising UpdateFailed to allow entity creation
+                data = {}
+                data["last_update"] = asyncio.get_event_loop().time()
+                data["ids_fetched"] = []
+                data["parsing_stats"] = {
+                    "total_ids_requested": len(self.id_list),
+                    "total_ids_received": 0,
+                    "total_ids_fetched": 0,
+                    "unknown_ids_count": 0,
+                    "sentinel_temps_count": 0,
+                    "clamped_percentages_count": 0,
+                    "successful_parses": 0,
+                    "enabled_entities_count": len([eid for eid in self.id_to_entity_map if self.is_entity_enabled(eid)]),
+                    "disabled_entities_count": len([eid for eid in self.id_to_entity_map if not self.is_entity_enabled(eid)])
+                }
+                self.parsing_errors.append("No data received from JSON API")
+                return data
             
             # Store raw JSON data for diagnostics (redact only credentials)
             self.last_raw_json = json_data
@@ -172,7 +195,24 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             
             if not parsed_items:
                 self.parsing_errors.append("No valid items could be parsed from JSON response")
-                raise UpdateFailed("No valid items could be parsed from JSON response")
+                _LOGGER.error("No valid items could be parsed from JSON response. Raw data: %s", json_data[:10] if json_data else "None")
+                # Don't raise UpdateFailed immediately - try to continue with empty data
+                # This allows entities to be created even if data fetching fails initially
+                data = {}
+                data["last_update"] = asyncio.get_event_loop().time()
+                data["ids_fetched"] = []
+                data["parsing_stats"] = {
+                    "total_ids_requested": len(self.id_list),
+                    "total_ids_received": len(json_data) if isinstance(json_data, list) else 0,
+                    "total_ids_fetched": 0,
+                    "unknown_ids_count": 0,
+                    "sentinel_temps_count": 0,
+                    "clamped_percentages_count": 0,
+                    "successful_parses": 0,
+                    "enabled_entities_count": len([eid for eid in self.id_to_entity_map if self.is_entity_enabled(eid)]),
+                    "disabled_entities_count": len([eid for eid in self.id_to_entity_map if not self.is_entity_enabled(eid)])
+                }
+                return data
             
             # Map parsed items to entity data
             data = {}
@@ -182,6 +222,8 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             sentinel_temps = []
             clamped_percentages = []
             
+            _LOGGER.info("Processing %d parsed items", len(parsed_items))
+            
             for entity_id, (name, value) in parsed_items.items():
                 ids_fetched.append(entity_id)
                 
@@ -190,6 +232,10 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                     unknown_ids.append({"id": entity_id, "name": name, "value": value})
                     _LOGGER.debug("Unknown entity ID %s with name %s and value %s", entity_id, name, value)
                     continue
+                
+                entity_info = self.id_to_entity_map[entity_id]
+                entity_key = entity_info["key"]
+                _LOGGER.debug("Processing entity ID %s -> %s = %s", entity_id, entity_key, value)
                 
                 entity_info = self.id_to_entity_map[entity_id]
                 entity_key = entity_info["key"]
@@ -262,13 +308,48 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             
             if not data:
                 self.parsing_errors.append("No valid data could be parsed from JSON response")
-                raise UpdateFailed("No valid data could be parsed from JSON response")
+                _LOGGER.warning("No valid data could be parsed from JSON response, returning empty data to allow entity creation")
+                # Return empty data instead of raising UpdateFailed to allow entity creation
+                data = {}
+                data["last_update"] = asyncio.get_event_loop().time()
+                data["ids_fetched"] = []
+                data["parsing_stats"] = {
+                    "total_ids_requested": len(self.id_list),
+                    "total_ids_received": len(json_data) if isinstance(json_data, list) else 0,
+                    "total_ids_fetched": 0,
+                    "unknown_ids_count": 0,
+                    "sentinel_temps_count": 0,
+                    "clamped_percentages_count": 0,
+                    "successful_parses": 0,
+                    "enabled_entities_count": len([eid for eid in self.id_to_entity_map if self.is_entity_enabled(eid)]),
+                    "disabled_entities_count": len([eid for eid in self.id_to_entity_map if not self.is_entity_enabled(eid)])
+                }
+                return data
             
-            _LOGGER.debug("Total data parsed from JSON: %d items", len(data))
+            _LOGGER.info("Successfully parsed %d entities from JSON data", len(data))
+            _LOGGER.debug("Parsed entities: %s", list(data.keys())[:20])  # Log first 20 entity keys
             return data
             
         except Exception as err:
-            raise UpdateFailed(f"JSON API update failed: {err}") from err
+            _LOGGER.error("JSON API update failed: %s", err)
+            _LOGGER.warning("Returning empty data due to JSON API failure to allow entity creation")
+            # Return empty data instead of raising UpdateFailed to allow entity creation
+            data = {}
+            data["last_update"] = asyncio.get_event_loop().time()
+            data["ids_fetched"] = []
+            data["parsing_stats"] = {
+                "total_ids_requested": len(self.id_list),
+                "total_ids_received": 0,
+                "total_ids_fetched": 0,
+                "unknown_ids_count": 0,
+                "sentinel_temps_count": 0,
+                "clamped_percentages_count": 0,
+                "successful_parses": 0,
+                "enabled_entities_count": len([eid for eid in self.id_to_entity_map if self.is_entity_enabled(eid)]),
+                "disabled_entities_count": len([eid for eid in self.id_to_entity_map if not self.is_entity_enabled(eid)])
+            }
+            self.parsing_errors.append(f"JSON API update failed: {err}")
+            return data
     
     async def _update_data_html(self):
         """Update data using HTML scraping (backward compatibility)."""
@@ -613,11 +694,16 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
     
     def is_entity_available(self, entity_key: str) -> bool:
         """Check if an entity is available."""
-        if not self.last_update_success:
-            return False
-        
-        if not self.data:
-            return False
+        # For JSON API, don't require successful update to consider entities available
+        # This allows entities to be created even if initial data fetch fails
+        if not self.is_json_client:
+            if not self.last_update_success:
+                _LOGGER.debug("Entity %s not available - last update failed for non-JSON client", entity_key)
+                return False
+            
+            if not self.data:
+                _LOGGER.debug("Entity %s not available - no data for non-JSON client", entity_key)
+                return False
         
         # For JSON API, check if the entity exists in the mapping
         if self.is_json_client:
@@ -631,7 +717,8 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             if entity_id is not None:
                 # Entity is considered available if it exists in the mapping,
                 # regardless of whether it had data in the last response
-                _LOGGER.debug("Entity %s (ID: %s) is available - exists in mapping", entity_key, entity_id)
+                # This ensures entities are created even if initial data fetching fails
+                _LOGGER.debug("Entity %s (ID: %s) is available - exists in mapping (JSON API)", entity_key, entity_id)
                 return True
             else:
                 _LOGGER.debug("Entity %s is not available - not found in mapping", entity_key)

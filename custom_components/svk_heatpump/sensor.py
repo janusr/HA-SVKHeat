@@ -1,4 +1,5 @@
 """Sensor platform for SVK Heatpump integration."""
+import logging
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -25,6 +26,8 @@ from . import coordinator
 # Import specific items from modules
 from .const import DOMAIN
 from .coordinator import SVKHeatpumpDataCoordinator
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def _get_constants():
@@ -127,10 +130,18 @@ class SVKHeatpumpSensor(CoordinatorEntity, SensorEntity):
     @property
     def available(self) -> bool:
         """Return True if entity is available."""
-        is_available = self.coordinator.last_update_success and self.coordinator.is_entity_available(self._entity_key)
-        _LOGGER.debug("Sensor %s availability: %s (last_update_success: %s)",
-                     self._entity_key, is_available, self.coordinator.last_update_success)
-        return is_available
+        # For JSON API, entities should be available even if data fetching fails initially
+        if self.coordinator.is_json_client:
+            is_available = self.coordinator.is_entity_available(self._entity_key)
+            _LOGGER.debug("JSON API Sensor %s availability: %s (entity exists in mapping)",
+                         self._entity_key, is_available)
+            return is_available
+        else:
+            # For HTML scraping, require successful update
+            is_available = self.coordinator.last_update_success and self.coordinator.is_entity_available(self._entity_key)
+            _LOGGER.debug("HTML API Sensor %s availability: %s (last_update_success: %s)",
+                         self._entity_key, is_available, self.coordinator.last_update_success)
+            return is_available
 
 
 async def async_setup_entry(
@@ -139,6 +150,9 @@ async def async_setup_entry(
     """Set up SVK Heatpump sensors."""
     coordinator = hass.data[DOMAIN][config_entry.entry_id]["coordinator"]
     entity_registry = hass.helpers.entity_registry.async_get(hass)
+    
+    _LOGGER.info("Setting up SVK Heatpump sensors for entry %s", config_entry.entry_id)
+    _LOGGER.info("Coordinator is_json_client: %s", coordinator.is_json_client)
     
     sensors = []
     
@@ -180,10 +194,46 @@ async def async_setup_entry(
             # Always add all entities to the platform
             # Entities not in DEFAULT_ENABLED_ENTITIES will be disabled by default
             sensors.append(sensor)
+            _LOGGER.debug("Added sensor entity: %s (ID: %s, enabled_by_default: %s)",
+                         entity_key, entity_id, enabled_by_default)
     else:
         # Fall back to HTML scraping entities for backward compatibility
-        # This would need to be implemented based on the old structure
-        pass
+        # Create basic entities even if JSON client is not available
+        _LOGGER.warning("JSON client not available, creating essential fallback entities")
+        
+        # Create essential entities as fallback to ensure basic functionality
+        essential_entities = [
+            ("heating_supply_temp", 253),
+            ("heating_return_temp", 254),
+            ("water_tank_temp", 255),
+            ("ambient_temp", 256),
+            ("room_temp", 257),
+            ("heatpump_state", 297),
+            ("capacity_actual", 299),
+            ("capacity_requested", 300),
+            ("season_mode", 278),
+            ("hot_water_setpoint", 383),
+            ("heating_setpoint_actual", 420),
+            ("compressor_runtime", 447),
+            ("alarm_output", 228),
+        ]
+        
+        for entity_key, entity_id in essential_entities:
+            try:
+                sensor = SVKHeatpumpSensor(
+                    coordinator,
+                    entity_key,
+                    entity_id,
+                    config_entry.entry_id,
+                    enabled_by_default=True
+                )
+                sensors.append(sensor)
+                _LOGGER.info("Added fallback sensor entity: %s (ID: %s)", entity_key, entity_id)
+            except Exception as err:
+                _LOGGER.error("Failed to create fallback sensor entity %s (ID: %s): %s",
+                             entity_key, entity_id, err)
+                # Continue with other entities even if one fails
+                continue
     
     # Add alarm count sensor
     alarm_count_desc = SensorEntityDescription(
@@ -252,5 +302,6 @@ async def async_setup_entry(
     last_update_sensor = LastUpdateSensor(coordinator, config_entry.entry_id, enabled_by_default=True)
     sensors.append(last_update_sensor)
     
+    _LOGGER.info("Created %d sensor entities", len(sensors))
     if sensors:
         async_add_entities(sensors, True)

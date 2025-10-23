@@ -733,45 +733,57 @@ def parse_items(items_list):
     Returns:
         dict[int]: Dictionary mapping integer IDs to (name, parsed_value) tuples
         
-    Raises:
-        ValueError: If any item format is invalid or ID cannot be converted to int
+    Note:
+        This function is more resilient to missing fields and will not raise exceptions
+        for invalid items. It will log warnings for problematic items but continue processing.
     """
     result = {}
     
     if not items_list:
+        _LOGGER.debug("Empty items list provided to parse_items")
         return result
+    
+    _LOGGER.debug("Parsing %d items from JSON response", len(items_list))
     
     for item in items_list:
         try:
             # Validate item structure
             if not isinstance(item, dict):
-                _LOGGER.debug("Skipping invalid item (not a dict): %s", item)
+                _LOGGER.warning("Skipping invalid item (not a dict): %s", item)
                 continue
                 
-            if 'id' not in item or 'name' not in item or 'value' not in item:
-                _LOGGER.debug("Skipping item missing required fields: %s", item)
+            # More flexible field validation - allow missing 'name' field
+            if 'id' not in item or 'value' not in item:
+                _LOGGER.warning("Skipping item missing required fields (id/value): %s", item)
                 continue
             
             # Extract and validate ID
             try:
                 entity_id = int(item['id'])
             except (ValueError, TypeError):
-                _LOGGER.debug("Invalid ID '%s' in item: %s", item.get('id'), item)
+                _LOGGER.warning("Invalid ID '%s' in item: %s", item.get('id'), item)
                 continue
             
-            # Extract name
-            name = item['name']
+            # Extract name or create default if missing
+            if 'name' in item and item['name']:
+                name = str(item['name'])
+            else:
+                name = f"entity_{entity_id}"
+                _LOGGER.debug("Generated default name '%s' for item ID %s", name, entity_id)
             
             # Parse value with proper type conversion
             raw_value = item['value']
             parsed_value = _parse_value(raw_value)
             
             result[entity_id] = (name, parsed_value)
+            _LOGGER.debug("Successfully parsed item ID %s: %s = %s", entity_id, name, parsed_value)
             
         except Exception as err:
-            _LOGGER.debug("Error parsing item %s: %s", item, err)
+            _LOGGER.warning("Error parsing item %s: %s", item, err)
+            # Continue processing other items instead of failing completely
             continue
     
+    _LOGGER.info("Successfully parsed %d valid items out of %d total items", len(result), len(items_list))
     return result
 
 

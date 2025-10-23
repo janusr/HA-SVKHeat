@@ -128,6 +128,9 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][config_entry.entry_id]["coordinator"]
     entity_registry = hass.helpers.entity_registry.async_get(hass)
     
+    _LOGGER.info("Setting up SVK Heatpump binary sensors for entry %s", config_entry.entry_id)
+    _LOGGER.info("Coordinator is_json_client: %s", coordinator.is_json_client)
+    
     binary_sensors = []
     
     # Create binary sensors based on ID_MAP for JSON API
@@ -187,6 +190,8 @@ async def async_setup_entry(
                 # Always add all entities to the platform
                 # Entities not in DEFAULT_ENABLED_ENTITIES will be disabled by default
                 binary_sensors.append(binary_sensor)
+                _LOGGER.debug("Added binary sensor entity: %s (ID: %s, enabled_by_default: %s)",
+                             entity_key, entity_id, enabled_by_default)
     else:
         # Fall back to HTML scraping entities for backward compatibility
         # This would need to be implemented based on the old structure
@@ -259,5 +264,6 @@ async def async_setup_entry(
     online_sensor = OnlineStatusBinarySensor(coordinator, config_entry.entry_id, enabled_by_default=True)
     binary_sensors.append(online_sensor)
     
+    _LOGGER.info("Created %d binary sensor entities", len(binary_sensors))
     if binary_sensors:
         async_add_entities(binary_sensors, True)
