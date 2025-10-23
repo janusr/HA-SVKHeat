@@ -7,9 +7,8 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntityDescription,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo
-from .compat import DISABLED_INTEGRATION
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from .compat import DISABLED_INTEGRATION
 
 from . import const
 from . import coordinator
@@ -43,6 +42,9 @@ class SVKHeatpumpBinarySensor(CoordinatorEntity, BinarySensorEntity):
         self._entity_id = entity_id
         self._attr_enabled_by_default = enabled_by_default
         
+        _LOGGER.debug("Creating binary sensor entity: %s (ID: %s, enabled_by_default: %s)",
+                     entity_key, entity_id, enabled_by_default)
+        
         # Get entity info from ID_MAP (5-element structure)
         ID_MAP, _ = _get_constants()
         entity_info = ID_MAP.get(entity_id, ("", "", None, None, ""))
@@ -70,14 +72,9 @@ class SVKHeatpumpBinarySensor(CoordinatorEntity, BinarySensorEntity):
         return f"{self._config_entry_id}_{self._entity_id}"
     
     @property
-    def device_info(self) -> DeviceInfo:
-        """Return device information."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, self._config_entry_id)},
-            name="SVK Heatpump",
-            manufacturer="SVK",
-            model="LMC320",
-        )
+    def device_info(self):
+        """Return device information from coordinator."""
+        return self.coordinator.device_info
     
     @property
     def is_on(self) -> bool:
@@ -98,7 +95,10 @@ class SVKHeatpumpBinarySensor(CoordinatorEntity, BinarySensorEntity):
     @property
     def available(self) -> bool:
         """Return True if entity is available."""
-        return self.coordinator.last_update_success and self.coordinator.is_entity_available(self._entity_key)
+        is_available = self.coordinator.last_update_success and self.coordinator.is_entity_available(self._entity_key)
+        _LOGGER.debug("Binary sensor %s availability: %s (last_update_success: %s)",
+                     self._entity_key, is_available, self.coordinator.last_update_success)
+        return is_available
 
 
 class SVKHeatpumpAlarmBinarySensor(SVKHeatpumpBinarySensor):

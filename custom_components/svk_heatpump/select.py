@@ -4,9 +4,8 @@ from typing import Any, List
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo
-from .compat import DISABLED_INTEGRATION
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from .compat import DISABLED_INTEGRATION
 
 from . import const
 from . import coordinator
@@ -43,6 +42,9 @@ class SVKHeatpumpSelect(CoordinatorEntity, SelectEntity):
         self._entity_id = entity_id
         self._writable = writable
         self._attr_enabled_by_default = enabled_by_default
+        
+        _LOGGER.debug("Creating select entity: %s (ID: %s, writable: %s, enabled_by_default: %s)",
+                     entity_key, entity_id, writable, enabled_by_default)
         
         # Get entity info from ID_MAP (5-element structure)
         ID_MAP, _, _ = _get_constants()
@@ -81,14 +83,9 @@ class SVKHeatpumpSelect(CoordinatorEntity, SelectEntity):
         return f"{self._config_entry_id}_{self._entity_id}"
     
     @property
-    def device_info(self) -> DeviceInfo:
-        """Return device information."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, self._config_entry_id)},
-            name="SVK Heatpump",
-            manufacturer="SVK",
-            model="LMC320",
-        )
+    def device_info(self):
+        """Return device information from coordinator."""
+        return self.coordinator.device_info
     
     @property
     def current_option(self) -> str:
@@ -107,16 +104,22 @@ class SVKHeatpumpSelect(CoordinatorEntity, SelectEntity):
     def available(self) -> bool:
         """Return True if entity is available."""
         if not self.coordinator.last_update_success:
+            _LOGGER.debug("Select %s availability: False (last_update_success: False)", self._entity_key)
             return False
         
         # Check if writes are enabled for writable entities
         if self._writable:
-            return (
-                self.coordinator.config_entry.options.get("enable_writes", False)
-                and self.coordinator.is_entity_available(self._entity_key)
-            )
+            writes_enabled = self.coordinator.config_entry.options.get("enable_writes", False)
+            entity_available = self.coordinator.is_entity_available(self._entity_key)
+            is_available = writes_enabled and entity_available
+            _LOGGER.debug("Select %s availability: %s (writable: %s, writes_enabled: %s, entity_available: %s)",
+                         self._entity_key, is_available, self._writable, writes_enabled, entity_available)
+            return is_available
         
-        return self.coordinator.is_entity_available(self._entity_key)
+        entity_available = self.coordinator.is_entity_available(self._entity_key)
+        _LOGGER.debug("Select %s availability: %s (writable: %s, entity_available: %s)",
+                     self._entity_key, entity_available, self._writable, entity_available)
+        return entity_available
     
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""

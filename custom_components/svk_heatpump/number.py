@@ -10,9 +10,8 @@ from homeassistant.components.number import (
 )
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo
-from .compat import DISABLED_INTEGRATION
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from .compat import DISABLED_INTEGRATION
 
 from . import const
 from . import coordinator
@@ -54,6 +53,9 @@ class SVKHeatpumpNumber(CoordinatorEntity, NumberEntity):
         self._step = step
         self._attr_enabled_by_default = enabled_by_default
         
+        _LOGGER.debug("Creating number entity: %s (ID: %s, range: %s-%s, step: %s, enabled_by_default: %s)",
+                     entity_key, entity_id, min_value, max_value, step, enabled_by_default)
+        
         # Get entity info from ID_MAP (5-element structure)
         ID_MAP, _ = _get_constants()
         entity_info = ID_MAP.get(entity_id, ("", "", None, None, ""))
@@ -86,14 +88,9 @@ class SVKHeatpumpNumber(CoordinatorEntity, NumberEntity):
         return f"{self._config_entry_id}_{self._entity_id}"
     
     @property
-    def device_info(self) -> DeviceInfo:
-        """Return device information."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, self._config_entry_id)},
-            name="SVK Heatpump",
-            manufacturer="SVK",
-            model="LMC320",
-        )
+    def device_info(self):
+        """Return device information from coordinator."""
+        return self.coordinator.device_info
     
     @property
     def native_value(self) -> Optional[float]:
@@ -109,11 +106,14 @@ class SVKHeatpumpNumber(CoordinatorEntity, NumberEntity):
     @property
     def available(self) -> bool:
         """Return True if entity is available."""
-        return (
-            self.coordinator.last_update_success
-            and self.coordinator.config_entry.options.get("enable_writes", False)
-            and self.coordinator.is_entity_available(self._entity_key)
-        )
+        last_update_success = self.coordinator.last_update_success
+        writes_enabled = self.coordinator.config_entry.options.get("enable_writes", False)
+        entity_available = self.coordinator.is_entity_available(self._entity_key)
+        is_available = last_update_success and writes_enabled and entity_available
+        
+        _LOGGER.debug("Number %s availability: %s (last_update_success: %s, writes_enabled: %s, entity_available: %s)",
+                     self._entity_key, is_available, last_update_success, writes_enabled, entity_available)
+        return is_available
     
     async def async_set_native_value(self, value: float) -> None:
         """Set a new value."""

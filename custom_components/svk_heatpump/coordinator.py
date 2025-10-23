@@ -4,6 +4,7 @@ import logging
 from datetime import timedelta
 
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .client import (
@@ -98,6 +99,14 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             _LOGGER,
             name=DOMAIN,
             update_interval=timedelta(seconds=scan_interval),
+        )
+        
+        # Initialize device info for centralized device registration
+        self._device_info = DeviceInfo(
+            identifiers={(DOMAIN, config_entry.entry_id) if config_entry else (DOMAIN, "svk_heatpump")},
+            name="SVK Heatpump",
+            manufacturer="SVK",
+            model="LMC320",
         )
     
     async def _async_update_data(self):
@@ -610,7 +619,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         if not self.data:
             return False
         
-        # For JSON API, check if the entity ID exists in the latest response
+        # For JSON API, check if the entity exists in the mapping
         if self.is_json_client:
             # Find the entity ID for this entity key
             entity_id = None
@@ -620,13 +629,19 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                     break
             
             if entity_id is not None:
-                # Check if the ID was in the last response
-                ids_fetched = self.data.get("ids_fetched", [])
-                return entity_id in ids_fetched
+                # Entity is considered available if it exists in the mapping,
+                # regardless of whether it had data in the last response
+                _LOGGER.debug("Entity %s (ID: %s) is available - exists in mapping", entity_key, entity_id)
+                return True
+            else:
+                _LOGGER.debug("Entity %s is not available - not found in mapping", entity_key)
+                return False
         
         # Check if the entity has a value
         value = self.get_entity_value(entity_key)
-        return value is not None
+        is_available = value is not None
+        _LOGGER.debug("Entity %s availability: %s (value: %s)", entity_key, is_available, value)
+        return is_available
     
     def get_all_entities_data(self) -> dict:
         """Get data for all available entities, including disabled ones.
@@ -919,3 +934,8 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                 })
         
         return disabled
+    
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return centralized device information."""
+        return self._device_info

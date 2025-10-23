@@ -16,9 +16,8 @@ from homeassistant.const import (
     UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo
-from .compat import DISABLED_INTEGRATION
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from .compat import DISABLED_INTEGRATION
 
 from . import const
 from . import coordinator
@@ -51,6 +50,9 @@ class SVKHeatpumpSensor(CoordinatorEntity, SensorEntity):
         self._entity_key = entity_key
         self._entity_id = entity_id
         self._attr_enabled_by_default = enabled_by_default
+        
+        _LOGGER.debug("Creating sensor entity: %s (ID: %s, enabled_by_default: %s)",
+                     entity_key, entity_id, enabled_by_default)
         
         # Get entity info from ID_MAP (5-element structure)
         ID_MAP, _ = _get_constants()
@@ -97,14 +99,9 @@ class SVKHeatpumpSensor(CoordinatorEntity, SensorEntity):
         return f"{self._config_entry_id}_{self._entity_id}"
     
     @property
-    def device_info(self) -> DeviceInfo:
-        """Return device information."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, self._config_entry_id)},
-            name="SVK Heatpump",
-            manufacturer="SVK",
-            model="LMC320",
-        )
+    def device_info(self):
+        """Return device information from coordinator."""
+        return self.coordinator.device_info
     
     @property
     def native_value(self) -> Any:
@@ -130,7 +127,10 @@ class SVKHeatpumpSensor(CoordinatorEntity, SensorEntity):
     @property
     def available(self) -> bool:
         """Return True if entity is available."""
-        return self.coordinator.last_update_success and self.coordinator.is_entity_available(self._entity_key)
+        is_available = self.coordinator.last_update_success and self.coordinator.is_entity_available(self._entity_key)
+        _LOGGER.debug("Sensor %s availability: %s (last_update_success: %s)",
+                     self._entity_key, is_available, self.coordinator.last_update_success)
+        return is_available
 
 
 async def async_setup_entry(
