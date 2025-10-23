@@ -9,7 +9,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
 from .client import LOMJsonClient, SVKConnectionError, SVKAuthenticationError
-from .const import DOMAIN
+from .const import (
+    DOMAIN,
+    DEFAULT_CHUNK_SIZE,
+    DEFAULT_ENABLE_CHUNKING,
+    DEFAULT_EXCLUDED_IDS,
+)
 from .coordinator import SVKHeatpumpDataCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -38,7 +43,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Create JSON client with Digest authentication
     # Use DEFAULT_TIMEOUT from const.py to ensure consistent timeout behavior
     from .const import DEFAULT_TIMEOUT
-    client = LOMJsonClient(host, username, password, DEFAULT_TIMEOUT, allow_basic_auth=allow_basic_auth)
+    client = LOMJsonClient(
+        host,
+        username,
+        password,
+        DEFAULT_TIMEOUT,
+        allow_basic_auth=allow_basic_auth,
+        chunk_size=DEFAULT_CHUNK_SIZE,
+        enable_chunking=DEFAULT_ENABLE_CHUNKING,
+        excluded_ids=DEFAULT_EXCLUDED_IDS
+    )
     _LOGGER.debug("Created LOMJsonClient for %s with timeout %d seconds", host, DEFAULT_TIMEOUT)
     
     # Test connection
@@ -154,6 +168,7 @@ async def async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None
     try:
         data = hass.data[DOMAIN][entry.entry_id]
         coordinator = data["coordinator"]
+        client = data["client"]
         
         # Update scan interval if changed
         new_scan_interval = entry.options.get("scan_interval", 30)
@@ -166,6 +181,31 @@ async def async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None
             )
         else:
             _LOGGER.debug("Scan interval unchanged at %d seconds", new_scan_interval)
+        
+        # Update client chunking settings if changed
+        if hasattr(client, '_chunk_size'):
+            new_chunk_size = entry.options.get("chunk_size", DEFAULT_CHUNK_SIZE)
+            if client._chunk_size != new_chunk_size:
+                client._chunk_size = new_chunk_size
+                _LOGGER.info("Updated chunk size to %d", new_chunk_size)
+        
+        if hasattr(client, '_enable_chunking'):
+            new_enable_chunking = entry.options.get("enable_chunking", DEFAULT_ENABLE_CHUNKING)
+            if client._enable_chunking != new_enable_chunking:
+                client._enable_chunking = new_enable_chunking
+                _LOGGER.info("Updated chunking enabled to %s", new_enable_chunking)
+        
+        if hasattr(client, '_excluded_ids'):
+            new_excluded_ids = entry.options.get("excluded_ids", DEFAULT_EXCLUDED_IDS)
+            if new_excluded_ids != DEFAULT_EXCLUDED_IDS:
+                try:
+                    from .const import parse_id_list
+                    new_excluded_ids_set = set(parse_id_list(new_excluded_ids))
+                    if client._excluded_ids != new_excluded_ids_set:
+                        client._excluded_ids = new_excluded_ids_set
+                        _LOGGER.info("Updated excluded IDs to %s", list(new_excluded_ids_set)[:10])
+                except Exception as err:
+                    _LOGGER.warning("Failed to parse excluded IDs '%s': %s", new_excluded_ids, err)
         
         # Trigger refresh to apply new settings
         _LOGGER.debug("Triggering coordinator refresh to apply new settings...")

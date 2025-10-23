@@ -24,8 +24,14 @@ from .const import (
     CONF_ENABLE_WRITES,
     CONF_ID_LIST,
     CONF_SCAN_INTERVAL,
+    CONF_CHUNK_SIZE,
+    CONF_ENABLE_CHUNKING,
+    CONF_EXCLUDED_IDS,
     DEFAULT_IDS,
     DEFAULT_SCAN_INTERVAL,
+    DEFAULT_CHUNK_SIZE,
+    DEFAULT_ENABLE_CHUNKING,
+    DEFAULT_EXCLUDED_IDS,
     DOMAIN,
     DEFAULT_TIMEOUT,
     parse_id_list,
@@ -73,7 +79,10 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._username,
                 self._password,
                 DEFAULT_TIMEOUT,
-                allow_basic_auth=self._allow_basic_auth
+                allow_basic_auth=self._allow_basic_auth,
+                chunk_size=DEFAULT_CHUNK_SIZE,
+                enable_chunking=DEFAULT_ENABLE_CHUNKING,
+                excluded_ids=DEFAULT_EXCLUDED_IDS
             )
             
             try:
@@ -236,7 +245,16 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             password = user_input.get(CONF_PASSWORD, "")
             allow_basic_auth = user_input.get(CONF_ALLOW_BASIC_AUTH, False)
             
-            client = LOMJsonClient(host, username, password, DEFAULT_TIMEOUT, allow_basic_auth=allow_basic_auth)
+            client = LOMJsonClient(
+                host,
+                username,
+                password,
+                DEFAULT_TIMEOUT,
+                allow_basic_auth=allow_basic_auth,
+                chunk_size=DEFAULT_CHUNK_SIZE,
+                enable_chunking=DEFAULT_ENABLE_CHUNKING,
+                excluded_ids=DEFAULT_EXCLUDED_IDS
+            )
             
             try:
                 # Start the client session
@@ -400,6 +418,19 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
                 CONF_ENABLE_WRITES,
                 default=options.get(CONF_ENABLE_WRITES, False)
             ): bool,
+            # New chunking configuration options
+            vol.Optional(
+                CONF_ENABLE_CHUNKING,
+                default=options.get(CONF_ENABLE_CHUNKING, DEFAULT_ENABLE_CHUNKING)
+            ): bool,
+            vol.Optional(
+                CONF_CHUNK_SIZE,
+                default=options.get(CONF_CHUNK_SIZE, DEFAULT_CHUNK_SIZE)
+            ): int,
+            vol.Optional(
+                CONF_EXCLUDED_IDS,
+                default=options.get(CONF_EXCLUDED_IDS, DEFAULT_EXCLUDED_IDS)
+            ): str,
         }
         
         # Only include ID list field for legacy configurations

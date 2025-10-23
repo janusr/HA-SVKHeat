@@ -596,7 +596,8 @@ def _compute_digest_response(
 class LOMJsonClient:
     """Client for communicating with SVK LOM320 web module using JSON API with Digest authentication."""
     
-    def __init__(self, host: str, username: str = "", password: str = "", timeout: int = 10, allow_basic_auth: bool = False):
+    def __init__(self, host: str, username: str = "", password: str = "", timeout: int = 10, allow_basic_auth: bool = False,
+                 chunk_size: int = None, enable_chunking: bool = None, excluded_ids: str = None):
         """Initialize the JSON client."""
         self.host = host
         self._base = URL.build(scheme="http", host=host)
@@ -605,9 +606,34 @@ class LOMJsonClient:
         self._allow_basic_auth = allow_basic_auth
         self._session: Optional[aiohttp.ClientSession] = None
         self._timeout = aiohttp.ClientTimeout(total=timeout, connect=3.0, sock_read=5.0)
-        self._chunk_size = 50  # Maximum number of IDs to request in one batch
-        self._max_retries = 1  # Further reduced maximum number of retries for failed requests
-        self._retry_delay = 0.2  # Further reduced initial retry delay in seconds
+        # Handle backward compatibility for optional parameters
+        if chunk_size is None:
+            from .const import DEFAULT_CHUNK_SIZE
+            chunk_size = DEFAULT_CHUNK_SIZE
+        
+        if enable_chunking is None:
+            from .const import DEFAULT_ENABLE_CHUNKING
+            enable_chunking = DEFAULT_ENABLE_CHUNKING
+        
+        if excluded_ids is None:
+            from .const import DEFAULT_EXCLUDED_IDS
+            excluded_ids = DEFAULT_EXCLUDED_IDS
+        
+        self._chunk_size = chunk_size  # Maximum number of IDs to request in one batch
+        self._enable_chunking = enable_chunking  # Whether to use chunking at all
+        self._excluded_ids = set()  # Set of IDs to exclude from requests
+        
+        # Parse excluded IDs if provided
+        if excluded_ids:
+            try:
+                from .const import parse_id_list
+                self._excluded_ids = set(parse_id_list(excluded_ids))
+                _LOGGER.info("Excluding %d IDs from requests: %s", len(self._excluded_ids), list(self._excluded_ids)[:10])
+            except Exception as err:
+                _LOGGER.warning("Failed to parse excluded IDs '%s': %s", excluded_ids, err)
+        
+        self._max_retries = 3  # Maximum number of retries for failed requests
+        self._retry_delay = 0.5  # Initial retry delay in seconds
         self._digest_nonce = None  # Store nonce for subsequent requests
         self._digest_opaque = None  # Store opaque for subsequent requests
         self._digest_realm = None  # Store realm for subsequent requests
@@ -616,6 +642,10 @@ class LOMJsonClient:
         self._digest_nc = 0  # Nonce count
         self._basic_auth = aiohttp.BasicAuth(username, password) if (username or password) else None
         self._last_status_code = None  # Track last HTTP status code for diagnostics
+        
+        # Track failed IDs for better error handling
+        self._failed_ids = set()  # IDs that consistently fail
+        self._unsupported_ids = set()  # IDs that are not supported by the API
     
     def _parse_json_response_flexible(self, data: Any, response_text: str = "") -> List[Dict[str, Any]]:
         """
@@ -862,8 +892,14 @@ class LOMJsonClient:
         
         for attempt in range(self._max_retries + 1):  # Add 1 to ensure at least one attempt
             try:
+                # Calculate exponential backoff delay
+                if attempt > 0:
+                    delay = self._retry_delay * (2 ** (attempt - 1))  # Exponential backoff
+                    _LOGGER.debug("Retrying after %.1f seconds (attempt %d/%d)", delay, attempt + 1, self._max_retries + 1)
+                    await asyncio.sleep(delay)
+                
                 # First, send an unauthenticated GET request
-                _LOGGER.info("Attempt %d/%d: Making unauthenticated request to %s", attempt + 1, self._max_retries, get_url)
+                _LOGGER.info("Attempt %d/%d: Making unauthenticated request to %s", attempt + 1, self._max_retries + 1, get_url)
                 headers = {}
                 _LOGGER.debug("About to make HTTP GET request - potential blocking point")
                 resp = await self._session.get(get_url, headers=headers, allow_redirects=False)
@@ -1059,26 +1095,65 @@ class LOMJsonClient:
             
             except asyncio.TimeoutError as err:
                 if attempt < self._max_retries:
-                    # Minimal backoff to prevent blocking
-                    delay = self._retry_delay
-                    _LOGGER.debug("Timeout on attempt %d, retrying after %.1f seconds", attempt + 1, delay)
-                    await asyncio.sleep(delay)
+                    # Exponential backoff is already handled at the start of the loop
+                    _LOGGER.debug("Timeout on attempt %d, will retry with exponential backoff", attempt + 1)
                     continue
                 _LOGGER.error("Timeout connecting to %s after %d attempts", self.host, attempt + 1)
                 raise SVKTimeoutError(f"Timeout connecting to {self.host}") from err
             
             except aiohttp.ClientError as err:
                 if attempt < self._max_retries:
-                    # Minimal backoff to prevent blocking
-                    delay = self._retry_delay
-                    _LOGGER.debug("Client error on attempt %d, retrying after %.1f seconds: %s", attempt + 1, delay, err)
-                    await asyncio.sleep(delay)
+                    # Exponential backoff is already handled at the start of the loop
+                    _LOGGER.debug("Client error on attempt %d, will retry with exponential backoff: %s", attempt + 1, err)
                     continue
                 _LOGGER.error("Client error connecting to %s after %d attempts: %s", self.host, attempt + 1, err)
                 raise SVKConnectionError(f"Failed to fetch {path}: {err}") from err
         
             raise SVKConnectionError(f"Max retries exceeded for {path}")
     
+    async def _request_individual_ids(self, path: str, ids: List[int]) -> List[Dict[str, Any]]:
+        """Make individual requests for each ID as a fallback mechanism."""
+        _LOGGER.info("Using individual requests fallback for %d IDs", len(ids))
+        results = []
+        failed_ids = []
+        
+        for entity_id in ids:
+            # Skip if this ID is known to be unsupported
+            if entity_id in self._unsupported_ids:
+                _LOGGER.debug("Skipping known unsupported ID %d", entity_id)
+                continue
+                
+            # Skip if this ID is in the excluded list
+            if entity_id in self._excluded_ids:
+                _LOGGER.debug("Skipping excluded ID %d", entity_id)
+                continue
+                
+            try:
+                _LOGGER.debug("Making individual request for ID %d", entity_id)
+                result = await self._request_with_retry(path, [entity_id])
+                if result:
+                    results.extend(result)
+                    _LOGGER.debug("Successfully retrieved ID %d", entity_id)
+                else:
+                    _LOGGER.warning("No data returned for ID %d", entity_id)
+                    failed_ids.append(entity_id)
+            except Exception as err:
+                _LOGGER.warning("Failed to retrieve ID %d individually: %s", entity_id, err)
+                failed_ids.append(entity_id)
+                
+                # If we consistently fail for this ID, mark it as unsupported
+                if entity_id in self._failed_ids:
+                    _LOGGER.info("ID %d has failed multiple times, marking as unsupported", entity_id)
+                    self._unsupported_ids.add(entity_id)
+                else:
+                    self._failed_ids.add(entity_id)
+        
+        _LOGGER.info("Individual requests completed: %d successful, %d failed", len(results), len(failed_ids))
+        if failed_ids:
+            _LOGGER.debug("Failed IDs: %s", failed_ids[:20])  # Log first 20 failed IDs
+        
+        return results
+
     async def _request_with_retry(self, path: str, ids: List[int]) -> List[Dict[str, Any]]:
         """Make a request with retry logic for timeouts and blank bodies using Digest authentication."""
         # Only use Digest authentication if credentials are provided
@@ -1160,7 +1235,7 @@ class LOMJsonClient:
     
     async def read_values(self, ids: List[int]) -> List[Dict[str, Any]]:
         """
-        Read values from the JSON API.
+        Read values from the JSON API with enhanced chunking and fallback mechanisms.
         
         Args:
             ids: Iterable of register IDs to read
@@ -1168,64 +1243,117 @@ class LOMJsonClient:
         Returns:
             List of dictionaries with 'id', 'name', and 'value' fields
         """
-        _LOGGER.debug("read_values called with %d IDs: %s", len(ids), ids[:10])
+        _LOGGER.info("read_values called with %d IDs", len(ids))
+        _LOGGER.debug("Requesting IDs: %s", ids[:20])  # Log first 20 IDs
         
         if not ids:
             _LOGGER.warning("read_values called with empty ID list")
             return []
         
-        # Convert to list if needed
+        # Convert to list if needed and filter out excluded/unsupported IDs
         id_list = list(ids)
+        filtered_ids = [entity_id for entity_id in id_list
+                       if entity_id not in self._excluded_ids and entity_id not in self._unsupported_ids]
+        
+        if len(filtered_ids) != len(id_list):
+            _LOGGER.info("Filtered %d IDs (excluded: %d, unsupported: %d)",
+                        len(id_list) - len(filtered_ids),
+                        len([id for id in id_list if id in self._excluded_ids]),
+                        len([id for id in id_list if id in self._unsupported_ids]))
+        
+        if not filtered_ids:
+            _LOGGER.warning("No valid IDs remaining after filtering")
+            return []
+        
+        # If chunking is disabled, make a single request with all IDs
+        if not self._enable_chunking:
+            _LOGGER.info("Chunking disabled, making single request for %d IDs", len(filtered_ids))
+            try:
+                result = await self._request_with_retry("/cgi-bin/json_values.cgi", filtered_ids)
+                _LOGGER.info("Single request returned %d items", len(result) if result else 0)
+                return result or []
+            except Exception as err:
+                _LOGGER.error("Single request failed: %s", err)
+                # Fallback to individual requests
+                _LOGGER.info("Falling back to individual requests due to single request failure")
+                return await self._request_individual_ids("/cgi-bin/json_values.cgi", filtered_ids)
         
         # If the number of IDs is small, make a single request
-        if len(id_list) <= self._chunk_size:
-            _LOGGER.debug("Making single request for %d IDs", len(id_list))
+        if len(filtered_ids) <= self._chunk_size:
+            _LOGGER.info("Making single request for %d IDs (below chunk size threshold)", len(filtered_ids))
             try:
-                result = await self._request_with_retry("/cgi-bin/json_values.cgi", id_list)
-                _LOGGER.debug("Single request returned %d items", len(result) if result else 0)
-                return result
-            except SVKConnectionError as err:
-                _LOGGER.error("Connection failed during single request: %s", err)
-                raise
-            except SVKAuthenticationError as err:
-                _LOGGER.error("Authentication failed during single request: %s", err)
-                raise
-            except SVKTimeoutError as err:
-                _LOGGER.error("Timeout during single request: %s", err)
-                raise
+                result = await self._request_with_retry("/cgi-bin/json_values.cgi", filtered_ids)
+                items_returned = len(result) if result else 0
+                _LOGGER.info("Single request returned %d items", items_returned)
+                
+                # Check if we got significantly fewer items than expected
+                if items_returned < len(filtered_ids) * 0.5:  # Less than 50% success rate
+                    _LOGGER.warning("Low success rate (%d/%d), falling back to individual requests",
+                                  items_returned, len(filtered_ids))
+                    return await self._request_individual_ids("/cgi-bin/json_values.cgi", filtered_ids)
+                
+                return result or []
             except Exception as err:
-                _LOGGER.error("Unexpected error during single request: %s", err)
-                raise SVKConnectionError(f"Unexpected error during request: {err}") from err
+                _LOGGER.error("Single request failed: %s", err)
+                # Fallback to individual requests
+                _LOGGER.info("Falling back to individual requests due to single request failure")
+                return await self._request_individual_ids("/cgi-bin/json_values.cgi", filtered_ids)
         
-        # For larger ID lists, split into chunks
-        _LOGGER.debug("Splitting %d IDs into chunks of %d", len(id_list), self._chunk_size)
+        # For larger ID lists, split into chunks with enhanced logging
+        _LOGGER.info("Splitting %d IDs into chunks of %d", len(filtered_ids), self._chunk_size)
         results = []
-        for i in range(0, len(id_list), self._chunk_size):
-            chunk = id_list[i:i + self._chunk_size]
-            _LOGGER.debug("Processing chunk %d-%d: %s", i, i + len(chunk), chunk)
+        failed_chunks = []
+        successful_chunks = 0
+        
+        for i in range(0, len(filtered_ids), self._chunk_size):
+            chunk = filtered_ids[i:i + self._chunk_size]
+            chunk_num = i // self._chunk_size + 1
+            total_chunks = (len(filtered_ids) + self._chunk_size - 1) // self._chunk_size
+            
+            _LOGGER.info("Processing chunk %d/%d (IDs %d-%d): %s",
+                        chunk_num, total_chunks, i, i + len(chunk) - 1, chunk)
+            
             try:
                 chunk_results = await self._request_with_retry("/cgi-bin/json_values.cgi", chunk)
-                _LOGGER.debug("Chunk %d-%d returned %d items", i, i + len(chunk), len(chunk_results) if chunk_results else 0)
-                # Extend the results list with the new items
-                if isinstance(chunk_results, list):
-                    results.extend(chunk_results)
+                items_returned = len(chunk_results) if chunk_results else 0
+                _LOGGER.info("Chunk %d/%d returned %d items", chunk_num, total_chunks, items_returned)
+                
+                # Check if this chunk had a low success rate
+                if items_returned < len(chunk) * 0.5:  # Less than 50% success rate
+                    _LOGGER.warning("Chunk %d/%d has low success rate (%d/%d), will retry individually",
+                                  chunk_num, total_chunks, items_returned, len(chunk))
+                    failed_chunks.append(chunk)
                 else:
-                    _LOGGER.warning("Unexpected response format for chunk %s-%s: expected list, got %s",
-                                  i, i + len(chunk), type(chunk_results))
-            except SVKConnectionError as err:
-                _LOGGER.error("Failed to read chunk %s-%s: %s", i, i + len(chunk), err)
-                # Continue with other chunks even if one fails
-            except SVKAuthenticationError as err:
-                _LOGGER.error("Authentication failed while reading chunk %s-%s: %s", i, i + len(chunk), err)
-                # Continue with other chunks even if one fails
-            except SVKTimeoutError as err:
-                _LOGGER.error("Timeout while reading chunk %s-%s: %s", i, i + len(chunk), err)
-                # Continue with other chunks even if one fails
+                    successful_chunks += 1
+                    # Extend the results list with the new items
+                    if isinstance(chunk_results, list):
+                        results.extend(chunk_results)
+                    else:
+                        _LOGGER.warning("Unexpected response format for chunk %d/%d: expected list, got %s",
+                                      chunk_num, total_chunks, type(chunk_results))
+                        failed_chunks.append(chunk)
+                        
             except Exception as err:
-                _LOGGER.error("Unexpected error while reading chunk %s-%s: %s", i, i + len(chunk), err)
-                # Continue with other chunks even if one fails
+                _LOGGER.error("Failed to read chunk %d/%d: %s", chunk_num, total_chunks, err)
+                failed_chunks.append(chunk)
         
-        _LOGGER.debug("read_values completed with total of %d items", len(results))
+        _LOGGER.info("Chunk processing completed: %d successful, %d failed chunks",
+                    successful_chunks, len(failed_chunks))
+        
+        # If we have failed chunks, try individual requests for those IDs
+        if failed_chunks:
+            failed_ids = [entity_id for chunk in failed_chunks for entity_id in chunk]
+            _LOGGER.info("Attempting individual requests for %d IDs from failed chunks", len(failed_ids))
+            
+            try:
+                individual_results = await self._request_individual_ids("/cgi-bin/json_values.cgi", failed_ids)
+                results.extend(individual_results)
+                _LOGGER.info("Individual requests recovered %d additional items", len(individual_results))
+            except Exception as err:
+                _LOGGER.error("Individual requests also failed: %s", err)
+        
+        _LOGGER.info("read_values completed with total of %d items from %d requested IDs",
+                    len(results), len(filtered_ids))
         return results
     
     async def write_value(self, id: int, value: Any) -> bool:
