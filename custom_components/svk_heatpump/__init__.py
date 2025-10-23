@@ -1,5 +1,6 @@
 """SVK Heatpump custom component for Home Assistant."""
 import asyncio
+import datetime
 import logging
 
 from homeassistant.config_entries import ConfigEntry
@@ -145,7 +146,7 @@ async def async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None
         new_scan_interval = entry.options.get("scan_interval", 30)
         old_scan_interval = coordinator.update_interval.total_seconds()
         if old_scan_interval != new_scan_interval:
-            coordinator.update_interval = asyncio.timedelta(seconds=new_scan_interval)
+            coordinator.update_interval = datetime.timedelta(seconds=new_scan_interval)
             _LOGGER.info(
                 "Updated scan interval from %d to %d seconds for SVK Heatpump",
                 old_scan_interval, new_scan_interval

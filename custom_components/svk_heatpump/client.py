@@ -842,6 +842,18 @@ class LOMJsonClient:
         _LOGGER.debug("Making request to: %s", get_url)
         _LOGGER.debug("Requesting %d IDs: %s", len(ids), ids[:10])  # Log first 10 IDs
         
+        try:
+            # Add overall timeout protection to prevent infinite retry loops
+            return await asyncio.wait_for(
+                self._request_with_digest_auth_internal(path, ids, get_url, payload),
+                timeout=30.0  # 30 second timeout for network operations
+            )
+        except asyncio.TimeoutError:
+            _LOGGER.warning("Request to %s timed out after 30 seconds", get_url)
+            raise SVKTimeoutError(f"Request timeout after 30 seconds for {path}")
+    
+    async def _request_with_digest_auth_internal(self, path: str, ids: List[int], get_url: URL, payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Internal method for Digest authentication with retry logic."""
         for attempt in range(self._max_retries):
             try:
                 # First, send an unauthenticated GET request
@@ -1039,7 +1051,7 @@ class LOMJsonClient:
                     continue
                 raise SVKConnectionError(f"Failed to fetch {path}: {err}") from err
         
-        raise SVKConnectionError(f"Max retries exceeded for {path}")
+            raise SVKConnectionError(f"Max retries exceeded for {path}")
     
     async def _request_with_retry(self, path: str, ids: List[int]) -> List[Dict[str, Any]]:
         """Make a request with retry logic for timeouts and blank bodies using Digest authentication."""

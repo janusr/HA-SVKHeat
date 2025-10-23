@@ -112,6 +112,18 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Update data via library."""
         try:
+            # Add overall timeout protection to prevent blocking the event loop
+            return await asyncio.wait_for(
+                self._async_update_data_internal(),
+                timeout=60.0  # 60 second timeout for full update cycle
+            )
+        except asyncio.TimeoutError:
+            _LOGGER.warning("Data update timed out after 60 seconds")
+            raise UpdateFailed("Data update timeout after 60 seconds")
+    
+    async def _async_update_data_internal(self):
+        """Internal method for data update with retry logic."""
+        try:
             # Start the client session if not already started
             await self.client.start()
             
