@@ -377,7 +377,53 @@ ALARM_CODES = {
 }
 
 # JSON API Constants
+
+# Complete list of all available entity IDs
+# This list contains all entities that can be accessed from the heat pump
 DEFAULT_IDS = "297;253;254;255;256;257;259;260;261;262;263;264;420;386;364;403;410;411;409;419;405;406;407;430;429;428;435;436;413;421;184;192;185;186;187;188;189;190;191;197;196;284;285;281;283;282;404;453;427;408;286;280;368;367;369;370;371;372;380;383;384;385;382;500;501;504;137;193;278;113;112;110;109;108;265;266;267;268;269;296;374;503;300;433;299;219;220;221;227;228;232;509;513;516;517;520;522;524;521;529;514;515;510;511;512;518;523;37;555;53;52;291;277;235;243;236;237;238;239;240;241;242;244;245;250;447;423;387;303;362;525;526;390"
+
+# Default enabled entities list
+# This list contains the essential entities that should be enabled by default
+# These entities provide the core functionality and monitoring capabilities
+# Users can enable additional entities through the UI as needed
+DEFAULT_ENABLED_ENTITIES = [
+    # Core temperature sensors
+    253,  # heating_supply_temp
+    254,  # heating_return_temp
+    255,  # water_tank_temp
+    256,  # ambient_temp
+    257,  # room_temp
+    
+    # Heat pump state and status
+    297,  # heatpump_state
+    296,  # heatpump_season_state
+    299,  # capacity_actual
+    300,  # capacity_requested
+    
+    # Essential setpoints
+    193,  # room_setpoint
+    383,  # hot_water_setpoint
+    386,  # hot_water_setpoint_actual
+    420,  # heating_setpoint_actual
+    
+    # Operating mode
+    278,  # season_mode
+    
+    # Important binary outputs
+    220,  # hot_tap_water_output
+    228,  # alarm_output
+    
+    # Solar panel state (if available)
+    364,  # solar_panel_state
+    
+    # Hot water source
+    380,  # hot_water_source
+    
+    # Runtime counters (useful for monitoring)
+    447,  # compressor_runtime
+    301,  # heatpump_runtime
+    387,  # hot_water_runtime
+]
 
 # Binary output IDs (exposed as binary_sensors)
 BINARY_OUTPUT_IDS = {

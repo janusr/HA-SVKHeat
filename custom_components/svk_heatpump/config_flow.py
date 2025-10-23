@@ -54,70 +54,56 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._username = user_input.get(CONF_USERNAME, "")
             self._password = user_input.get(CONF_PASSWORD, "")
             self._allow_basic_auth = user_input.get(CONF_ALLOW_BASIC_AUTH, False)
-            id_list_str = user_input.get(CONF_ID_LIST, DEFAULT_IDS)
             
-            # Validate ID list format if provided
-            if id_list_str and not validate_id_list(id_list_str):
-                errors[CONF_ID_LIST] = "invalid_id_list"
-            else:
-                # Test connection
-                await self.async_set_unique_id(self._host)
-                self._abort_if_unique_id_configured()
+            # Test connection
+            await self.async_set_unique_id(self._host)
+            self._abort_if_unique_id_configured()
+            
+            client = LOMJsonClient(
+                self._host,
+                self._username,
+                self._password,
+                DEFAULT_TIMEOUT,
+                allow_basic_auth=self._allow_basic_auth
+            )
+            
+            try:
+                # Start the client session
+                await client.start()
                 
-                client = LOMJsonClient(
-                    self._host,
-                    self._username,
-                    self._password,
-                    DEFAULT_TIMEOUT,
-                    allow_basic_auth=self._allow_basic_auth
-                )
+                # Use default IDs for validation
+                test_ids = parse_id_list(DEFAULT_IDS)
                 
-                try:
-                    # Start the client session
-                    await client.start()
+                # Validate connection by calling read_values with test IDs
+                # Accept any successful JSON response as validation
+                json_data = await client.read_values(test_ids)
+                
+                if json_data is None:
+                    errors["base"] = "invalid_response"
+                else:
+                    # Connection successful, proceed to entity management explanation
+                    self._client = client
+                    return await self.async_step_entity_management()
                     
-                    # Parse ID list for validation
-                    test_ids = parse_id_list(id_list_str or DEFAULT_IDS)
-                    
-                    # Validate connection by calling read_values with test IDs
-                    # Accept any successful JSON response as validation
-                    json_data = await client.read_values(test_ids)
-                    
-                    if json_data is None:
-                        errors["base"] = "invalid_response"
-                    else:
-                        # Connection successful, create entry
-                        return self.async_create_entry(
-                            title=f"SVK Heatpump ({self._host})",
-                            data={
-                                CONF_HOST: self._host,
-                                CONF_USERNAME: self._username,
-                                CONF_PASSWORD: self._password,
-                                CONF_ALLOW_BASIC_AUTH: self._allow_basic_auth,
-                            },
-                            options={
-                                CONF_ID_LIST: id_list_str or DEFAULT_IDS,
-                            }
-                        )
-                        
-                except SVKAuthenticationError as auth_err:
-                    # Check if this is a Digest authentication issue
-                    error_msg = str(auth_err)
-                    if "does not support Digest authentication" in error_msg:
-                        errors["base"] = "unexpected_auth_scheme"
-                        _LOGGER.error("Device at %s returned unexpected auth scheme (not Digest)", self._host)
-                    elif "Invalid username or password" in error_msg:
-                        errors["base"] = "invalid_auth"
-                        _LOGGER.error("Digest authentication failed for host %s", self._host)
-                    else:
-                        errors["base"] = "invalid_auth"
-                        _LOGGER.error("Authentication failed for host %s: %s", self._host, error_msg)
-                except SVKConnectionError:
-                    errors["base"] = "cannot_connect"
-                except Exception:  # pylint: disable=broad-except
-                    _LOGGER.exception("Unexpected exception")
-                    errors["base"] = "unknown"
-                finally:
+            except SVKAuthenticationError as auth_err:
+                # Check if this is a Digest authentication issue
+                error_msg = str(auth_err)
+                if "does not support Digest authentication" in error_msg:
+                    errors["base"] = "unexpected_auth_scheme"
+                    _LOGGER.error("Device at %s returned unexpected auth scheme (not Digest)", self._host)
+                elif "Invalid username or password" in error_msg:
+                    errors["base"] = "invalid_auth"
+                    _LOGGER.error("Digest authentication failed for host %s", self._host)
+                else:
+                    errors["base"] = "invalid_auth"
+                    _LOGGER.error("Authentication failed for host %s: %s", self._host, error_msg)
+            except SVKConnectionError:
+                errors["base"] = "cannot_connect"
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception("Unexpected exception")
+                errors["base"] = "unknown"
+            finally:
+                if '_client' not in locals():
                     await client.close()
         
         return self.async_show_form(
@@ -126,10 +112,34 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_HOST): str,
                 vol.Optional(CONF_USERNAME, default=""): str,
                 vol.Optional(CONF_PASSWORD, default=""): str,
-                vol.Optional(CONF_ID_LIST, default=DEFAULT_IDS): str,
                 vol.Optional(CONF_ALLOW_BASIC_AUTH, default=False): bool,
             }),
             errors=errors,
+        )
+    
+    async def async_step_entity_management(
+        self, user_input: Optional[Dict[str, Any]] = None
+    ) -> FlowResult:
+        """Handle the entity management explanation step."""
+        # This step is shown for information only and automatically proceeds
+        # Close the client if it's still open
+        if hasattr(self, '_client'):
+            await self._client.close()
+            delattr(self, '_client')
+        
+        # Always proceed to create entry after showing the explanation
+        return self.async_create_entry(
+            title=f"SVK Heatpump ({self._host})",
+            data={
+                CONF_HOST: self._host,
+                CONF_USERNAME: self._username,
+                CONF_PASSWORD: self._password,
+                CONF_ALLOW_BASIC_AUTH: self._allow_basic_auth,
+            },
+            options={
+                # Keep empty options for new configurations
+                # Entity management will be handled through the UI
+            }
         )
     
     async def async_step_reauth(
@@ -160,8 +170,11 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 # Start the client session
                 await client.start()
                 
-                # Get ID list from options or use default
+                # Use default IDs for validation (backward compatibility)
+                # If user has custom ID list in options, use that for validation
                 id_list_str = self._reauth_entry.options.get(CONF_ID_LIST, DEFAULT_IDS)
+                if not id_list_str:  # Handle empty case for new configurations
+                    id_list_str = DEFAULT_IDS
                 test_ids = parse_id_list(id_list_str)
                 
                 # Validate connection by calling read_values with test IDs
@@ -232,7 +245,12 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
     def _get_options_schema(self) -> vol.Schema:
         """Get the options schema."""
         options = self.config_entry.options
-        return vol.Schema({
+        
+        # Check if this is a legacy configuration with custom ID list
+        has_custom_id_list = CONF_ID_LIST in options and options.get(CONF_ID_LIST) != DEFAULT_IDS
+        
+        # Build schema based on configuration type
+        schema_fields = {
             vol.Optional(
                 CONF_SCAN_INTERVAL,
                 default=options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
@@ -249,11 +267,16 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
                 CONF_ENABLE_WRITES,
                 default=options.get(CONF_ENABLE_WRITES, False)
             ): bool,
-            vol.Optional(
+        }
+        
+        # Only include ID list field for legacy configurations
+        if has_custom_id_list:
+            schema_fields[vol.Optional(
                 CONF_ID_LIST,
                 default=options.get(CONF_ID_LIST, DEFAULT_IDS)
-            ): str,
-        })
+            )] = str
+        
+        return vol.Schema(schema_fields)
     
     async def async_step_init(
         self, user_input: Optional[Dict[str, Any]] = None
@@ -268,17 +291,18 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
                 if not isinstance(scan_interval, int) or not 10 <= scan_interval <= 120:
                     errors[CONF_SCAN_INTERVAL] = "invalid_scan_interval"
                 
-                # Handle ID list
-                id_list_str = user_input.get(CONF_ID_LIST, "").strip()
-                
-                # If empty, use default
-                if not id_list_str:
-                    id_list_str = DEFAULT_IDS
-                    user_input[CONF_ID_LIST] = DEFAULT_IDS
-                
-                # Validate ID list format if provided
-                if id_list_str and not validate_id_list(id_list_str):
-                    errors[CONF_ID_LIST] = "invalid_id_list"
+                # Handle ID list only for legacy configurations
+                if CONF_ID_LIST in self.config_entry.options:
+                    id_list_str = user_input.get(CONF_ID_LIST, "").strip()
+                    
+                    # If empty, use default
+                    if not id_list_str:
+                        id_list_str = DEFAULT_IDS
+                        user_input[CONF_ID_LIST] = DEFAULT_IDS
+                    
+                    # Validate ID list format if provided
+                    if id_list_str and not validate_id_list(id_list_str):
+                        errors[CONF_ID_LIST] = "invalid_id_list"
                 
                 if not errors:
                     # Save options
@@ -287,7 +311,7 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
                         data=user_input,
                     )
                     
-                    # Trigger coordinator reload to apply new ID list
+                    # Trigger coordinator reload to apply new settings
                     try:
                         await self.hass.config_entries.async_reload(self.config_entry.entry_id)
                     except Exception as ex:
@@ -308,12 +332,24 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
                 _LOGGER.exception("Unexpected error in options flow: %s", ex)
                 errors["base"] = "unknown"
         
+        # Determine if this is a legacy configuration
+        has_custom_id_list = CONF_ID_LIST in self.config_entry.options and self.config_entry.options.get(CONF_ID_LIST) != DEFAULT_IDS
+        
+        # Set appropriate description placeholders
+        if has_custom_id_list:
+            description_placeholders = {
+                "default_ids": DEFAULT_IDS,
+                "id_list_example": "299;255;256",
+                "id_list_description": "The ID List field is shown because you have a legacy configuration with custom IDs. For new installations, entity management is handled through the UI."
+            }
+        else:
+            description_placeholders = {
+                "id_list_description": ""
+            }
+        
         return self.async_show_form(
             step_id="init",
             data_schema=self._get_options_schema(),
             errors=errors,
-            description_placeholders={
-                "default_ids": DEFAULT_IDS,
-                "id_list_example": "299;255;256"
-            }
+            description_placeholders=description_placeholders,
         )

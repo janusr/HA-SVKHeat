@@ -8,9 +8,12 @@
           "host": "IP-adresse",
           "username": "Brugernavn",
           "password": "Adgangskode",
-          "id_list": "ID-liste (Avanceret)",
           "allow_basic_auth": "Tillad Basic Auth (Forældet)"
         }
+      },
+      "entity_management": {
+        "title": "Enhedshåndtering",
+        "description": "Din SVK Varmepumpe er blevet tilsluttet med succes!\n\nAlle tilgængelige enheder vil blive oprettet, men kun essentielle enheder vil blive aktiveret som standard. Du kan aktivere eller deaktivere enheder via Home Assistant brugerfladen:\n\n1. Gå til Indstillinger > Enheder & Services\n2. Vælg din SVK Varmepumpe integration\n3. Klik på Enheder fanen\n4. Slå enheder til/fra efter behov\n\nDenne tilgang giver dig fuld kontrol over hvilke enheder der er aktive i dit system."
       },
       "reauth_confirm": {
         "title": "Genautentificer SVK Varmepumpe",
@@ -45,7 +48,7 @@
     "step": {
       "init": {
         "title": "SVK Varmepumpe Indstillinger",
-        "description": "Konfigurer indstillinger for SVK Varmepumpe integrationen. ID-liste feltet lader avancerede brugere tilpasse, hvilke datapunkter der skal hentes fra varmepumpen. Brug semikolon- eller komma-separerede ID'er. Lad feltet være tomt for at bruge standard ID'er: {default_ids}",
+        "description": "Konfigurer indstillinger for SVK Varmepumpe integrationen. Enhedshåndtering håndteres nu via Home Assistant brugerfladen - gå til Indstillinger > Enheder & Services > SVK Varmepumpe > Enheder for at aktivere/deaktivere specifikke enheder. {id_list_description}",
         "data": {
           "scan_interval": "Scanningsinterval (sekunder)",
           "enable_solar": "Aktiver Sol-entiteter",

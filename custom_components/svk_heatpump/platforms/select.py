@@ -4,10 +4,11 @@ from typing import Any, List
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import DeviceInfo, EntityRegistry
+from homeassistant.helpers.entity_registry import DISABLED_INTEGRATION
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from ..const import DOMAIN, ID_MAP, SEASON_MODES_REVERSE
+from ..const import DOMAIN, ID_MAP, SEASON_MODES_REVERSE, DEFAULT_ENABLED_ENTITIES
 from ..coordinator import SVKHeatpumpDataCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -23,6 +24,7 @@ class SVKHeatpumpSelect(CoordinatorEntity, SelectEntity):
         entity_id: int,
         config_entry_id: str,
         writable: bool = False,
+        enabled_by_default: bool = True,
     ) -> None:
         """Initialize the select entity."""
         super().__init__(coordinator)
@@ -30,6 +32,7 @@ class SVKHeatpumpSelect(CoordinatorEntity, SelectEntity):
         self._entity_key = entity_key
         self._entity_id = entity_id
         self._writable = writable
+        self._attr_enabled_by_default = enabled_by_default
         
         # Get entity info from ID_MAP (5-element structure)
         entity_info = ID_MAP.get(entity_id, ("", "", None, None, ""))
@@ -156,38 +159,50 @@ async def async_setup_entry(
 ) -> None:
     """Set up SVK Heatpump select entities."""
     coordinator = hass.data[DOMAIN][config_entry.entry_id]["coordinator"]
-    
-    # Get enabled entities from coordinator
-    enabled_entities = coordinator.get_enabled_entities(config_entry)
+    entity_registry = hass.helpers.entity_registry.async_get(hass)
     
     select_entities = []
     
     # Create select entities based on ID_MAP for JSON API
     if coordinator.is_json_client:
+        # Create all possible entities from DEFAULT_IDS
         for entity_id, (entity_key, unit, device_class, state_class, original_name) in ID_MAP.items():
             # Only include select entities
             if entity_key in ["season_mode", "heatpump_state"]:
-                # Check if this entity should be enabled
-                if entity_key in enabled_entities:
-                    # Determine if writable
-                    writable = (entity_key == "season_mode" and
-                               coordinator.config_entry.options.get("enable_writes", False))
-                    
-                    # Choose the appropriate class based on the entity type
-                    if entity_key == "heatpump_state":
-                        sensor_class = SVKHeatpumpHeatpumpStateSelect
-                    elif entity_key == "season_mode":
-                        sensor_class = SVKHeatpumpSeasonModeSelect
-                    else:
-                        sensor_class = SVKHeatpumpSelect
-                    
-                    select_entity = sensor_class(
-                        coordinator,
-                        entity_key,
-                        entity_id,
-                        config_entry.entry_id,
-                        writable
-                    )
+                # Check if this entity should be enabled by default
+                enabled_by_default = entity_id in DEFAULT_ENABLED_ENTITIES
+                
+                # Determine if writable
+                writable = (entity_key == "season_mode" and
+                           coordinator.config_entry.options.get("enable_writes", False))
+                
+                # Choose the appropriate class based on the entity type
+                if entity_key == "heatpump_state":
+                    sensor_class = SVKHeatpumpHeatpumpStateSelect
+                elif entity_key == "season_mode":
+                    sensor_class = SVKHeatpumpSeasonModeSelect
+                else:
+                    sensor_class = SVKHeatpumpSelect
+                
+                select_entity = sensor_class(
+                    coordinator,
+                    entity_key,
+                    entity_id,
+                    config_entry.entry_id,
+                    writable,
+                    enabled_by_default=enabled_by_default
+                )
+                
+                # Get the entity registry entry
+                entity_id_str = f"{config_entry.entry_id}_{entity_id}"
+                registry_entry = entity_registry.async_get(entity_id_str)
+                
+                # If entity exists in registry but should be disabled by default and isn't already disabled, disable it
+                if registry_entry and not enabled_by_default and registry_entry.disabled_by is None:
+                    entity_registry.async_update_entity(entity_id_str, disabled_by=DISABLED_INTEGRATION)
+                
+                # Only add enabled entities to the platform
+                if enabled_by_default or (registry_entry and registry_entry.disabled_by is None):
                     select_entities.append(select_entity)
     else:
         # Fall back to HTML scraping entities for backward compatibility
@@ -195,49 +210,50 @@ async def async_setup_entry(
         pass
     
     # Add additional select entities for system status
-    if "system_status" in enabled_entities:
-        system_status_desc = SelectEntityDescription(
-            key="system_status",
-            name="System Status",
-            options=[
-                "Off",
-                "Standby",
-                "Active",
-                "Alarm",
-                "Unknown"
-            ],
-        )
+    system_status_desc = SelectEntityDescription(
+        key="system_status",
+        name="System Status",
+        options=[
+            "Off",
+            "Standby",
+            "Active",
+            "Alarm",
+            "Unknown"
+        ],
+    )
+    
+    class SystemStatusSelect(SVKHeatpumpSelect):
+        """Select entity for overall system status."""
         
-        class SystemStatusSelect(SVKHeatpumpSelect):
-            """Select entity for overall system status."""
-            
-            def __init__(self, coordinator, config_entry_id):
-                super().__init__(coordinator, "system_status", 0, config_entry_id)
-                self.entity_description = system_status_desc
-            
-            @property
-            def unique_id(self) -> str:
-                """Return unique ID for select entity."""
-                return f"{self._config_entry_id}_system_status"
-            
-            @property
-            def current_option(self) -> str:
-                """Return the current system status."""
-                if self.coordinator.data:
-                    system_status = self.coordinator.get_system_status()
-                    return system_status.get("status", "Unknown")
-                return "Unknown"
-            
-            @property
-            def available(self) -> bool:
-                """System status should always be available when data is present."""
-                return self.coordinator.last_update_success and bool(self.coordinator.data)
+        def __init__(self, coordinator, config_entry_id, enabled_by_default: bool = True):
+            super().__init__(coordinator, "system_status", 0, config_entry_id, False, enabled_by_default)
+            self.entity_description = system_status_desc
         
-        system_status_entity = SystemStatusSelect(
-            coordinator,
-            config_entry.entry_id
-        )
-        select_entities.append(system_status_entity)
+        @property
+        def unique_id(self) -> str:
+            """Return unique ID for select entity."""
+            return f"{self._config_entry_id}_system_status"
+        
+        @property
+        def current_option(self) -> str:
+            """Return the current system status."""
+            if self.coordinator.data:
+                system_status = self.coordinator.get_system_status()
+                return system_status.get("status", "Unknown")
+            return "Unknown"
+        
+        @property
+        def available(self) -> bool:
+            """System status should always be available when data is present."""
+            return self.coordinator.last_update_success and bool(self.coordinator.data)
+    
+    # System status entity is enabled by default
+    system_status_entity = SystemStatusSelect(
+        coordinator,
+        config_entry.entry_id,
+        enabled_by_default=True
+    )
+    select_entities.append(system_status_entity)
     
     if select_entities:
         async_add_entities(select_entities, True)

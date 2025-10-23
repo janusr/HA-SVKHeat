@@ -10,10 +10,11 @@ from homeassistant.components.number import (
 )
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import DeviceInfo, EntityRegistry
+from homeassistant.helpers.entity_registry import DISABLED_INTEGRATION
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from ..const import DOMAIN, ID_MAP
+from ..const import DOMAIN, ID_MAP, DEFAULT_ENABLED_ENTITIES
 from ..coordinator import SVKHeatpumpDataCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -31,6 +32,7 @@ class SVKHeatpumpNumber(CoordinatorEntity, NumberEntity):
         min_value: float,
         max_value: float,
         step: float,
+        enabled_by_default: bool = True,
     ) -> None:
         """Initialize the number entity."""
         super().__init__(coordinator)
@@ -40,6 +42,7 @@ class SVKHeatpumpNumber(CoordinatorEntity, NumberEntity):
         self._min_value = min_value
         self._max_value = max_value
         self._step = step
+        self._attr_enabled_by_default = enabled_by_default
         
         # Get entity info from ID_MAP (5-element structure)
         entity_info = ID_MAP.get(entity_id, ("", "", None, None, ""))
@@ -183,141 +186,148 @@ async def async_setup_entry(
 ) -> None:
     """Set up SVK Heatpump number entities."""
     coordinator = hass.data[DOMAIN][config_entry.entry_id]["coordinator"]
-    
-    # Get enabled entities from coordinator
-    enabled_entities = coordinator.get_enabled_entities(config_entry)
+    entity_registry = hass.helpers.entity_registry.async_get(hass)
     
     number_entities = []
     
     # Create number entities based on ID_MAP for JSON API
     if coordinator.is_json_client:
-        # Only create number entities if writes are enabled
-        if coordinator.config_entry.options.get("enable_writes", False):
-            for entity_id, (entity_key, unit, device_class, state_class, original_name) in ID_MAP.items():
-                # Only include writable setpoint entities
-                if entity_key in ["heating_setpoint", "hot_water_setpoint"]:
-                    # Check if this entity should be enabled
-                    if entity_key in enabled_entities:
-                        # Set min/max values based on entity type
-                        if entity_key == "hot_water_setpoint":
-                            min_value, max_value, step = 40, 65, 1
-                            sensor_class = SVKHeatpumpHotWaterSetpoint
-                        elif entity_key == "heating_setpoint":
-                            min_value, max_value, step = 10, 35, 1
-                            sensor_class = SVKHeatpumpNumber
-                        else:
-                            min_value, max_value, step = 0, 100, 1
-                            sensor_class = SVKHeatpumpNumber
-                        
-                        number_entity = sensor_class(
-                            coordinator,
-                            entity_key,
-                            entity_id,
-                            config_entry.entry_id,
-                            min_value,
-                            max_value,
-                            step
-                        )
-                        number_entities.append(number_entity)
+        # Create all possible entities from DEFAULT_IDS
+        for entity_id, (entity_key, unit, device_class, state_class, original_name) in ID_MAP.items():
+            # Only include writable setpoint entities
+            if entity_key in ["heating_setpoint", "hot_water_setpoint", "room_setpoint"]:
+                # Check if this entity should be enabled by default
+                enabled_by_default = entity_id in DEFAULT_ENABLED_ENTITIES
+                
+                # Set min/max values based on entity type
+                if entity_key == "hot_water_setpoint":
+                    min_value, max_value, step = 40, 65, 1
+                    sensor_class = SVKHeatpumpHotWaterSetpoint
+                elif entity_key == "room_setpoint":
+                    min_value, max_value, step = 10, 30, 1
+                    sensor_class = SVKHeatpumpRoomSetpoint
+                elif entity_key == "heating_setpoint":
+                    min_value, max_value, step = 10, 35, 1
+                    sensor_class = SVKHeatpumpNumber
+                else:
+                    min_value, max_value, step = 0, 100, 1
+                    sensor_class = SVKHeatpumpNumber
+                
+                number_entity = sensor_class(
+                    coordinator,
+                    entity_key,
+                    entity_id,
+                    config_entry.entry_id,
+                    min_value,
+                    max_value,
+                    step,
+                    enabled_by_default=enabled_by_default
+                )
+                
+                # Get the entity registry entry
+                entity_id_str = f"{config_entry.entry_id}_{entity_id}"
+                registry_entry = entity_registry.async_get(entity_id_str)
+                
+                # If entity exists in registry but should be disabled by default and isn't already disabled, disable it
+                if registry_entry and not enabled_by_default and registry_entry.disabled_by is None:
+                    entity_registry.async_update_entity(entity_id_str, disabled_by=DISABLED_INTEGRATION)
+                
+                # Only add enabled entities to the platform
+                if enabled_by_default or (registry_entry and registry_entry.disabled_by is None):
+                    number_entities.append(number_entity)
     else:
         # Fall back to HTML scraping entities for backward compatibility
         # This would need to be implemented based on the old structure
         pass
     
     # Add additional number entities for monitoring (read-only)
-    if "heating_setpoint_monitor" in enabled_entities:
-        heating_setpoint_desc = NumberEntityDescription(
-            key="heating_setpoint_monitor",
-            name="Heating Set Point",
-            native_min_value=10,
-            native_max_value=35,
-            native_step=1,
-            native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-            device_class=NumberDeviceClass.TEMPERATURE,
-        )
+    heating_setpoint_desc = NumberEntityDescription(
+        key="heating_setpoint_monitor",
+        name="Heating Set Point",
+        native_min_value=10,
+        native_max_value=35,
+        native_step=1,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=NumberDeviceClass.TEMPERATURE,
+    )
+    
+    class HeatingSetpointMonitor(SVKHeatpumpNumber):
+        """Read-only monitor for heating setpoint."""
         
-        class HeatingSetpointMonitor(SVKHeatpumpNumber):
-            """Read-only monitor for heating setpoint."""
-            
-            def __init__(self, coordinator, config_entry_id):
-                super().__init__(coordinator, "heating_setpoint_monitor", 0, config_entry_id, 10, 35, 1)
-                self.entity_description = heating_setpoint_desc
-            
-            @property
-            def unique_id(self) -> str:
-                """Return unique ID for number entity."""
-                return f"{self._config_entry_id}_heating_setpoint_monitor"
-            
-            @property
-            def available(self) -> bool:
-                """This monitor should be available when data is present."""
-                return (
-                    self.coordinator.last_update_success
-                    and self.coordinator.is_entity_available("heating_setpoint")
-                )
-            
-            async def async_set_native_value(self, value: float) -> None:
-                """Prevent setting value on monitor."""
-                raise ValueError("This is a read-only monitor entity")
+        def __init__(self, coordinator, config_entry_id, enabled_by_default: bool = False):
+            super().__init__(coordinator, "heating_setpoint_monitor", 0, config_entry_id, 10, 35, 1, enabled_by_default)
+            self.entity_description = heating_setpoint_desc
         
-        heating_monitor = HeatingSetpointMonitor(
-            coordinator,
-            config_entry.entry_id
-        )
-        number_entities.append(heating_monitor)
+        @property
+        def unique_id(self) -> str:
+            """Return unique ID for number entity."""
+            return f"{self._config_entry_id}_heating_setpoint_monitor"
+        
+        @property
+        def available(self) -> bool:
+            """This monitor should be available when data is present."""
+            return (
+                self.coordinator.last_update_success
+                and self.coordinator.is_entity_available("heating_setpoint")
+            )
+        
+        async def async_set_native_value(self, value: float) -> None:
+            """Prevent setting value on monitor."""
+            raise ValueError("This is a read-only monitor entity")
+    
+    # Heating setpoint monitor is disabled by default
+    heating_monitor = HeatingSetpointMonitor(coordinator, config_entry.entry_id, enabled_by_default=False)
+    number_entities.append(heating_monitor)
     
     # Add compressor speed monitor (if available)
-    if "compressor_speed_monitor" in enabled_entities:
-        compressor_speed_desc = NumberEntityDescription(
-            key="compressor_speed_monitor",
-            name="Compressor Speed Monitor",
-            native_min_value=0,
-            native_max_value=100,
-            native_step=1,
-            native_unit_of_measurement="%",
-            device_class=None,
-        )
+    compressor_speed_desc = NumberEntityDescription(
+        key="compressor_speed_monitor",
+        name="Compressor Speed Monitor",
+        native_min_value=0,
+        native_max_value=100,
+        native_step=1,
+        native_unit_of_measurement="%",
+        device_class=None,
+    )
+    
+    class CompressorSpeedMonitor(SVKHeatpumpNumber):
+        """Read-only monitor for compressor speed."""
         
-        class CompressorSpeedMonitor(SVKHeatpumpNumber):
-            """Read-only monitor for compressor speed."""
-            
-            def __init__(self, coordinator, config_entry_id):
-                super().__init__(coordinator, "compressor_speed_monitor", 0, config_entry_id, 0, 100, 1)
-                self.entity_description = compressor_speed_desc
-            
-            @property
-            def unique_id(self) -> str:
-                """Return unique ID for number entity."""
-                return f"{self._config_entry_id}_compressor_speed_monitor"
-            
-            @property
-            def native_value(self) -> Optional[float]:
-                """Return the current compressor speed percentage."""
-                value = self.coordinator.get_entity_value("compressor_speed_pct")
-                if value is not None:
-                    try:
-                        return float(value)
-                    except (ValueError, TypeError):
-                        pass
-                return None
-            
-            @property
-            def available(self) -> bool:
-                """This monitor should be available when data is present."""
-                return (
-                    self.coordinator.last_update_success
-                    and self.coordinator.is_entity_available("compressor_speed_pct")
-                )
-            
-            async def async_set_native_value(self, value: float) -> None:
-                """Prevent setting value on monitor."""
-                raise ValueError("This is a read-only monitor entity")
+        def __init__(self, coordinator, config_entry_id, enabled_by_default: bool = False):
+            super().__init__(coordinator, "compressor_speed_monitor", 0, config_entry_id, 0, 100, 1, enabled_by_default)
+            self.entity_description = compressor_speed_desc
         
-        compressor_monitor = CompressorSpeedMonitor(
-            coordinator,
-            config_entry.entry_id
-        )
-        number_entities.append(compressor_monitor)
+        @property
+        def unique_id(self) -> str:
+            """Return unique ID for number entity."""
+            return f"{self._config_entry_id}_compressor_speed_monitor"
+        
+        @property
+        def native_value(self) -> Optional[float]:
+            """Return the current compressor speed percentage."""
+            value = self.coordinator.get_entity_value("compressor_speed_pct")
+            if value is not None:
+                try:
+                    return float(value)
+                except (ValueError, TypeError):
+                    pass
+            return None
+        
+        @property
+        def available(self) -> bool:
+            """This monitor should be available when data is present."""
+            return (
+                self.coordinator.last_update_success
+                and self.coordinator.is_entity_available("compressor_speed_pct")
+            )
+        
+        async def async_set_native_value(self, value: float) -> None:
+            """Prevent setting value on monitor."""
+            raise ValueError("This is a read-only monitor entity")
+    
+    # Compressor speed monitor is disabled by default
+    compressor_monitor = CompressorSpeedMonitor(coordinator, config_entry.entry_id, enabled_by_default=False)
+    number_entities.append(compressor_monitor)
     
     if number_entities:
         async_add_entities(number_entities, True)

@@ -16,12 +16,14 @@ from homeassistant.const import (
     UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import DeviceInfo, EntityRegistry
+from homeassistant.helpers.entity_registry import DISABLED_INTEGRATION
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from ..const import (
     DOMAIN,
     ID_MAP,
+    DEFAULT_ENABLED_ENTITIES,
 )
 from ..coordinator import SVKHeatpumpDataCoordinator
 
@@ -35,12 +37,14 @@ class SVKHeatpumpSensor(CoordinatorEntity, SensorEntity):
         entity_key: str,
         entity_id: int,
         config_entry_id: str,
+        enabled_by_default: bool = True,
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._config_entry_id = config_entry_id
         self._entity_key = entity_key
         self._entity_id = entity_id
+        self._attr_enabled_by_default = enabled_by_default
         
         # Get entity info from ID_MAP (5-element structure)
         entity_info = ID_MAP.get(entity_id, ("", "", None, None, ""))
@@ -127,27 +131,44 @@ async def async_setup_entry(
 ) -> None:
     """Set up SVK Heatpump sensors."""
     coordinator = hass.data[DOMAIN][config_entry.entry_id]["coordinator"]
-    
-    # Get enabled entities from coordinator
-    enabled_entities = coordinator.get_enabled_entities(config_entry)
+    entity_registry = hass.helpers.entity_registry.async_get(hass)
     
     sensors = []
     
     # Create sensors based on ID_MAP for JSON API
     if coordinator.is_json_client:
+        # Create all possible entities from DEFAULT_IDS
         for entity_id, (entity_key, unit, device_class, state_class, original_name) in ID_MAP.items():
             # Skip binary sensor entities (IDs 222-225 are digital outputs)
             if entity_id in [222, 223, 224, 225]:
                 continue
             
-            # Check if this entity should be enabled
-            if entity_key in enabled_entities:
-                sensor = SVKHeatpumpSensor(
-                    coordinator,
-                    entity_key,
-                    entity_id,
-                    config_entry.entry_id
-                )
+            # Skip non-sensor entities (select, number entities)
+            if entity_key in ["season_mode", "heatpump_state", "heating_setpoint", "hot_water_setpoint", "room_setpoint"]:
+                continue
+            
+            # Check if this entity should be enabled by default
+            enabled_by_default = entity_id in DEFAULT_ENABLED_ENTITIES
+            
+            # Create the sensor
+            sensor = SVKHeatpumpSensor(
+                coordinator,
+                entity_key,
+                entity_id,
+                config_entry.entry_id,
+                enabled_by_default=enabled_by_default
+            )
+            
+            # Get the entity registry entry
+            entity_id_str = f"{config_entry.entry_id}_{entity_id}"
+            registry_entry = entity_registry.async_get(entity_id_str)
+            
+            # If entity exists in registry but should be disabled by default and isn't already disabled, disable it
+            if registry_entry and not enabled_by_default and registry_entry.disabled_by is None:
+                entity_registry.async_update_entity(entity_id_str, disabled_by=DISABLED_INTEGRATION)
+            
+            # Only add enabled entities to the platform
+            if enabled_by_default or (registry_entry and registry_entry.disabled_by is None):
                 sensors.append(sensor)
     else:
         # Fall back to HTML scraping entities for backward compatibility
@@ -167,8 +188,8 @@ async def async_setup_entry(
     class AlarmCountSensor(SVKHeatpumpSensor):
         """Sensor for alarm count."""
         
-        def __init__(self, coordinator, config_entry_id):
-            super().__init__(coordinator, "alarm_count", 0, config_entry_id)
+        def __init__(self, coordinator, config_entry_id, enabled_by_default: bool = True):
+            super().__init__(coordinator, "alarm_count", 0, config_entry_id, enabled_by_default)
             self.entity_description = alarm_count_desc
         
         @property
@@ -184,9 +205,9 @@ async def async_setup_entry(
                 return alarm_summary.get("count", 0)
             return 0
     
-    if "alarm_count" in enabled_entities:
-        alarm_sensor = AlarmCountSensor(coordinator, config_entry.entry_id)
-        sensors.append(alarm_sensor)
+    # Alarm count sensor is enabled by default
+    alarm_sensor = AlarmCountSensor(coordinator, config_entry.entry_id, enabled_by_default=True)
+    sensors.append(alarm_sensor)
     
     # Add last update sensor
     last_update_desc = SensorEntityDescription(
@@ -201,8 +222,8 @@ async def async_setup_entry(
     class LastUpdateSensor(SVKHeatpumpSensor):
         """Sensor for last update timestamp."""
         
-        def __init__(self, coordinator, config_entry_id):
-            super().__init__(coordinator, "last_update_sensor", 0, config_entry_id)
+        def __init__(self, coordinator, config_entry_id, enabled_by_default: bool = True):
+            super().__init__(coordinator, "last_update_sensor", 0, config_entry_id, enabled_by_default)
             self.entity_description = last_update_desc
         
         @property
@@ -217,9 +238,9 @@ async def async_setup_entry(
                 return self.coordinator.data.get("last_update")
             return None
     
-    if "last_update_sensor" in enabled_entities:
-        last_update_sensor = LastUpdateSensor(coordinator, config_entry.entry_id)
-        sensors.append(last_update_sensor)
+    # Last update sensor is enabled by default
+    last_update_sensor = LastUpdateSensor(coordinator, config_entry.entry_id, enabled_by_default=True)
+    sensors.append(last_update_sensor)
     
     if sensors:
         async_add_entities(sensors, True)

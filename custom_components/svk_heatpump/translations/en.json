@@ -8,9 +8,12 @@
           "host": "IP Address",
           "username": "Username",
           "password": "Password",
-          "id_list": "ID List (Advanced)",
           "allow_basic_auth": "Allow Basic Auth (Legacy)"
         }
+      },
+      "entity_management": {
+        "title": "Entity Management",
+        "description": "Your SVK Heatpump has been successfully connected!\n\nAll available entities will be created but only essential ones will be enabled by default. You can enable or disable entities through the Home Assistant UI:\n\n1. Go to Settings > Devices & Services\n2. Select your SVK Heatpump integration\n3. Click on the Entities tab\n4. Toggle entities on/off as needed\n\nThis approach gives you full control over which entities are active in your system."
       },
       "reauth_confirm": {
         "title": "Reauthenticate SVK Heatpump",
@@ -45,7 +48,7 @@
     "step": {
       "init": {
         "title": "SVK Heatpump Options",
-        "description": "Configure the SVK Heatpump integration settings. The ID List field allows advanced users to customize which data points to fetch from the heat pump. Use semicolon or comma-separated IDs. Leave empty to use default IDs: {default_ids}",
+        "description": "Configure the SVK Heatpump integration settings. Entity management is now handled through the Home Assistant UI - go to Settings > Devices & Services > SVK Heatpump > Entities to enable/disable specific entities. {id_list_description}",
         "data": {
           "scan_interval": "Scan Interval (seconds)",
           "enable_solar": "Enable Solar Entities",

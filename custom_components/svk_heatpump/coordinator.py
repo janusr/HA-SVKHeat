@@ -19,6 +19,7 @@ from .const import (
     CONF_ENABLE_WRITES,
     CONF_ID_LIST,
     DEFAULT_IDS,
+    DEFAULT_ENABLED_ENTITIES,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     PAGES,
@@ -54,16 +55,18 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         
         # Initialize ID list for JSON API
         if self.is_json_client:
-            # Get ID list from config entry options or use default
+            # Always use DEFAULT_IDS for fetching all available entities
+            # This ensures we have access to all entities for dynamic enabling/disabling
+            self.id_list = parse_id_list(DEFAULT_IDS)
+            
+            # Store the user-configured ID list for backward compatibility
+            self.user_configured_ids = None
             if config_entry and CONF_ID_LIST in config_entry.options:
                 id_list_str = config_entry.options[CONF_ID_LIST]
                 try:
-                    self.id_list = parse_id_list(id_list_str)
+                    self.user_configured_ids = parse_id_list(id_list_str)
                 except ValueError as err:
-                    _LOGGER.warning("Invalid ID list in config, using default: %s", err)
-                    self.id_list = parse_id_list(DEFAULT_IDS)
-            else:
-                self.id_list = parse_id_list(DEFAULT_IDS)
+                    _LOGGER.warning("Invalid ID list in config, ignoring: %s", err)
             
             # Create reverse mapping for efficient lookups
             self.id_to_entity_map = {}
@@ -136,7 +139,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             self.parsing_errors = []
             self.parsing_warnings = []
             
-            # Read all configured IDs
+            # Read all available entities from DEFAULT_IDS
             json_data = await self.client.read_values(self.id_list)
             
             if not json_data:
@@ -231,7 +234,9 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                 "unknown_ids_count": len(unknown_ids),
                 "sentinel_temps_count": len(sentinel_temps),
                 "clamped_percentages_count": len(clamped_percentages),
-                "successful_parses": len([k for k, v in data.items() if v is not None and not k.startswith("last_") and not k.startswith("ids_") and not k.startswith("parsing_")])
+                "successful_parses": len([k for k, v in data.items() if v is not None and not k.startswith("last_") and not k.startswith("ids_") and not k.startswith("parsing_")]),
+                "enabled_entities_count": len([eid for eid in self.id_to_entity_map if self.is_entity_enabled(eid)]),
+                "disabled_entities_count": len([eid for eid in self.id_to_entity_map if not self.is_entity_enabled(eid)])
             }
             
             # Store detailed parsing information for diagnostics
@@ -469,11 +474,24 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
     
     def get_enabled_entities(self, config_entry):
         """Get list of enabled entities based on configuration."""
-        # If using JSON API, return entities based on ID_MAP
+        # If using JSON API, return entities based on DEFAULT_ENABLED_ENTITIES
         if self.is_json_client:
             enabled_entities = []
-            for entity_id, entity_info in self.id_to_entity_map.items():
-                enabled_entities.append(entity_info["key"])
+            
+            # Check if user has configured a custom ID list (backward compatibility)
+            if self.user_configured_ids:
+                # Use the user's configured ID list
+                for entity_id in self.user_configured_ids:
+                    if entity_id in self.id_to_entity_map:
+                        entity_key = self.id_to_entity_map[entity_id]["key"]
+                        enabled_entities.append(entity_key)
+            else:
+                # Use DEFAULT_ENABLED_ENTITIES as the default enabled entities
+                for entity_id in DEFAULT_ENABLED_ENTITIES:
+                    if entity_id in self.id_to_entity_map:
+                        entity_key = self.id_to_entity_map[entity_id]["key"]
+                        enabled_entities.append(entity_key)
+            
             return enabled_entities
         
         # Fall back to HTML scraping entities for backward compatibility
@@ -546,6 +564,23 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         
         return enabled_entities
     
+    def is_entity_enabled(self, entity_id: int, config_entry=None) -> bool:
+        """Check if an entity should be enabled based on configuration.
+        
+        Args:
+            entity_id: The entity ID to check
+            config_entry: The config entry (optional)
+            
+        Returns:
+            True if the entity should be enabled, False otherwise
+        """
+        # If user has configured a custom ID list, use that for backward compatibility
+        if self.user_configured_ids:
+            return entity_id in self.user_configured_ids
+        
+        # Otherwise, check if the entity is in DEFAULT_ENABLED_ENTITIES
+        return entity_id in DEFAULT_ENABLED_ENTITIES
+    
     def get_entity_value(self, entity_key: str):
         """Get the current value for an entity."""
         if not self.data:
@@ -585,6 +620,34 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         # Check if the entity has a value
         value = self.get_entity_value(entity_key)
         return value is not None
+    
+    def get_all_entities_data(self) -> dict:
+        """Get data for all available entities, including disabled ones.
+        
+        Returns:
+            Dictionary with all entity data, including enabled/disabled status
+        """
+        if not self.is_json_client or not self.data:
+            return {}
+        
+        all_entities = {}
+        
+        for entity_id, entity_info in self.id_to_entity_map.items():
+            entity_key = entity_info["key"]
+            entity_data = {
+                "key": entity_key,
+                "id": entity_id,
+                "name": entity_info["original_name"],
+                "unit": entity_info["unit"],
+                "device_class": entity_info["device_class"],
+                "state_class": entity_info["state_class"],
+                "enabled": self.is_entity_enabled(entity_id),
+                "available": self.is_entity_available(entity_key),
+                "value": self.get_entity_value(entity_key) if self.is_entity_available(entity_key) else None
+            }
+            all_entities[entity_key] = entity_data
+        
+        return all_entities
     
     def get_entity_info(self, entity_key: str):
         """Get entity information (unit, device_class, state_class, original_name) for JSON API."""
@@ -690,6 +753,9 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             "last_json_timestamp": self.last_json_timestamp,
             "id_list_configured": self.id_list,
             "id_list_count": len(self.id_list),
+            "user_configured_ids": self.user_configured_ids,
+            "user_configured_ids_count": len(self.user_configured_ids) if self.user_configured_ids else 0,
+            "using_default_enabled_entities": self.user_configured_ids is None,
             "parsing_errors": self.parsing_errors,
             "parsing_warnings": self.parsing_warnings,
         }
@@ -718,6 +784,8 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         total_entities = 0
         available_entities = 0
         unavailable_entities = 0
+        enabled_entities = 0
+        disabled_entities = 0
         entity_types = {
             "temperature": 0,
             "percentage": 0,
@@ -730,6 +798,13 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         for entity_id, entity_info in self.id_to_entity_map.items():
             entity_key = entity_info["key"]
             total_entities += 1
+            
+            # Check if entity is enabled
+            is_enabled = self.is_entity_enabled(entity_id)
+            if is_enabled:
+                enabled_entities += 1
+            else:
+                disabled_entities += 1
             
             # Check if entity is available
             if self.is_entity_available(entity_key):
@@ -758,6 +833,8 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             "total": total_entities,
             "available": available_entities,
             "unavailable": unavailable_entities,
+            "enabled": enabled_entities,
+            "disabled": disabled_entities,
             "availability_percentage": round((available_entities / total_entities * 100) if total_entities > 0 else 0, 1),
             "entity_types": entity_types
         }
@@ -807,7 +884,31 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                     "entity_id": entity_id,
                     "name": entity_info["original_name"],
                     "unit": entity_info["unit"],
-                    "device_class": entity_info["device_class"]
+                    "device_class": entity_info["device_class"],
+                    "enabled": self.is_entity_enabled(entity_id)
                 })
         
         return unavailable
+    
+    def get_disabled_entities(self) -> list:
+        """Get list of disabled entities that are available but not enabled."""
+        if not self.data:
+            return []
+        
+        disabled = []
+        
+        for entity_id, entity_info in self.id_to_entity_map.items():
+            entity_key = entity_info["key"]
+            
+            # Entity is disabled but available (we have data for it)
+            if not self.is_entity_enabled(entity_id) and self.is_entity_available(entity_key):
+                disabled.append({
+                    "entity_key": entity_key,
+                    "entity_id": entity_id,
+                    "name": entity_info["original_name"],
+                    "unit": entity_info["unit"],
+                    "device_class": entity_info["device_class"],
+                    "value": self.get_entity_value(entity_key)
+                })
+        
+        return disabled
