@@ -29,7 +29,25 @@ def _get_constants():
 _LOGGER = logging.getLogger(__name__)
 
 
-class SVKHeatpumpNumber(CoordinatorEntity, NumberEntity):
+class SVKHeatpumpBaseEntity(CoordinatorEntity):
+    """Base entity for SVK Heatpump integration."""
+    
+    def __init__(
+        self,
+        coordinator: SVKHeatpumpDataCoordinator,
+        config_entry_id: str,
+    ) -> None:
+        """Initialize the base entity."""
+        super().__init__(coordinator)
+        self._config_entry_id = config_entry_id
+    
+    @property
+    def device_info(self):
+        """Return device information from coordinator."""
+        return self.coordinator.device_info
+
+
+class SVKHeatpumpNumber(SVKHeatpumpBaseEntity, NumberEntity):
     """Representation of a SVK Heatpump number entity."""
     
     def __init__(
@@ -44,14 +62,13 @@ class SVKHeatpumpNumber(CoordinatorEntity, NumberEntity):
         enabled_by_default: bool = True,
     ) -> None:
         """Initialize the number entity."""
-        super().__init__(coordinator)
-        self._config_entry_id = config_entry_id
+        super().__init__(coordinator, config_entry_id)
         self._entity_key = entity_key
         self._entity_id = entity_id
         self._min_value = min_value
         self._max_value = max_value
         self._step = step
-        self._attr_enabled_by_default = enabled_by_default
+        self._attr_entity_registry_enabled_default = enabled_by_default
         
         _LOGGER.debug("Creating number entity: %s (ID: %s, range: %s-%s, step: %s, enabled_by_default: %s)",
                      entity_key, entity_id, min_value, max_value, step, enabled_by_default)
@@ -87,10 +104,6 @@ class SVKHeatpumpNumber(CoordinatorEntity, NumberEntity):
         """Return unique ID for number entity."""
         return f"{self._config_entry_id}_{self._entity_id}"
     
-    @property
-    def device_info(self):
-        """Return device information from coordinator."""
-        return self.coordinator.device_info
     
     @property
     def native_value(self) -> Optional[float]:
@@ -197,7 +210,6 @@ async def async_setup_entry(
 ) -> None:
     """Set up SVK Heatpump number entities."""
     coordinator = hass.data[DOMAIN][config_entry.entry_id]["coordinator"]
-    entity_registry = hass.helpers.entity_registry.async_get(hass)
     
     _LOGGER.info("Setting up SVK Heatpump number entities for entry %s", config_entry.entry_id)
     _LOGGER.info("Coordinator is_json_client: %s", coordinator.is_json_client)
@@ -209,7 +221,7 @@ async def async_setup_entry(
         # Get constants using lazy import
         ID_MAP, DEFAULT_ENABLED_ENTITIES = _get_constants()
         
-        # Create all possible entities from DEFAULT_IDS
+        # Create all possible entities from ID_MAP
         for entity_id, (entity_key, unit, device_class, state_class, original_name) in ID_MAP.items():
             # Only include writable setpoint entities
             if entity_key in ["heating_setpoint", "hot_water_setpoint", "room_setpoint"]:
@@ -241,16 +253,6 @@ async def async_setup_entry(
                     enabled_by_default=enabled_by_default
                 )
                 
-                # Get the entity registry entry
-                entity_id_str = f"{config_entry.entry_id}_{entity_id}"
-                registry_entry = entity_registry.async_get(entity_id_str)
-                
-                # If entity exists in registry but should be disabled by default and isn't already disabled, disable it
-                if registry_entry and not enabled_by_default and registry_entry.disabled_by is None:
-                    entity_registry.async_update_entity(entity_id_str, disabled_by=DISABLED_INTEGRATION)
-                
-                # Always add all entities to the platform
-                # Entities not in DEFAULT_ENABLED_ENTITIES will be disabled by default
                 number_entities.append(number_entity)
                 _LOGGER.debug("Added number entity: %s (ID: %s, enabled_by_default: %s)",
                              entity_key, entity_id, enabled_by_default)
@@ -270,11 +272,12 @@ async def async_setup_entry(
         device_class=NumberDeviceClass.TEMPERATURE,
     )
     
-    class HeatingSetpointMonitor(SVKHeatpumpNumber):
+    class HeatingSetpointMonitor(SVKHeatpumpBaseEntity, NumberEntity):
         """Read-only monitor for heating setpoint."""
+        _attr_entity_registry_enabled_default = False
         
-        def __init__(self, coordinator, config_entry_id, enabled_by_default: bool = False):
-            super().__init__(coordinator, "heating_setpoint_monitor", 0, config_entry_id, 10, 35, 1, enabled_by_default)
+        def __init__(self, coordinator, config_entry_id):
+            super().__init__(coordinator, config_entry_id)
             self.entity_description = heating_setpoint_desc
         
         @property
@@ -295,7 +298,7 @@ async def async_setup_entry(
             raise ValueError("This is a read-only monitor entity")
     
     # Heating setpoint monitor is disabled by default
-    heating_monitor = HeatingSetpointMonitor(coordinator, config_entry.entry_id, enabled_by_default=False)
+    heating_monitor = HeatingSetpointMonitor(coordinator, config_entry.entry_id)
     number_entities.append(heating_monitor)
     
     # Add compressor speed monitor (if available)
@@ -309,11 +312,12 @@ async def async_setup_entry(
         device_class=None,
     )
     
-    class CompressorSpeedMonitor(SVKHeatpumpNumber):
+    class CompressorSpeedMonitor(SVKHeatpumpBaseEntity, NumberEntity):
         """Read-only monitor for compressor speed."""
+        _attr_entity_registry_enabled_default = False
         
-        def __init__(self, coordinator, config_entry_id, enabled_by_default: bool = False):
-            super().__init__(coordinator, "compressor_speed_monitor", 0, config_entry_id, 0, 100, 1, enabled_by_default)
+        def __init__(self, coordinator, config_entry_id):
+            super().__init__(coordinator, config_entry_id)
             self.entity_description = compressor_speed_desc
         
         @property
@@ -345,7 +349,7 @@ async def async_setup_entry(
             raise ValueError("This is a read-only monitor entity")
     
     # Compressor speed monitor is disabled by default
-    compressor_monitor = CompressorSpeedMonitor(coordinator, config_entry.entry_id, enabled_by_default=False)
+    compressor_monitor = CompressorSpeedMonitor(coordinator, config_entry.entry_id)
     number_entities.append(compressor_monitor)
     
     _LOGGER.info("Created %d number entities", len(number_entities))

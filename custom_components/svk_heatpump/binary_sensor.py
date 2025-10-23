@@ -24,7 +24,25 @@ def _get_constants():
     return ID_MAP, DEFAULT_ENABLED_ENTITIES
 
 
-class SVKHeatpumpBinarySensor(CoordinatorEntity, BinarySensorEntity):
+class SVKHeatpumpBaseEntity(CoordinatorEntity):
+    """Base entity for SVK Heatpump integration."""
+    
+    def __init__(
+        self,
+        coordinator: SVKHeatpumpDataCoordinator,
+        config_entry_id: str,
+    ) -> None:
+        """Initialize the base entity."""
+        super().__init__(coordinator)
+        self._config_entry_id = config_entry_id
+    
+    @property
+    def device_info(self):
+        """Return device information from coordinator."""
+        return self.coordinator.device_info
+
+
+class SVKHeatpumpBinarySensor(SVKHeatpumpBaseEntity, BinarySensorEntity):
     """Representation of a SVK Heatpump binary sensor."""
     
     def __init__(
@@ -36,11 +54,10 @@ class SVKHeatpumpBinarySensor(CoordinatorEntity, BinarySensorEntity):
         enabled_by_default: bool = True,
     ) -> None:
         """Initialize the binary sensor."""
-        super().__init__(coordinator)
-        self._config_entry_id = config_entry_id
+        super().__init__(coordinator, config_entry_id)
         self._entity_key = entity_key
         self._entity_id = entity_id
-        self._attr_enabled_by_default = enabled_by_default
+        self._attr_entity_registry_enabled_default = enabled_by_default
         
         _LOGGER.debug("Creating binary sensor entity: %s (ID: %s, enabled_by_default: %s)",
                      entity_key, entity_id, enabled_by_default)
@@ -71,10 +88,6 @@ class SVKHeatpumpBinarySensor(CoordinatorEntity, BinarySensorEntity):
         """Return unique ID for binary sensor."""
         return f"{self._config_entry_id}_{self._entity_id}"
     
-    @property
-    def device_info(self):
-        """Return device information from coordinator."""
-        return self.coordinator.device_info
     
     @property
     def is_on(self) -> bool:
@@ -126,7 +139,6 @@ async def async_setup_entry(
 ) -> None:
     """Set up SVK Heatpump binary sensors."""
     coordinator = hass.data[DOMAIN][config_entry.entry_id]["coordinator"]
-    entity_registry = hass.helpers.entity_registry.async_get(hass)
     
     _LOGGER.info("Setting up SVK Heatpump binary sensors for entry %s", config_entry.entry_id)
     _LOGGER.info("Coordinator is_json_client: %s", coordinator.is_json_client)
@@ -138,7 +150,7 @@ async def async_setup_entry(
         # Get constants using lazy import
         ID_MAP, DEFAULT_ENABLED_ENTITIES = _get_constants()
         
-        # Create all possible entities from DEFAULT_IDS
+        # Create all possible entities from ID_MAP
         for entity_id, (entity_key, unit, device_class, state_class, original_name) in ID_MAP.items():
             # Include alarm_active entity
             if entity_key == "alarm_active":
@@ -154,16 +166,6 @@ async def async_setup_entry(
                     enabled_by_default=enabled_by_default
                 )
                 
-                # Get the entity registry entry
-                entity_id_str = f"{config_entry.entry_id}_{entity_id}"
-                registry_entry = entity_registry.async_get(entity_id_str)
-                
-                # If entity exists in registry but should be disabled by default and isn't already disabled, disable it
-                if registry_entry and not enabled_by_default and registry_entry.disabled_by is None:
-                    entity_registry.async_update_entity(entity_id_str, disabled_by=DISABLED_INTEGRATION)
-                
-                # Always add all entities to the platform
-                # Entities not in DEFAULT_ENABLED_ENTITIES will be disabled by default
                 binary_sensors.append(binary_sensor)
             
             # Include digital outputs (IDs 222-225)
@@ -179,16 +181,6 @@ async def async_setup_entry(
                     enabled_by_default=enabled_by_default
                 )
                 
-                # Get the entity registry entry
-                entity_id_str = f"{config_entry.entry_id}_{entity_id}"
-                registry_entry = entity_registry.async_get(entity_id_str)
-                
-                # If entity exists in registry but should be disabled by default and isn't already disabled, disable it
-                if registry_entry and not enabled_by_default and registry_entry.disabled_by is None:
-                    entity_registry.async_update_entity(entity_id_str, disabled_by=DISABLED_INTEGRATION)
-                
-                # Always add all entities to the platform
-                # Entities not in DEFAULT_ENABLED_ENTITIES will be disabled by default
                 binary_sensors.append(binary_sensor)
                 _LOGGER.debug("Added binary sensor entity: %s (ID: %s, enabled_by_default: %s)",
                              entity_key, entity_id, enabled_by_default)
@@ -204,11 +196,12 @@ async def async_setup_entry(
         device_class=BinarySensorDeviceClass.RUNNING,
     )
     
-    class SystemActiveBinarySensor(SVKHeatpumpBinarySensor):
+    class SystemActiveBinarySensor(SVKHeatpumpBaseEntity, BinarySensorEntity):
         """Binary sensor for system active state."""
+        _attr_entity_registry_enabled_default = True
         
-        def __init__(self, coordinator, config_entry_id, enabled_by_default: bool = True):
-            super().__init__(coordinator, "system_active", 0, config_entry_id, enabled_by_default)
+        def __init__(self, coordinator, config_entry_id):
+            super().__init__(coordinator, config_entry_id)
             self.entity_description = system_state_desc
         
         @property
@@ -228,7 +221,7 @@ async def async_setup_entry(
             return False
     
     # System active sensor is enabled by default
-    system_sensor = SystemActiveBinarySensor(coordinator, config_entry.entry_id, enabled_by_default=True)
+    system_sensor = SystemActiveBinarySensor(coordinator, config_entry.entry_id)
     binary_sensors.append(system_sensor)
     
     # Add online status binary sensor
@@ -238,11 +231,12 @@ async def async_setup_entry(
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
     )
     
-    class OnlineStatusBinarySensor(SVKHeatpumpBinarySensor):
+    class OnlineStatusBinarySensor(SVKHeatpumpBaseEntity, BinarySensorEntity):
         """Binary sensor for online status."""
+        _attr_entity_registry_enabled_default = True
         
-        def __init__(self, coordinator, config_entry_id, enabled_by_default: bool = True):
-            super().__init__(coordinator, "online_status", 0, config_entry_id, enabled_by_default)
+        def __init__(self, coordinator, config_entry_id):
+            super().__init__(coordinator, config_entry_id)
             self.entity_description = online_desc
         
         @property
@@ -261,7 +255,7 @@ async def async_setup_entry(
             return True
     
     # Online status sensor is enabled by default
-    online_sensor = OnlineStatusBinarySensor(coordinator, config_entry.entry_id, enabled_by_default=True)
+    online_sensor = OnlineStatusBinarySensor(coordinator, config_entry.entry_id)
     binary_sensors.append(online_sensor)
     
     _LOGGER.info("Created %d binary sensor entities", len(binary_sensors))

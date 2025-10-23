@@ -23,7 +23,25 @@ def _get_constants():
 _LOGGER = logging.getLogger(__name__)
 
 
-class SVKHeatpumpSelect(CoordinatorEntity, SelectEntity):
+class SVKHeatpumpBaseEntity(CoordinatorEntity):
+    """Base entity for SVK Heatpump integration."""
+    
+    def __init__(
+        self,
+        coordinator: SVKHeatpumpDataCoordinator,
+        config_entry_id: str,
+    ) -> None:
+        """Initialize the base entity."""
+        super().__init__(coordinator)
+        self._config_entry_id = config_entry_id
+    
+    @property
+    def device_info(self):
+        """Return device information from coordinator."""
+        return self.coordinator.device_info
+
+
+class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
     """Representation of a SVK Heatpump select entity."""
     
     def __init__(
@@ -36,12 +54,11 @@ class SVKHeatpumpSelect(CoordinatorEntity, SelectEntity):
         enabled_by_default: bool = True,
     ) -> None:
         """Initialize the select entity."""
-        super().__init__(coordinator)
-        self._config_entry_id = config_entry_id
+        super().__init__(coordinator, config_entry_id)
         self._entity_key = entity_key
         self._entity_id = entity_id
         self._writable = writable
-        self._attr_enabled_by_default = enabled_by_default
+        self._attr_entity_registry_enabled_default = enabled_by_default
         
         _LOGGER.debug("Creating select entity: %s (ID: %s, writable: %s, enabled_by_default: %s)",
                      entity_key, entity_id, writable, enabled_by_default)
@@ -82,10 +99,6 @@ class SVKHeatpumpSelect(CoordinatorEntity, SelectEntity):
         """Return unique ID for select entity."""
         return f"{self._config_entry_id}_{self._entity_id}"
     
-    @property
-    def device_info(self):
-        """Return device information from coordinator."""
-        return self.coordinator.device_info
     
     @property
     def current_option(self) -> str:
@@ -174,7 +187,6 @@ async def async_setup_entry(
 ) -> None:
     """Set up SVK Heatpump select entities."""
     coordinator = hass.data[DOMAIN][config_entry.entry_id]["coordinator"]
-    entity_registry = hass.helpers.entity_registry.async_get(hass)
     
     _LOGGER.info("Setting up SVK Heatpump select entities for entry %s", config_entry.entry_id)
     _LOGGER.info("Coordinator is_json_client: %s", coordinator.is_json_client)
@@ -186,7 +198,7 @@ async def async_setup_entry(
         # Get constants using lazy import
         ID_MAP, _, DEFAULT_ENABLED_ENTITIES = _get_constants()
         
-        # Create all possible entities from DEFAULT_IDS
+        # Create all possible entities from ID_MAP
         for entity_id, (entity_key, unit, device_class, state_class, original_name) in ID_MAP.items():
             # Only include select entities
             if entity_key in ["season_mode", "heatpump_state"]:
@@ -214,16 +226,6 @@ async def async_setup_entry(
                     enabled_by_default=enabled_by_default
                 )
                 
-                # Get the entity registry entry
-                entity_id_str = f"{config_entry.entry_id}_{entity_id}"
-                registry_entry = entity_registry.async_get(entity_id_str)
-                
-                # If entity exists in registry but should be disabled by default and isn't already disabled, disable it
-                if registry_entry and not enabled_by_default and registry_entry.disabled_by is None:
-                    entity_registry.async_update_entity(entity_id_str, disabled_by=DISABLED_INTEGRATION)
-                
-                # Always add all entities to the platform
-                # Entities not in DEFAULT_ENABLED_ENTITIES will be disabled by default
                 select_entities.append(select_entity)
                 _LOGGER.debug("Added select entity: %s (ID: %s, enabled_by_default: %s)",
                              entity_key, entity_id, enabled_by_default)
@@ -245,11 +247,12 @@ async def async_setup_entry(
         ],
     )
     
-    class SystemStatusSelect(SVKHeatpumpSelect):
+    class SystemStatusSelect(SVKHeatpumpBaseEntity, SelectEntity):
         """Select entity for overall system status."""
+        _attr_entity_registry_enabled_default = True
         
-        def __init__(self, coordinator, config_entry_id, enabled_by_default: bool = True):
-            super().__init__(coordinator, "system_status", 0, config_entry_id, False, enabled_by_default)
+        def __init__(self, coordinator, config_entry_id):
+            super().__init__(coordinator, config_entry_id)
             self.entity_description = system_status_desc
         
         @property
@@ -271,11 +274,7 @@ async def async_setup_entry(
             return self.coordinator.last_update_success and bool(self.coordinator.data)
     
     # System status entity is enabled by default
-    system_status_entity = SystemStatusSelect(
-        coordinator,
-        config_entry.entry_id,
-        enabled_by_default=True
-    )
+    system_status_entity = SystemStatusSelect(coordinator, config_entry.entry_id)
     select_entities.append(system_status_entity)
     
     _LOGGER.info("Created %d select entities", len(select_entities))

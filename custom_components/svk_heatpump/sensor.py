@@ -36,7 +36,25 @@ def _get_constants():
     return ID_MAP, DEFAULT_ENABLED_ENTITIES
 
 
-class SVKHeatpumpSensor(CoordinatorEntity, SensorEntity):
+class SVKHeatpumpBaseEntity(CoordinatorEntity):
+    """Base entity for SVK Heatpump integration."""
+    
+    def __init__(
+        self,
+        coordinator: SVKHeatpumpDataCoordinator,
+        config_entry_id: str,
+    ) -> None:
+        """Initialize the base entity."""
+        super().__init__(coordinator)
+        self._config_entry_id = config_entry_id
+    
+    @property
+    def device_info(self):
+        """Return device information from coordinator."""
+        return self.coordinator.device_info
+
+
+class SVKHeatpumpSensor(SVKHeatpumpBaseEntity, SensorEntity):
     """Representation of a SVK Heatpump sensor."""
     
     def __init__(
@@ -48,11 +66,10 @@ class SVKHeatpumpSensor(CoordinatorEntity, SensorEntity):
         enabled_by_default: bool = True,
     ) -> None:
         """Initialize the sensor."""
-        super().__init__(coordinator)
-        self._config_entry_id = config_entry_id
+        super().__init__(coordinator, config_entry_id)
         self._entity_key = entity_key
         self._entity_id = entity_id
-        self._attr_enabled_by_default = enabled_by_default
+        self._attr_entity_registry_enabled_default = enabled_by_default
         
         _LOGGER.debug("Creating sensor entity: %s (ID: %s, enabled_by_default: %s)",
                      entity_key, entity_id, enabled_by_default)
@@ -101,10 +118,6 @@ class SVKHeatpumpSensor(CoordinatorEntity, SensorEntity):
         """Return unique ID for sensor."""
         return f"{self._config_entry_id}_{self._entity_id}"
     
-    @property
-    def device_info(self):
-        """Return device information from coordinator."""
-        return self.coordinator.device_info
     
     @property
     def native_value(self) -> Any:
@@ -149,7 +162,6 @@ async def async_setup_entry(
 ) -> None:
     """Set up SVK Heatpump sensors."""
     coordinator = hass.data[DOMAIN][config_entry.entry_id]["coordinator"]
-    entity_registry = hass.helpers.entity_registry.async_get(hass)
     
     _LOGGER.info("Setting up SVK Heatpump sensors for entry %s", config_entry.entry_id)
     _LOGGER.info("Coordinator is_json_client: %s", coordinator.is_json_client)
@@ -161,7 +173,7 @@ async def async_setup_entry(
         # Get constants using lazy import
         ID_MAP, DEFAULT_ENABLED_ENTITIES = _get_constants()
         
-        # Create all possible entities from DEFAULT_IDS
+        # Create all possible entities from ID_MAP
         for entity_id, (entity_key, unit, device_class, state_class, original_name) in ID_MAP.items():
             # Skip binary sensor entities (IDs 222-225 are digital outputs)
             if entity_id in [222, 223, 224, 225]:
@@ -183,16 +195,6 @@ async def async_setup_entry(
                 enabled_by_default=enabled_by_default
             )
             
-            # Get the entity registry entry
-            entity_id_str = f"{config_entry.entry_id}_{entity_id}"
-            registry_entry = entity_registry.async_get(entity_id_str)
-            
-            # If entity exists in registry but should be disabled by default and isn't already disabled, disable it
-            if registry_entry and not enabled_by_default and registry_entry.disabled_by is None:
-                entity_registry.async_update_entity(entity_id_str, disabled_by=DISABLED_INTEGRATION)
-            
-            # Always add all entities to the platform
-            # Entities not in DEFAULT_ENABLED_ENTITIES will be disabled by default
             sensors.append(sensor)
             _LOGGER.debug("Added sensor entity: %s (ID: %s, enabled_by_default: %s)",
                          entity_key, entity_id, enabled_by_default)
@@ -245,11 +247,12 @@ async def async_setup_entry(
         entity_category=EntityCategory.DIAGNOSTIC,
     )
     
-    class AlarmCountSensor(SVKHeatpumpSensor):
+    class AlarmCountSensor(SVKHeatpumpBaseEntity, SensorEntity):
         """Sensor for alarm count."""
+        _attr_entity_registry_enabled_default = True
         
-        def __init__(self, coordinator, config_entry_id, enabled_by_default: bool = True):
-            super().__init__(coordinator, "alarm_count", 0, config_entry_id, enabled_by_default)
+        def __init__(self, coordinator, config_entry_id):
+            super().__init__(coordinator, config_entry_id)
             self.entity_description = alarm_count_desc
         
         @property
@@ -266,7 +269,7 @@ async def async_setup_entry(
             return 0
     
     # Alarm count sensor is enabled by default
-    alarm_sensor = AlarmCountSensor(coordinator, config_entry.entry_id, enabled_by_default=True)
+    alarm_sensor = AlarmCountSensor(coordinator, config_entry.entry_id)
     sensors.append(alarm_sensor)
     
     # Add last update sensor
@@ -279,11 +282,12 @@ async def async_setup_entry(
         entity_category=EntityCategory.DIAGNOSTIC,
     )
     
-    class LastUpdateSensor(SVKHeatpumpSensor):
+    class LastUpdateSensor(SVKHeatpumpBaseEntity, SensorEntity):
         """Sensor for last update timestamp."""
+        _attr_entity_registry_enabled_default = True
         
-        def __init__(self, coordinator, config_entry_id, enabled_by_default: bool = True):
-            super().__init__(coordinator, "last_update_sensor", 0, config_entry_id, enabled_by_default)
+        def __init__(self, coordinator, config_entry_id):
+            super().__init__(coordinator, config_entry_id)
             self.entity_description = last_update_desc
         
         @property
@@ -299,7 +303,7 @@ async def async_setup_entry(
             return None
     
     # Last update sensor is enabled by default
-    last_update_sensor = LastUpdateSensor(coordinator, config_entry.entry_id, enabled_by_default=True)
+    last_update_sensor = LastUpdateSensor(coordinator, config_entry.entry_id)
     sensors.append(last_update_sensor)
     
     _LOGGER.info("Created %d sensor entities", len(sensors))
