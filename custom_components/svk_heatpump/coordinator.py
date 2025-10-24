@@ -278,11 +278,17 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                 ids_to_request = self.id_list
                 _LOGGER.info("Starting JSON data update with %d IDs (30 second timeout)", len(ids_to_request))
                 _LOGGER.debug("Requesting IDs: %s", ids_to_request[:20])  # Log first 20 IDs
+                
+                # Add after line 271:
+                _LOGGER.info("REQUESTED IDs: %s", ids_to_request[:20])  # First 20 IDs
             
             # Read entities based on whether this is first refresh or not
             _LOGGER.debug("About to call client.read_values - this is a potential blocking point")
             json_data = await self.client.read_values(ids_to_request)
             _LOGGER.debug("Returned from client.read_values - got %d items", len(json_data) if json_data else 0)
+            
+            # Add after line 284:
+            _LOGGER.info("RECEIVED IDs: %s", [item.get('id') for item in json_data[:20]])
             
             _LOGGER.info("Received raw JSON data with %d items", len(json_data) if json_data else 0)
             _LOGGER.debug("Raw JSON data sample: %s", json_data[:5] if json_data and len(json_data) > 0 else "None")
@@ -329,6 +335,12 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                     unknown_ids.append({"id": entity_id, "name": name, "value": value})
                     _LOGGER.debug("Unknown entity ID %s with name %s and value %s", entity_id, name, value)
                     continue
+                
+                # After line 330, add:
+                if entity_id not in self.id_to_entity_map:
+                    _LOGGER.warning("UNMAPPED ENTITY ID: %s (name: %s, value: %s)",
+                                   entity_id, name, value)
+                    # Continue with detailed logging instead of skipping
                 
                 entity_info = self.id_to_entity_map[entity_id]
                 entity_key = entity_info["key"]

@@ -604,7 +604,7 @@ class LOMJsonClient:
         self._username = username
         self._password = password
         self._session: Optional[aiohttp.ClientSession] = None
-        self._timeout = aiohttp.ClientTimeout(total=timeout, connect=5.0, sock_read=10.0)
+        self._timeout = aiohttp.ClientTimeout(total=timeout, connect=15.0, sock_read=30.0)
         # Handle backward compatibility for optional parameters
         if chunk_size is None:
             from .const import DEFAULT_CHUNK_SIZE
@@ -659,10 +659,19 @@ class LOMJsonClient:
         Raises:
             SVKInvalidDataFormatError: If the data format is not supported
         """
+        # Add diagnostic logging at the beginning of the method
+        _LOGGER.info("RAW JSON RESPONSE: %s", response_text[:1000])  # First 1000 chars
+        _LOGGER.info("PARSED ITEMS COUNT: %d", len(data) if data else 0)
+        
         _LOGGER.debug("Parsing JSON response with flexible format handling")
         _LOGGER.debug("Response data type: %s", type(data))
         if isinstance(data, (list, dict)):
             _LOGGER.debug("Response data size: %d items", len(data))
+        
+        # Before line 1055, add:
+        _LOGGER.info("JSON RESPONSE STRUCTURE: type=%s, keys=%s, sample=%s",
+                     type(data), list(data.keys())[:10] if isinstance(data, dict) else "N/A",
+                     str(data)[:500])
         
         # Log a sample of the raw data for debugging (only first few items to avoid log spam)
         if isinstance(data, list) and len(data) > 0:

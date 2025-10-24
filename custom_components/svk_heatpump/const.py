@@ -4,7 +4,7 @@ import logging
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "svk_heatpump"
-DEFAULT_TIMEOUT = 5
+DEFAULT_TIMEOUT = 10
 DEFAULT_SCAN_INTERVAL = 30
 DEFAULT_CHUNK_SIZE = 50  # Increased from 25 to reduce number of requests and improve performance
 DEFAULT_ENABLE_CHUNKING = True
@@ -779,10 +779,24 @@ def parse_items(items_list):
             
             # Parse value with proper type conversion
             raw_value = item['value']
-            parsed_value = _parse_value(raw_value)
+            
+            # Replace line 784 with:
+            try:
+                parsed_value = _parse_value(raw_value)
+                if parsed_value is None:
+                    _LOGGER.warning("VALUE PARSING RETURNED NULL: id=%s, raw_value=%s", entity_id, raw_value)
+                    parsed_value = raw_value  # Fallback to raw value
+            except Exception as err:
+                _LOGGER.error("VALUE PARSING FAILED: id=%s, raw_value=%s, error=%s",
+                              entity_id, raw_value, err)
+                parsed_value = raw_value  # Fallback to raw value
             
             result[entity_id] = (name, parsed_value)
             _LOGGER.debug("Successfully parsed item ID %s: %s = %s", entity_id, name, parsed_value)
+            
+            # Add inside the loop:
+            _LOGGER.info("SAMPLE PARSED ITEM: ID=%s, Name=%s, Value=%s -> %s",
+                         entity_id, name, raw_value, parsed_value)
             
         except Exception as err:
             _LOGGER.warning("Error parsing item %s: %s", item, err)
