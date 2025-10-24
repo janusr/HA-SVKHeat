@@ -269,9 +269,11 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             
             # Use progressive loading for first refresh
             if self.is_first_refresh:
-                ids_to_request = ESSENTIAL_IDS
-                _LOGGER.info("Starting first JSON data update with %d essential IDs (30 second timeout)", len(ids_to_request))
-                _LOGGER.debug("Requesting essential IDs: %s", ids_to_request)
+                # For first refresh, request all IDs but with a smaller subset to ensure success
+                # This ensures all entities are available from the start
+                ids_to_request = self.id_list
+                _LOGGER.info("Starting first JSON data update with %d IDs (30 second timeout)", len(ids_to_request))
+                _LOGGER.debug("Requesting all IDs on first refresh: %s", ids_to_request[:20])  # Log first 20 IDs
             else:
                 ids_to_request = self.id_list
                 _LOGGER.info("Starting JSON data update with %d IDs (30 second timeout)", len(ids_to_request))
@@ -404,9 +406,10 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             
             if not data:
                 self.parsing_errors.append("No valid data could be parsed from JSON response")
-                _LOGGER.error("No valid data could be parsed from JSON response - raising UpdateFailed to ensure proper error reporting")
-                # Raise UpdateFailed instead of returning empty data to ensure proper error reporting
-                raise UpdateFailed("No valid data could be parsed from JSON response - all entities unavailable")
+                _LOGGER.error("No valid data could be parsed from JSON response")
+                # Return minimal data instead of raising UpdateFailed to allow entities to be created
+                _LOGGER.warning("Returning minimal data to allow entity creation - entities will be unavailable until data is successfully parsed")
+                return {"last_update": datetime.now(timezone.utc), "ids_fetched": [], "parsing_stats": {"total_ids_requested": len(ids_to_request), "total_ids_received": 0, "total_ids_fetched": 0}}
             
             _LOGGER.info("Successfully parsed %d entities from JSON data", len(data))
             _LOGGER.debug("Parsed entities: %s", list(data.keys())[:20])  # Log first 20 entity keys

@@ -6,7 +6,7 @@ _LOGGER = logging.getLogger(__name__)
 DOMAIN = "svk_heatpump"
 DEFAULT_TIMEOUT = 5
 DEFAULT_SCAN_INTERVAL = 30
-DEFAULT_CHUNK_SIZE = 25  # Reduced from 50 to balance request size and count
+DEFAULT_CHUNK_SIZE = 50  # Increased from 25 to reduce number of requests and improve performance
 DEFAULT_ENABLE_CHUNKING = True
 DEFAULT_EXCLUDED_IDS = ""
 

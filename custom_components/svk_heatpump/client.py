@@ -1390,13 +1390,13 @@ class LOMJsonClient:
         
         # Wait for all chunks to complete (with timeout)
         try:
-            _LOGGER.info("PERFORMANCE: Waiting for %d chunks to complete with 25 second timeout", len(chunk_tasks))
+            _LOGGER.info("PERFORMANCE: Waiting for %d chunks to complete with 60 second timeout", len(chunk_tasks))
             chunk_results_list = await asyncio.wait_for(
                 asyncio.gather(*chunk_tasks, return_exceptions=True),
-                timeout=25.0  # 25 second timeout for all chunks
+                timeout=60.0  # 60 second timeout for all chunks
             )
         except asyncio.TimeoutError:
-            _LOGGER.error("PERFORMANCE: Parallel chunk processing timed out after 25 seconds")
+            _LOGGER.error("PERFORMANCE: Parallel chunk processing timed out after 60 seconds")
             # Cancel any remaining tasks
             for task in chunk_tasks:
                 if not task.done():

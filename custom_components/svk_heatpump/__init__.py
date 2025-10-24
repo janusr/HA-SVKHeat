@@ -59,12 +59,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await client.start()
         _LOGGER.info("Client session started successfully")
         
-        # Test with a simple read operation to validate connection
-        _LOGGER.info("Testing connection with read operation - this is a potential blocking point for Google Assistant")
-        test_data = await client.read_values([299])  # Test with a common ID
-        _LOGGER.info("Connection test successful, received test data: %s", test_data)
-        if not test_data:
-            _LOGGER.warning("Connection test returned empty data - this may indicate authentication or communication issues")
+        # Skip redundant test request to avoid duplicate data fetching during setup
+        _LOGGER.info("Skipping redundant test request to avoid duplicate data fetching during setup")
+        _LOGGER.debug("Connection will be validated during first data refresh instead")
     except SVKAuthenticationError as err:
         _LOGGER.error("Authentication failed for SVK Heatpump at %s: %s", host, err)
         _LOGGER.error("Please check your credentials and authentication settings")
