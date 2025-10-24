@@ -120,7 +120,7 @@ class SVKHeatpumpClient:
         """
         Make a request with LOM320 HTTP Compatibility Mode.
         
-        Always sends preemptive Basic Auth on the first request and on every redirect.
+        Always sends preemptive Digest Auth on the first request and on every redirect.
         Follows redirects manually and re-attaches auth each hop.
         """
         if not self._session:
@@ -596,14 +596,13 @@ def _compute_digest_response(
 class LOMJsonClient:
     """Client for communicating with SVK LOM320 web module using JSON API with Digest authentication."""
     
-    def __init__(self, host: str, username: str = "", password: str = "", timeout: int = 10, allow_basic_auth: bool = False,
+    def __init__(self, host: str, username: str = "", password: str = "", timeout: int = 10,
                  chunk_size: int = None, enable_chunking: bool = None, excluded_ids: str = None):
         """Initialize the JSON client."""
         self.host = host
         self._base = URL.build(scheme="http", host=host)
         self._username = username
         self._password = password
-        self._allow_basic_auth = allow_basic_auth
         self._session: Optional[aiohttp.ClientSession] = None
         self._timeout = aiohttp.ClientTimeout(total=timeout, connect=5.0, sock_read=10.0)
         # Handle backward compatibility for optional parameters
@@ -640,7 +639,6 @@ class LOMJsonClient:
         self._digest_qop = "auth"  # Quality of protection
         self._digest_algorithm = "MD5"  # Hash algorithm
         self._digest_nc = 0  # Nonce count
-        self._basic_auth = aiohttp.BasicAuth(username, password) if (username or password) else None
         self._last_status_code = None  # Track last HTTP status code for diagnostics
         
         # Track failed IDs for better error handling
@@ -928,23 +926,8 @@ class LOMJsonClient:
                         auth_header = resp.headers.get('WWW-Authenticate', '')
                         _LOGGER.info("PERFORMANCE: Received 401 - WWW-Authenticate header: %s", auth_header)
                         if not auth_header.startswith('Digest '):
-                            # Check if Basic Auth is allowed as fallback
-                            if self._allow_basic_auth and auth_header.startswith('Basic '):
-                                _LOGGER.warning("PERFORMANCE: Falling back to Basic authentication as Digest is not supported")
-                                # Retry with Basic Auth
-                                if self._basic_auth:
-                                    headers["Authorization"] = self._basic_auth.encode()
-                                    auth_start = time.time()
-                                    resp = await self._session.get(get_url, headers=headers, allow_redirects=False)
-                                    auth_duration = time.time() - auth_start
-                                    self._last_status_code = resp.status
-                                    _LOGGER.info("PERFORMANCE: Basic auth request completed in %.2fs, status: %d", auth_duration, resp.status)
-                                else:
-                                    _LOGGER.error("Server requires Basic authentication but no credentials provided")
-                                    raise SVKAuthenticationError("Server requires Basic authentication but no credentials provided")
-                            else:
-                                _LOGGER.error("Server does not support Digest authentication - auth scheme: %s", auth_header[:50])
-                                raise SVKAuthenticationError("Server does not support Digest authentication. Please check if your device supports Digest authentication or enable 'Allow Basic Auth (Legacy)' option.")
+                            _LOGGER.error("Server does not support Digest authentication - auth scheme: %s", auth_header[:50])
+                            raise SVKAuthenticationError("Server does not support Digest authentication. Please check if your device supports Digest authentication.")
                         
                         # Parse WWW-Authenticate header
                         auth_params = _parse_www_authenticate(auth_header)
@@ -1534,18 +1517,7 @@ class LOMJsonClient:
                     auth_header = resp.headers.get('WWW-Authenticate', '')
                     _LOGGER.debug("POST request received WWW-Authenticate header: %s", auth_header)
                     if not auth_header.startswith('Digest '):
-                        # Check if Basic Auth is allowed as fallback
-                        if self._allow_basic_auth and auth_header.startswith('Basic '):
-                            _LOGGER.debug("Falling back to Basic authentication for write operation")
-                            # Retry with Basic Auth
-                            if self._basic_auth:
-                                headers["Authorization"] = self._basic_auth.encode()
-                                resp = await self._session.post(url, json=payload, headers=headers, allow_redirects=False)
-                                self._last_status_code = resp.status
-                            else:
-                                raise SVKAuthenticationError("Server requires Basic authentication but no credentials provided")
-                        else:
-                            raise SVKAuthenticationError("Server does not support Digest authentication")
+                        raise SVKAuthenticationError("Server does not support Digest authentication")
                     
                     # Parse WWW-Authenticate header
                     auth_params = _parse_www_authenticate(auth_header)

@@ -16,11 +16,9 @@ TO_REDACT = {
     "secret",
     "auth",
     "login",
-    "basic_auth",
     "_auth",
     "_username",
     "_password",
-    "_basic_auth",
 }
 # Note: We don't redact "host" anymore as it's needed for debugging JSON API connectivity
 # Note: We keep auth_scheme, last_status_code, and digest_auth_info for troubleshooting
@@ -35,7 +33,7 @@ def _redact_auth_data(data: Any) -> Any:
         redacted = {}
         for key, value in data.items():
             # Redact auth-related keys
-            if key.lower() in {"password", "username", "auth", "login", "_auth", "basic_auth", "_username", "_password", "_basic_auth"}:
+            if key.lower() in {"password", "username", "auth", "login", "_auth", "_username", "_password"}:
                 redacted[key] = "**REDACTED**"
             # Recursively process nested dictionaries
             elif isinstance(value, dict):
@@ -159,8 +157,8 @@ async def async_get_config_entry_diagnostics(
             }
             client_info["digest_auth_info"] = digest_info
     elif hasattr(client, '_auth') and client._auth:
-        # This is SVKHeatpumpClient with Basic auth
-        client_info["auth_scheme"] = "basic"
+        # This is SVKHeatpumpClient with Digest auth
+        client_info["auth_scheme"] = "digest"
     
     # Redact sensitive information for privacy (only credentials, keep host/base_url for debugging)
     diagnostics_data["client_info"] = _redact_auth_data(async_redact_data(client_info, {"_auth", "auth", "_username", "_password"}))
@@ -245,8 +243,8 @@ def get_connection_debug_info(client) -> Dict[str, Any]:
         if hasattr(client, '_last_status_code'):
             debug_info["last_status_code"] = client._last_status_code
     elif client and hasattr(client, '_auth') and client._auth:
-        # This is SVKHeatpumpClient with Basic auth
-        debug_info["auth_scheme"] = "basic"
+        # This is SVKHeatpumpClient with Digest auth
+        debug_info["auth_scheme"] = "digest"
     
     # Redact only credentials, keep host/base_url for debugging
     return async_redact_data(debug_info, {"_auth", "auth"})

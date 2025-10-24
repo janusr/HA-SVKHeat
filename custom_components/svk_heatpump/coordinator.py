@@ -241,8 +241,8 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             error_msg = str(err)
             if "does not support Digest authentication" in error_msg:
                 _LOGGER.error("Device at %s returned unexpected auth scheme (not Digest)", self.client.host)
-                _LOGGER.error("Please check if your device supports Digest authentication or enable 'Allow Basic Auth (Legacy)' option")
-                raise UpdateFailed(f"Unexpected auth scheme from device. Please check if your device supports Digest authentication or enable 'Allow Basic Auth (Legacy)' option.") from err
+                _LOGGER.error("Please check if your device supports Digest authentication")
+                raise UpdateFailed(f"Unexpected auth scheme from device. Please check if your device supports Digest authentication.") from err
             elif "Invalid username or password" in error_msg:
                 _LOGGER.error("Digest authentication failed with SVK Heatpump: %s", err)
                 _LOGGER.error("Please check your username and password in the integration configuration")

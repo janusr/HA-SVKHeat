@@ -7,8 +7,7 @@
         "data": {
           "host": "IP Address",
           "username": "Username",
-          "password": "Password",
-          "allow_basic_auth": "Allow Basic Auth (Legacy)"
+          "password": "Password"
         }
       },
       "entity_management": {
@@ -20,8 +19,7 @@
         "description": "The SVK Heatpump integration failed to authenticate. Please update your credentials.",
         "data": {
           "username": "Username",
-          "password": "Password",
-          "allow_basic_auth": "Allow Basic Auth (Legacy)"
+          "password": "Password"
         }
       }
     },

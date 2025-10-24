@@ -7,8 +7,7 @@
         "data": {
           "host": "IP-adresse",
           "username": "Brugernavn",
-          "password": "Adgangskode",
-          "allow_basic_auth": "Tillad Basic Auth (Forældet)"
+          "password": "Adgangskode"
         }
       },
       "entity_management": {
@@ -20,8 +19,7 @@
         "description": "SVK Varmepumpe integrationen kunne ikke autentificeres. Opdater venligst dine loginoplysninger.",
         "data": {
           "username": "Brugernavn",
-          "password": "Adgangskode",
-          "allow_basic_auth": "Tillad Basic Auth (Forældet)"
+          "password": "Adgangskode"
         }
       }
     },

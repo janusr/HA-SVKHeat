@@ -35,10 +35,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     host = entry.data["host"]
     username = entry.data.get("username", "")
     password = entry.data.get("password", "")
-    allow_basic_auth = entry.data.get("allow_basic_auth", False)
     
-    _LOGGER.info("Connecting to SVK Heatpump at %s (username: %s, allow_basic_auth: %s)",
-                 host, username if username else "none", allow_basic_auth)
+    _LOGGER.info("Connecting to SVK Heatpump at %s (username: %s)",
+                 host, username if username else "none")
     
     # Create JSON client with Digest authentication
     # Use DEFAULT_TIMEOUT from const.py to ensure consistent timeout behavior
@@ -48,7 +47,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         username,
         password,
         DEFAULT_TIMEOUT,
-        allow_basic_auth=allow_basic_auth,
         chunk_size=DEFAULT_CHUNK_SIZE,
         enable_chunking=DEFAULT_ENABLE_CHUNKING,
         excluded_ids=DEFAULT_EXCLUDED_IDS
@@ -91,7 +89,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[DOMAIN][entry.entry_id] = {
         "coordinator": coordinator,
         "client": client,
-        "allow_basic_auth": allow_basic_auth,
     }
     _LOGGER.debug("Stored coordinator and client in hass.data")
     

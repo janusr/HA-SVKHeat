@@ -39,7 +39,6 @@ from .const import (
 )
 
 # Configuration constants for authentication
-CONF_ALLOW_BASIC_AUTH = "allow_basic_auth"
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -55,7 +54,6 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._host: Optional[str] = None
         self._username: Optional[str] = None
         self._password: Optional[str] = None
-        self._allow_basic_auth: bool = False
         self._reauth_entry: Optional[config_entries.ConfigEntry] = None
     
     async def async_step_user(
@@ -68,7 +66,6 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._host = user_input[CONF_HOST]
             self._username = user_input.get(CONF_USERNAME, "")
             self._password = user_input.get(CONF_PASSWORD, "")
-            self._allow_basic_auth = user_input.get(CONF_ALLOW_BASIC_AUTH, False)
             
             # Test connection
             await self.async_set_unique_id(self._host)
@@ -79,7 +76,6 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._username,
                 self._password,
                 DEFAULT_TIMEOUT,
-                allow_basic_auth=self._allow_basic_auth,
                 chunk_size=DEFAULT_CHUNK_SIZE,
                 enable_chunking=DEFAULT_ENABLE_CHUNKING,
                 excluded_ids=DEFAULT_EXCLUDED_IDS
@@ -112,7 +108,6 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             vol.Required(CONF_HOST): str,
                             vol.Optional(CONF_USERNAME, default=""): str,
                             vol.Optional(CONF_PASSWORD, default=""): str,
-                            vol.Optional(CONF_ALLOW_BASIC_AUTH, default=False): bool,
                         }),
                         errors=errors,
                     )
@@ -193,7 +188,6 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_HOST): str,
                 vol.Optional(CONF_USERNAME, default=""): str,
                 vol.Optional(CONF_PASSWORD, default=""): str,
-                vol.Optional(CONF_ALLOW_BASIC_AUTH, default=False): bool,
             }),
             errors=errors,
         )
@@ -215,7 +209,6 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_HOST: self._host,
                 CONF_USERNAME: self._username,
                 CONF_PASSWORD: self._password,
-                CONF_ALLOW_BASIC_AUTH: self._allow_basic_auth,
             },
             options={
                 # Keep empty options for new configurations
@@ -243,14 +236,12 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             host = self._reauth_entry.data[CONF_HOST]
             username = user_input.get(CONF_USERNAME, "")
             password = user_input.get(CONF_PASSWORD, "")
-            allow_basic_auth = user_input.get(CONF_ALLOW_BASIC_AUTH, False)
             
             client = LOMJsonClient(
                 host,
                 username,
                 password,
                 DEFAULT_TIMEOUT,
-                allow_basic_auth=allow_basic_auth,
                 chunk_size=DEFAULT_CHUNK_SIZE,
                 enable_chunking=DEFAULT_ENABLE_CHUNKING,
                 excluded_ids=DEFAULT_EXCLUDED_IDS
@@ -285,7 +276,6 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         data_schema=vol.Schema({
                             vol.Optional(CONF_USERNAME, default=""): str,
                             vol.Optional(CONF_PASSWORD, default=""): str,
-                            vol.Optional(CONF_ALLOW_BASIC_AUTH, default=False): bool,
                         }),
                         errors=errors,
                     )
@@ -374,7 +364,6 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema({
                 vol.Optional(CONF_USERNAME, default=""): str,
                 vol.Optional(CONF_PASSWORD, default=""): str,
-                vol.Optional(CONF_ALLOW_BASIC_AUTH, default=False): bool,
             }),
             errors=errors,
         )
