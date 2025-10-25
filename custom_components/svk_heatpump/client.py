@@ -649,6 +649,9 @@ class LOMJsonClient:
         """
         Parse JSON response with flexible format handling.
         
+        Enhanced to better handle the actual heat pump response format which appears
+        to be a dictionary with numeric keys containing nested objects with name/value fields.
+        
         Args:
             data: The parsed JSON data
             response_text: Raw response text for debugging
@@ -668,7 +671,7 @@ class LOMJsonClient:
         if isinstance(data, (list, dict)):
             _LOGGER.debug("Response data size: %d items", len(data))
         
-        # Before line 1055, add:
+        # Enhanced structure logging
         _LOGGER.info("JSON RESPONSE STRUCTURE: type=%s, keys=%s, sample=%s",
                      type(data), list(data.keys())[:10] if isinstance(data, dict) else "N/A",
                      str(data)[:500])
@@ -699,7 +702,7 @@ class LOMJsonClient:
                     f"List has {len(data)} items but none contain 'id' field"
                 )
         
-        # Handle dict format (alternative format)
+        # Handle dict format (alternative format) - Enhanced for heat pump format
         elif isinstance(data, dict):
             _LOGGER.debug("Processing dict format with %d keys", len(data))
             
@@ -711,7 +714,67 @@ class LOMJsonClient:
                     "Response appears to be an error message rather than data"
                 )
             
-            # Check if it's a simple key-value format
+            # ENHANCED: Handle the actual heat pump format: {"253": {"name": "...", "value": "..."}, ...}
+            # This appears to be the actual format returned by the heat pump
+            dict_items = []
+            for key, value in data.items():
+                try:
+                    # Try to convert key to integer ID
+                    entity_id = int(key)
+                    
+                    # Check if value is a dict with name and value fields
+                    if isinstance(value, dict) and 'name' in value and 'value' in value:
+                        # This is the expected heat pump format
+                        dict_items.append({
+                            "id": str(entity_id),
+                            "name": str(value['name']),
+                            "value": str(value['value'])
+                        })
+                        _LOGGER.debug("Successfully parsed heat pump format item: ID=%s, Name=%s, Value=%s",
+                                   entity_id, value['name'], value['value'])
+                    # Check if value is a simple dict with just a value field
+                    elif isinstance(value, dict) and 'value' in value:
+                        dict_items.append({
+                            "id": str(entity_id),
+                            "name": f"entity_{entity_id}",
+                            "value": str(value['value'])
+                        })
+                        _LOGGER.debug("Parsed simplified heat pump format item: ID=%s, Value=%s",
+                                   entity_id, value['value'])
+                    # Check if value is a simple value
+                    elif not isinstance(value, dict):
+                        dict_items.append({
+                            "id": str(entity_id),
+                            "name": f"entity_{entity_id}",
+                            "value": str(value)
+                        })
+                        _LOGGER.debug("Parsed simple key-value item: ID=%s, Value=%s", entity_id, value)
+                    else:
+                        # Complex nested structure that we don't recognize
+                        _LOGGER.warning("Unrecognized nested structure for ID %s: %s", entity_id, str(value)[:100])
+                        # Try to extract any useful information
+                        if isinstance(value, dict):
+                            # Use first string value we find
+                            for sub_key, sub_value in value.items():
+                                if isinstance(sub_value, (str, int, float, bool)):
+                                    dict_items.append({
+                                        "id": str(entity_id),
+                                        "name": f"entity_{entity_id}_{sub_key}",
+                                        "value": str(sub_value)
+                                    })
+                                    _LOGGER.debug("Extracted nested value for ID %s: %s=%s", entity_id, sub_key, sub_value)
+                                    break
+                
+                except (ValueError, TypeError):
+                    # Key is not a numeric ID, skip it
+                    _LOGGER.debug("Skipping non-numeric key: %s", key)
+                    continue
+            
+            if dict_items:
+                _LOGGER.info("Successfully converted heat pump dict format to list with %d items", len(dict_items))
+                return dict_items
+            
+            # Check if it's a simple key-value format (fallback)
             if all(isinstance(k, (str, int, float)) for k in data.keys()):
                 _LOGGER.debug("Converting simple dict format to list")
                 items = []
@@ -732,14 +795,12 @@ class LOMJsonClient:
                     if nested_data:  # Non-empty list
                         return self._parse_json_response_flexible(nested_data, response_text)
             
-            
-            
             # Check if it's a single item format
             if 'id' in data and 'value' in data:
                 _LOGGER.debug("Found single item format, converting to list")
                 return [data]
             
-            # Try to extract any numeric keys as IDs
+            # Try to extract any numeric keys as IDs (fallback)
             numeric_items = []
             for key, value in data.items():
                 try:

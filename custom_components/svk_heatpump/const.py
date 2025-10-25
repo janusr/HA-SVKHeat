@@ -22,6 +22,7 @@ CONF_ID_LIST = "id_list"
 CONF_CHUNK_SIZE = "chunk_size"
 CONF_ENABLE_CHUNKING = "enable_chunking"
 CONF_EXCLUDED_IDS = "excluded_ids"
+CONF_STRICT_PARSING = "strict_parsing"
 
 # Page endpoints with dataset parameters
 PAGES = {
@@ -733,6 +734,8 @@ def validate_id_list(id_list_str):
 def parse_items(items_list):
     """Parse a list of JSON items with id, name, and value fields.
     
+    Enhanced with per-entity error tracking to identify parsing patterns.
+    
     Args:
         items_list (list): List of dictionaries with 'id', 'name', and 'value' fields
         
@@ -745,29 +748,57 @@ def parse_items(items_list):
     """
     result = {}
     
+    # Per-entity error tracking
+    parsing_errors = []
+    parsing_warnings = []
+    successful_parses = []
+    
     if not items_list:
         _LOGGER.debug("Empty items list provided to parse_items")
         return result
     
-    _LOGGER.debug("Parsing %d items from JSON response", len(items_list))
+    _LOGGER.info("PARSING PIPELINE: Starting to parse %d items from JSON response", len(items_list))
     
     for item in items_list:
         try:
             # Validate item structure
             if not isinstance(item, dict):
-                _LOGGER.warning("Skipping invalid item (not a dict): %s", item)
+                error_detail = {
+                    "entity_id": "unknown",
+                    "reason": "not_a_dict",
+                    "item": str(item)[:100],
+                    "raw_data": item
+                }
+                parsing_errors.append(error_detail)
+                _LOGGER.warning("PARSING ERROR: Skipping invalid item (not a dict): %s", item)
                 continue
                 
             # More flexible field validation - allow missing 'name' field
             if 'id' not in item or 'value' not in item:
-                _LOGGER.warning("Skipping item missing required fields (id/value): %s", item)
+                error_detail = {
+                    "entity_id": item.get('id', 'unknown'),
+                    "reason": "missing_required_fields",
+                    "missing_fields": [f for f in ['id', 'value'] if f not in item],
+                    "item": str(item)[:100],
+                    "raw_data": item
+                }
+                parsing_errors.append(error_detail)
+                _LOGGER.warning("PARSING ERROR: Skipping item missing required fields (id/value): %s", item)
                 continue
             
             # Extract and validate ID
             try:
                 entity_id = int(item['id'])
             except (ValueError, TypeError):
-                _LOGGER.warning("Invalid ID '%s' in item: %s", item.get('id'), item)
+                error_detail = {
+                    "entity_id": item.get('id', 'unknown'),
+                    "reason": "invalid_id_format",
+                    "raw_id": item.get('id'),
+                    "item": str(item)[:100],
+                    "raw_data": item
+                }
+                parsing_errors.append(error_detail)
+                _LOGGER.warning("PARSING ERROR: Invalid ID '%s' in item: %s", item.get('id'), item)
                 continue
             
             # Extract name or create default if missing
@@ -775,7 +806,14 @@ def parse_items(items_list):
                 name = str(item['name'])
             else:
                 name = f"entity_{entity_id}"
-                _LOGGER.debug("Generated default name '%s' for item ID %s", name, entity_id)
+                warning_detail = {
+                    "entity_id": entity_id,
+                    "reason": "missing_name_field",
+                    "generated_name": name,
+                    "item": str(item)[:100]
+                }
+                parsing_warnings.append(warning_detail)
+                _LOGGER.debug("PARSING WARNING: Generated default name '%s' for item ID %s", name, entity_id)
             
             # Parse value with proper type conversion
             raw_value = item['value']
@@ -785,32 +823,124 @@ def parse_items(items_list):
             try:
                 parsed_value = _parse_value(raw_value)
                 if parsed_value is None:
-                    _LOGGER.warning("VALUE PARSING RETURNED NULL: id=%s, raw_value=%s - entity will be excluded from results",
-                                   entity_id, raw_value)
+                    error_detail = {
+                        "entity_id": entity_id,
+                        "name": name,
+                        "reason": "value_parsing_returned_null",
+                        "raw_value": str(raw_value)[:100],
+                        "value_type": type(raw_value).__name__
+                    }
+                    parsing_errors.append(error_detail)
+                    _LOGGER.warning("PARSING ERROR: VALUE PARSING RETURNED NULL: id=%s, name=%s, raw_value=%s - entity will be excluded from results",
+                                   entity_id, name, raw_value)
                     # Skip adding this entity to results when parsing returns None
                     continue
             except Exception as err:
-                _LOGGER.error("VALUE PARSING FAILED: id=%s, raw_value=%s, error=%s - entity will be excluded from results",
-                              entity_id, raw_value, err)
+                error_detail = {
+                    "entity_id": entity_id,
+                    "name": name,
+                    "reason": "value_parsing_failed",
+                    "raw_value": str(raw_value)[:100],
+                    "value_type": type(raw_value).__name__,
+                    "error": str(err)
+                }
+                parsing_errors.append(error_detail)
+                _LOGGER.error("PARSING ERROR: VALUE PARSING FAILED: id=%s, name=%s, raw_value=%s, error=%s - entity will be excluded from results",
+                              entity_id, name, raw_value, err)
                 # Skip adding this entity to results when parsing fails
                 continue
             
             # Only add entities with successfully parsed values to results
             result[entity_id] = (name, parsed_value)
+            
+            # Track successful parsing
+            success_detail = {
+                "entity_id": entity_id,
+                "name": name,
+                "raw_value": str(raw_value)[:100],
+                "parsed_value": str(parsed_value)[:100],
+                "parsed_type": type(parsed_value).__name__
+            }
+            successful_parses.append(success_detail)
+            
             _LOGGER.debug("Successfully parsed item ID %s: %s = %s", entity_id, name, parsed_value)
             
             # Add enhanced logging for debugging parsing successes
-            _LOGGER.info("SUCCESSFULLY PARSED: ID=%s, Name=%s, RawValue=%s -> ParsedValue=%s (type: %s)",
+            _LOGGER.info("PARSING SUCCESS: ID=%s, Name=%s, RawValue=%s -> ParsedValue=%s (type: %s)",
                          entity_id, name, raw_value, parsed_value, type(parsed_value).__name__)
             
         except Exception as err:
-            _LOGGER.warning("Error parsing item %s: %s", item, err)
+            # Catch-all error for unexpected issues
+            error_detail = {
+                "entity_id": item.get('id', 'unknown') if isinstance(item, dict) else 'unknown',
+                "reason": "unexpected_parsing_error",
+                "error": str(err),
+                "item": str(item)[:100]
+            }
+            parsing_errors.append(error_detail)
+            _LOGGER.warning("PARSING ERROR: Unexpected error parsing item %s: %s", item, err)
             # Continue processing other items instead of failing completely
             continue
     
+    # Enhanced summary logging with error patterns
     _LOGGER.info("PARSING SUMMARY: Successfully parsed %d items with valid values out of %d total items",
                  len(result), len(items_list))
+    
+    if parsing_errors:
+        _LOGGER.error("PARSING ERRORS SUMMARY: %d parsing errors occurred", len(parsing_errors))
+        # Group errors by reason for pattern analysis
+        error_reasons = {}
+        for error in parsing_errors:
+            reason = error.get('reason', 'unknown')
+            error_reasons[reason] = error_reasons.get(reason, 0) + 1
+        _LOGGER.error("PARSING ERROR PATTERNS: %s", error_reasons)
+        
+        # Log first few errors for debugging
+        for i, error in enumerate(parsing_errors[:5]):
+            _LOGGER.error("PARSING ERROR #%d: ID=%s, Reason=%s, Details=%s",
+                         i+1, error.get('entity_id'), error.get('reason'), error)
+    
+    if parsing_warnings:
+        _LOGGER.warning("PARSING WARNINGS SUMMARY: %d parsing warnings occurred", len(parsing_warnings))
+        # Group warnings by reason for pattern analysis
+        warning_reasons = {}
+        for warning in parsing_warnings:
+            reason = warning.get('reason', 'unknown')
+            warning_reasons[reason] = warning_reasons.get(reason, 0) + 1
+        _LOGGER.warning("PARSING WARNING PATTERNS: %s", warning_reasons)
+    
     _LOGGER.debug("Final parsed entities: %s", list(result.keys()))
+    
+    # Add parsing statistics to the result for diagnostics
+    parsing_stats = {
+        "total_items": len(items_list),
+        "successful_parses": len(successful_parses),
+        "parsing_errors": len(parsing_errors),
+        "parsing_warnings": len(parsing_warnings),
+        "success_rate": round(len(result) / len(items_list) * 100, 1) if items_list else 0,
+        "error_patterns": {error.get('reason'): error.get('error') for error in parsing_errors[:10]},
+        "warning_patterns": {warning.get('reason'): warning.get('generated_name') for warning in parsing_warnings[:10]}
+    }
+    
+    # Store detailed parsing information for diagnostics
+    # We'll attach this to the result in a way that doesn't break existing code
+    if hasattr(parse_items, '_last_parsing_stats'):
+        parse_items._last_parsing_stats = parsing_stats
+    else:
+        setattr(parse_items, '_last_parsing_stats', parsing_stats)
+    
+    if hasattr(parse_items, '_last_parsing_errors'):
+        parse_items._last_parsing_errors = parsing_errors
+    else:
+        setattr(parse_items, '_last_parsing_errors', parsing_errors)
+    
+    if hasattr(parse_items, '_last_parsing_warnings'):
+        parse_items._last_parsing_warnings = parsing_warnings
+    else:
+        setattr(parse_items, '_last_parsing_warnings', parsing_warnings)
+    
+    _LOGGER.info("PARSING STATISTICS: %s", parsing_stats)
+    
     return result
 
 

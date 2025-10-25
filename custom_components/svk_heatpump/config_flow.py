@@ -27,6 +27,7 @@ from .const import (
     CONF_CHUNK_SIZE,
     CONF_ENABLE_CHUNKING,
     CONF_EXCLUDED_IDS,
+    CONF_STRICT_PARSING,
     DEFAULT_IDS,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_CHUNK_SIZE,
@@ -420,6 +421,11 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
                 CONF_EXCLUDED_IDS,
                 default=options.get(CONF_EXCLUDED_IDS, DEFAULT_EXCLUDED_IDS)
             ): str,
+            # New strict parsing option
+            vol.Optional(
+                CONF_STRICT_PARSING,
+                default=options.get(CONF_STRICT_PARSING, True)
+            ): bool,
         }
         
         # Only include ID list field for legacy configurations

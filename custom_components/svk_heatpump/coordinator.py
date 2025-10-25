@@ -22,6 +22,7 @@ from .const import (
     CONF_CHUNK_SIZE,
     CONF_ENABLE_CHUNKING,
     CONF_EXCLUDED_IDS,
+    CONF_STRICT_PARSING,
     DEFAULT_IDS,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_CHUNK_SIZE,
@@ -436,20 +437,56 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             _LOGGER.info("DATA PIPELINE: Issues found - %d unknown IDs, %d sentinel temps, %d parsing failures",
                         len(unknown_ids), len(sentinel_temps), len(parsing_failures))
             
-            # Enhanced error detection for parsing failures
+            # Enhanced error detection for parsing failures with graceful degradation
             total_enabled_entities = len([eid for eid in self.id_to_entity_map if self.is_entity_enabled(eid)])
-            critical_failure_threshold = 0.5  # If less than 50% of enabled entities parse successfully, consider it a critical failure
+            
+            # Get parsing mode from config (strict vs lenient)
+            strict_parsing = True  # Default to strict for backward compatibility
+            if self.config_entry:
+                strict_parsing = self.config_entry.options.get(CONF_STRICT_PARSING, True)
+            
+            # Set critical failure threshold based on parsing mode
+            if strict_parsing:
+                critical_failure_threshold = 0.5  # 50% for strict mode
+                mode_description = "strict"
+            else:
+                critical_failure_threshold = 0.2  # 20% for lenient mode
+                mode_description = "lenient"
+            
+            _LOGGER.info("PARSING MODE: %s parsing enabled (threshold: %.1f%%)",
+                        mode_description, critical_failure_threshold * 100)
             
             if total_enabled_entities > 0:
                 success_rate = successful_entities / total_enabled_entities
+                
+                # Always log parsing statistics for diagnostics
+                _LOGGER.info("PARSING STATISTICS: %d/%d entities successfully parsed (%.1f%% success rate)",
+                             successful_entities, total_enabled_entities, success_rate * 100)
+                
                 if success_rate < critical_failure_threshold:
-                    self.parsing_errors.append(f"Critical parsing failure: Only {successful_entities}/{total_enabled_entities} ({success_rate:.1%}) entities parsed successfully")
-                    _LOGGER.error("CRITICAL: Parsing failure detected - only %d/%d (%.1f%%) enabled entities parsed successfully",
-                                 successful_entities, total_enabled_entities, success_rate * 100)
-                    _LOGGER.error("This indicates a serious parsing issue that should trigger retry mechanisms")
-                    _LOGGER.error("Common causes: incompatible heat pump model, API changes, or network corruption")
-                    # Raise UpdateFailed to trigger proper retry mechanisms instead of returning partial data
-                    raise UpdateFailed(f"Critical parsing failure: Only {successful_entities}/{total_enabled_entities} ({success_rate:.1%}) entities parsed successfully - check heat pump compatibility")
+                    # Different behavior based on parsing mode
+                    if strict_parsing:
+                        self.parsing_errors.append(f"Critical parsing failure: Only {successful_entities}/{total_enabled_entities} ({success_rate:.1%}) entities parsed successfully")
+                        _LOGGER.error("CRITICAL: Parsing failure detected - only %d/%d (%.1f%%) enabled entities parsed successfully",
+                                     successful_entities, total_enabled_entities, success_rate * 100)
+                        _LOGGER.error("This indicates a serious parsing issue that should trigger retry mechanisms")
+                        _LOGGER.error("Common causes: incompatible heat pump model, API changes, or network corruption")
+                        # Raise UpdateFailed to trigger proper retry mechanisms instead of returning partial data
+                        raise UpdateFailed(f"Critical parsing failure: Only {successful_entities}/{total_enabled_entities} ({success_rate:.1%}) entities parsed successfully - check heat pump compatibility")
+                    else:
+                        # Lenient mode - log warning but continue with partial data
+                        self.parsing_warnings.append(f"Low parsing success rate: Only {successful_entities}/{total_enabled_entities} ({success_rate:.1%}) entities parsed successfully")
+                        _LOGGER.warning("LENIENT PARSING: Low success rate but continuing - %d/%d (%.1f%%) entities parsed successfully",
+                                        successful_entities, total_enabled_entities, success_rate * 100)
+                        _LOGGER.warning("LENIENT PARSING: Some entities may be unavailable due to parsing issues")
+                        _LOGGER.warning("LENIENT PARSING: Consider switching to strict mode if this persists")
+                        
+                        # Add warning to data for UI display
+                        data["parsing_warning"] = f"Low parsing success rate: {successful_entities}/{total_enabled_entities} ({success_rate:.1%}%) entities parsed successfully"
+                else:
+                    # Success - log info and continue
+                    _LOGGER.info("PARSING SUCCESS: %d/%d entities successfully parsed (%.1f%% success rate) - above threshold of %.1f%%",
+                                 successful_entities, total_enabled_entities, success_rate * 100, critical_failure_threshold * 100)
             
             # Check if we have any valid entity data (excluding metadata)
             valid_entity_data = {k: v for k, v in data.items()

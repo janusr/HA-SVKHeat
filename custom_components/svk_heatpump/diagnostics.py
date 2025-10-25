@@ -82,6 +82,15 @@ async def async_get_config_entry_diagnostics(
         if coordinator.data and "parsing_stats" in coordinator.data:
             diagnostics_data["parsing_statistics"] = coordinator.data["parsing_stats"]
             diagnostics_data["parsing_details"] = coordinator.data.get("parsing_details", {})
+            
+            # Enhanced parsing diagnostics from const.py parse_items function
+            from . import const
+            if hasattr(const.parse_items, '_last_parsing_stats'):
+                diagnostics_data["enhanced_parsing_statistics"] = const.parse_items._last_parsing_stats
+            if hasattr(const.parse_items, '_last_parsing_errors'):
+                diagnostics_data["parsing_errors"] = const.parse_items._last_parsing_errors
+            if hasattr(const.parse_items, '_last_parsing_warnings'):
+                diagnostics_data["parsing_warnings"] = const.parse_items._last_parsing_warnings
         
         # Add unavailable entities list
         unavailable_entities = coordinator.get_unavailable_entities()
@@ -290,6 +299,15 @@ def create_diagnostics_report(hass: HomeAssistant, config_entry: ConfigEntry) ->
         if coordinator.data and "parsing_stats" in coordinator.data:
             report["parsing_statistics"] = coordinator.data["parsing_stats"]
             report["parsing_details"] = coordinator.data.get("parsing_details", {})
+            
+            # Enhanced parsing diagnostics from const.py parse_items function
+            from . import const
+            if hasattr(const.parse_items, '_last_parsing_stats'):
+                report["enhanced_parsing_statistics"] = const.parse_items._last_parsing_stats
+            if hasattr(const.parse_items, '_last_parsing_errors'):
+                report["parsing_errors"] = const.parse_items._last_parsing_errors
+            if hasattr(const.parse_items, '_last_parsing_warnings'):
+                report["parsing_warnings"] = const.parse_items._last_parsing_warnings
         
         # Add unavailable entities list
         unavailable_entities = coordinator.get_unavailable_entities()
