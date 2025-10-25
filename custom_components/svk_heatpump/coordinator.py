@@ -15,19 +15,12 @@ from .client import (
     SVKHeatpumpParser,
 )
 from .const import (
-    CONF_ENABLE_COUNTERS,
-    CONF_ENABLE_SOLAR,
     CONF_ENABLE_WRITES,
     CONF_ID_LIST,
     CONF_CHUNK_SIZE,
-    CONF_ENABLE_CHUNKING,
-    CONF_EXCLUDED_IDS,
-    CONF_STRICT_PARSING,
     DEFAULT_IDS,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_CHUNK_SIZE,
-    DEFAULT_ENABLE_CHUNKING,
-    DEFAULT_EXCLUDED_IDS,
     DOMAIN,
     PAGES,
     HEATPUMP_STATES,
@@ -440,18 +433,9 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             # Enhanced error detection for parsing failures with graceful degradation
             total_enabled_entities = len([eid for eid in self.id_to_entity_map if self.is_entity_enabled(eid)])
             
-            # Get parsing mode from config (strict vs lenient)
-            strict_parsing = True  # Default to strict for backward compatibility
-            if self.config_entry:
-                strict_parsing = self.config_entry.options.get(CONF_STRICT_PARSING, True)
-            
-            # Set critical failure threshold based on parsing mode
-            if strict_parsing:
-                critical_failure_threshold = 0.5  # 50% for strict mode
-                mode_description = "strict"
-            else:
-                critical_failure_threshold = 0.2  # 20% for lenient mode
-                mode_description = "lenient"
+            # Always use strict parsing with 50% failure threshold
+            critical_failure_threshold = 0.5  # 50% for strict mode
+            mode_description = "strict"
             
             _LOGGER.info("PARSING MODE: %s parsing enabled (threshold: %.1f%%)",
                         mode_description, critical_failure_threshold * 100)
@@ -464,25 +448,14 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                              successful_entities, total_enabled_entities, success_rate * 100)
                 
                 if success_rate < critical_failure_threshold:
-                    # Different behavior based on parsing mode
-                    if strict_parsing:
-                        self.parsing_errors.append(f"Critical parsing failure: Only {successful_entities}/{total_enabled_entities} ({success_rate:.1%}) entities parsed successfully")
-                        _LOGGER.error("CRITICAL: Parsing failure detected - only %d/%d (%.1f%%) enabled entities parsed successfully",
-                                     successful_entities, total_enabled_entities, success_rate * 100)
-                        _LOGGER.error("This indicates a serious parsing issue that should trigger retry mechanisms")
-                        _LOGGER.error("Common causes: incompatible heat pump model, API changes, or network corruption")
-                        # Raise UpdateFailed to trigger proper retry mechanisms instead of returning partial data
-                        raise UpdateFailed(f"Critical parsing failure: Only {successful_entities}/{total_enabled_entities} ({success_rate:.1%}) entities parsed successfully - check heat pump compatibility")
-                    else:
-                        # Lenient mode - log warning but continue with partial data
-                        self.parsing_warnings.append(f"Low parsing success rate: Only {successful_entities}/{total_enabled_entities} ({success_rate:.1%}) entities parsed successfully")
-                        _LOGGER.warning("LENIENT PARSING: Low success rate but continuing - %d/%d (%.1f%%) entities parsed successfully",
-                                        successful_entities, total_enabled_entities, success_rate * 100)
-                        _LOGGER.warning("LENIENT PARSING: Some entities may be unavailable due to parsing issues")
-                        _LOGGER.warning("LENIENT PARSING: Consider switching to strict mode if this persists")
-                        
-                        # Add warning to data for UI display
-                        data["parsing_warning"] = f"Low parsing success rate: {successful_entities}/{total_enabled_entities} ({success_rate:.1%}%) entities parsed successfully"
+                    # Strict parsing - raise UpdateFailed on critical failures
+                    self.parsing_errors.append(f"Critical parsing failure: Only {successful_entities}/{total_enabled_entities} ({success_rate:.1%}) entities parsed successfully")
+                    _LOGGER.error("CRITICAL: Parsing failure detected - only %d/%d (%.1f%%) enabled entities parsed successfully",
+                                 successful_entities, total_enabled_entities, success_rate * 100)
+                    _LOGGER.error("This indicates a serious parsing issue that should trigger retry mechanisms")
+                    _LOGGER.error("Common causes: incompatible heat pump model, API changes, or network corruption")
+                    # Raise UpdateFailed to trigger proper retry mechanisms instead of returning partial data
+                    raise UpdateFailed(f"Critical parsing failure: Only {successful_entities}/{total_enabled_entities} ({success_rate:.1%}) entities parsed successfully - check heat pump compatibility")
                 else:
                     # Success - log info and continue
                     _LOGGER.info("PARSING SUCCESS: %d/%d entities successfully parsed (%.1f%% success rate) - above threshold of %.1f%%",
@@ -569,14 +542,13 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         except Exception as err:
             _LOGGER.warning("Failed to fetch heatpump page: %s", err)
         
-        # Fetch solar page (if enabled)
-        if self.config_entry and self.config_entry.options.get(CONF_ENABLE_SOLAR, True):
-            try:
-                solar_html = await self.client.get_solar()
-                if solar_html:
-                    pages_html["solar"] = solar_html
-            except Exception as err:
-                _LOGGER.warning("Failed to fetch solar page: %s", err)
+        # Fetch solar page
+        try:
+            solar_html = await self.client.get_solar()
+            if solar_html:
+                pages_html["solar"] = solar_html
+        except Exception as err:
+            _LOGGER.warning("Failed to fetch solar page: %s", err)
         
         # Fetch hot water page
         try:
@@ -628,7 +600,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             except SVKParseError as err:
                 _LOGGER.error("Failed to parse heatpump page: %s", err)
         
-        # Parse solar page (if enabled)
+        # Parse solar page
         if "solar" in pages_html:
             try:
                 solar_data = self.parser.parse_solar_page(pages_html["solar"])
@@ -796,19 +768,19 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         # Add optional entities based on configuration
         options = config_entry.options
         
-        if options.get(CONF_ENABLE_SOLAR, True):
-            enabled_entities.extend([
-                "solar_collector_temp",
-                "solar_water_temp",
-                "solar_panel_state",
-            ])
+        # Always include solar entities
+        enabled_entities.extend([
+            "solar_collector_temp",
+            "solar_water_temp",
+            "solar_panel_state",
+        ])
         
-        if options.get(CONF_ENABLE_COUNTERS, True):
-            enabled_entities.extend([
-                "compressor_runtime",
-                "heater_runtime",
-                "pump_runtime",
-            ])
+        # Always include runtime counters
+        enabled_entities.extend([
+            "compressor_runtime",
+            "heater_runtime",
+            "pump_runtime",
+        ])
         
         # Add additional temperature sensors if available
         additional_temps = [

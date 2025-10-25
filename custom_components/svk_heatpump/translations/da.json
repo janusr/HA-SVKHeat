@@ -57,8 +57,6 @@
         "description": "Konfigurer indstillinger for SVK Varmepumpe integrationen. Enhedshåndtering håndteres nu via Home Assistant brugerfladen - gå til Indstillinger > Enheder & Services > SVK Varmepumpe > Enheder for at aktivere/deaktivere specifikke enheder. {id_list_description}",
         "data": {
           "scan_interval": "Scanningsinterval (sekunder)",
-          "enable_solar": "Aktiver Sol-entiteter",
-          "enable_counters": "Aktiver Driftstidstællere",
           "enable_writes": "Aktiver Skrivekontrol (Avanceret)",
           "id_list": "ID-liste (Avanceret)"
         }

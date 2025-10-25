@@ -597,7 +597,7 @@ class LOMJsonClient:
     """Client for communicating with SVK LOM320 web module using JSON API with Digest authentication."""
     
     def __init__(self, host: str, username: str = "", password: str = "", timeout: int = 10,
-                 chunk_size: int = None, enable_chunking: bool = None, excluded_ids: str = None):
+                 chunk_size: int = None):
         """Initialize the JSON client."""
         self.host = host
         self._base = URL.build(scheme="http", host=host)
@@ -610,26 +610,8 @@ class LOMJsonClient:
             from .const import DEFAULT_CHUNK_SIZE
             chunk_size = DEFAULT_CHUNK_SIZE
         
-        if enable_chunking is None:
-            from .const import DEFAULT_ENABLE_CHUNKING
-            enable_chunking = DEFAULT_ENABLE_CHUNKING
-        
-        if excluded_ids is None:
-            from .const import DEFAULT_EXCLUDED_IDS
-            excluded_ids = DEFAULT_EXCLUDED_IDS
-        
-        self._chunk_size = chunk_size  # Maximum number of IDs to request in one batch
-        self._enable_chunking = enable_chunking  # Whether to use chunking at all
-        self._excluded_ids = set()  # Set of IDs to exclude from requests
-        
-        # Parse excluded IDs if provided
-        if excluded_ids:
-            try:
-                from .const import parse_id_list
-                self._excluded_ids = set(parse_id_list(excluded_ids))
-                _LOGGER.info("Excluding %d IDs from requests: %s", len(self._excluded_ids), list(self._excluded_ids)[:10])
-            except Exception as err:
-                _LOGGER.warning("Failed to parse excluded IDs '%s': %s", excluded_ids, err)
+        self._chunk_size = 25  # Fixed chunk size of 25 for all requests
+        # Chunking is always enabled
         
         self._max_retries = 3  # Maximum number of retries for failed requests
         self._retry_delay = 0.5  # Initial retry delay in seconds
@@ -941,7 +923,7 @@ class LOMJsonClient:
         payload = {"ids": ids}
         
         # For GET requests with query parameters
-        query_params = f"ids={','.join(map(str, ids))}"
+        query_params = f"ids={';'.join(map(str, ids))}"
         get_url = self._base.with_path("/cgi-bin/json_values.cgi").with_query(query_params)
         _LOGGER.info("PERFORMANCE: Making digest auth request to: %s", get_url)
         _LOGGER.debug("Requesting %d IDs: %s", len(ids), ids[:10])  # Log first 10 IDs
@@ -1210,7 +1192,8 @@ class LOMJsonClient:
                 continue
                 
             # Skip if this ID is in the excluded list
-            if entity_id in self._excluded_ids:
+            # Note: _excluded_ids functionality has been removed
+            if hasattr(self, '_excluded_ids') and entity_id in self._excluded_ids:
                 _LOGGER.debug("Skipping excluded ID %d", entity_id)
                 continue
                 
@@ -1362,16 +1345,14 @@ class LOMJsonClient:
             _LOGGER.warning("read_values called with empty ID list")
             return []
         
-        # Convert to list if needed and filter out excluded/unsupported IDs
+        # Convert to list if needed and filter out unsupported IDs
         id_list = list(ids)
         filtered_ids = [entity_id for entity_id in id_list
-                       if entity_id not in self._excluded_ids and entity_id not in self._unsupported_ids]
+                       if entity_id not in self._unsupported_ids]
         
         if len(filtered_ids) != len(id_list):
-            _LOGGER.info("Filtered %d IDs (excluded: %d, unsupported: %d)",
-                        len(id_list) - len(filtered_ids),
-                        len([id for id in id_list if id in self._excluded_ids]),
-                        len([id for id in id_list if id in self._unsupported_ids]))
+            _LOGGER.info("Filtered %d unsupported IDs",
+                        len(id_list) - len(filtered_ids))
         
         if not filtered_ids:
             _LOGGER.warning("No valid IDs remaining after filtering")
@@ -1379,21 +1360,7 @@ class LOMJsonClient:
         
         _LOGGER.info("PERFORMANCE: Processing %d IDs after filtering", len(filtered_ids))
         
-        # If chunking is disabled, make a single request with all IDs
-        if not self._enable_chunking:
-            _LOGGER.info("PERFORMANCE: Chunking disabled, making single request for %d IDs", len(filtered_ids))
-            single_start = time.time()
-            try:
-                result = await self._request_with_retry("/cgi-bin/json_values.cgi", filtered_ids)
-                single_duration = time.time() - single_start
-                _LOGGER.info("PERFORMANCE: Single request completed in %.2fs, returned %d items",
-                           single_duration, len(result) if result else 0)
-                return result or []
-            except Exception as err:
-                _LOGGER.error("Single request failed: %s", err)
-                # Fallback to individual requests
-                _LOGGER.info("Falling back to individual requests due to single request failure")
-                return await self._request_individual_ids("/cgi-bin/json_values.cgi", filtered_ids)
+        # Chunking is always enabled, so we skip the non-chunking path
         
         # If the number of IDs is small, make a single request
         if len(filtered_ids) <= self._chunk_size:

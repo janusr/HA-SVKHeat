@@ -12,8 +12,6 @@ from .client import LOMJsonClient, SVKConnectionError, SVKAuthenticationError
 from .const import (
     DOMAIN,
     DEFAULT_CHUNK_SIZE,
-    DEFAULT_ENABLE_CHUNKING,
-    DEFAULT_EXCLUDED_IDS,
 )
 from .coordinator import SVKHeatpumpDataCoordinator
 
@@ -48,8 +46,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         password,
         DEFAULT_TIMEOUT,
         chunk_size=DEFAULT_CHUNK_SIZE,
-        enable_chunking=DEFAULT_ENABLE_CHUNKING,
-        excluded_ids=DEFAULT_EXCLUDED_IDS
     )
     _LOGGER.debug("Created LOMJsonClient for %s with timeout %d seconds", host, DEFAULT_TIMEOUT)
     
@@ -182,23 +178,8 @@ async def async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None
                 client._chunk_size = new_chunk_size
                 _LOGGER.info("Updated chunk size to %d", new_chunk_size)
         
-        if hasattr(client, '_enable_chunking'):
-            new_enable_chunking = entry.options.get("enable_chunking", DEFAULT_ENABLE_CHUNKING)
-            if client._enable_chunking != new_enable_chunking:
-                client._enable_chunking = new_enable_chunking
-                _LOGGER.info("Updated chunking enabled to %s", new_enable_chunking)
+        # Chunking is always enabled, no need to check this option
         
-        if hasattr(client, '_excluded_ids'):
-            new_excluded_ids = entry.options.get("excluded_ids", DEFAULT_EXCLUDED_IDS)
-            if new_excluded_ids != DEFAULT_EXCLUDED_IDS:
-                try:
-                    from .const import parse_id_list
-                    new_excluded_ids_set = set(parse_id_list(new_excluded_ids))
-                    if client._excluded_ids != new_excluded_ids_set:
-                        client._excluded_ids = new_excluded_ids_set
-                        _LOGGER.info("Updated excluded IDs to %s", list(new_excluded_ids_set)[:10])
-                except Exception as err:
-                    _LOGGER.warning("Failed to parse excluded IDs '%s': %s", new_excluded_ids, err)
         
         # Trigger refresh to apply new settings
         _LOGGER.debug("Triggering coordinator refresh to apply new settings...")

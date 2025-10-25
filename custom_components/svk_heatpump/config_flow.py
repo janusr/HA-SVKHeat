@@ -19,20 +19,13 @@ from .client import (
     SVKHTMLResponseError
 )
 from .const import (
-    CONF_ENABLE_COUNTERS,
-    CONF_ENABLE_SOLAR,
     CONF_ENABLE_WRITES,
     CONF_ID_LIST,
     CONF_SCAN_INTERVAL,
     CONF_CHUNK_SIZE,
-    CONF_ENABLE_CHUNKING,
-    CONF_EXCLUDED_IDS,
-    CONF_STRICT_PARSING,
     DEFAULT_IDS,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_CHUNK_SIZE,
-    DEFAULT_ENABLE_CHUNKING,
-    DEFAULT_EXCLUDED_IDS,
     DOMAIN,
     DEFAULT_TIMEOUT,
     parse_id_list,
@@ -78,8 +71,6 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._password,
                 DEFAULT_TIMEOUT,
                 chunk_size=DEFAULT_CHUNK_SIZE,
-                enable_chunking=DEFAULT_ENABLE_CHUNKING,
-                excluded_ids=DEFAULT_EXCLUDED_IDS
             )
             
             try:
@@ -244,8 +235,6 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 password,
                 DEFAULT_TIMEOUT,
                 chunk_size=DEFAULT_CHUNK_SIZE,
-                enable_chunking=DEFAULT_ENABLE_CHUNKING,
-                excluded_ids=DEFAULT_EXCLUDED_IDS
             )
             
             try:
@@ -397,35 +386,14 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
                 default=options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
             ): int,
             vol.Optional(
-                CONF_ENABLE_SOLAR,
-                default=options.get(CONF_ENABLE_SOLAR, True)
-            ): bool,
-            vol.Optional(
-                CONF_ENABLE_COUNTERS,
-                default=options.get(CONF_ENABLE_COUNTERS, True)
-            ): bool,
-            vol.Optional(
                 CONF_ENABLE_WRITES,
                 default=options.get(CONF_ENABLE_WRITES, False)
             ): bool,
-            # New chunking configuration options
-            vol.Optional(
-                CONF_ENABLE_CHUNKING,
-                default=options.get(CONF_ENABLE_CHUNKING, DEFAULT_ENABLE_CHUNKING)
-            ): bool,
+            # Chunking configuration options
             vol.Optional(
                 CONF_CHUNK_SIZE,
                 default=options.get(CONF_CHUNK_SIZE, DEFAULT_CHUNK_SIZE)
             ): int,
-            vol.Optional(
-                CONF_EXCLUDED_IDS,
-                default=options.get(CONF_EXCLUDED_IDS, DEFAULT_EXCLUDED_IDS)
-            ): str,
-            # New strict parsing option
-            vol.Optional(
-                CONF_STRICT_PARSING,
-                default=options.get(CONF_STRICT_PARSING, True)
-            ): bool,
         }
         
         # Only include ID list field for legacy configurations

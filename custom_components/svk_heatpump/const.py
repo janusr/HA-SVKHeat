@@ -6,9 +6,7 @@ _LOGGER = logging.getLogger(__name__)
 DOMAIN = "svk_heatpump"
 DEFAULT_TIMEOUT = 10
 DEFAULT_SCAN_INTERVAL = 30
-DEFAULT_CHUNK_SIZE = 50  # Increased from 25 to reduce number of requests and improve performance
-DEFAULT_ENABLE_CHUNKING = True
-DEFAULT_EXCLUDED_IDS = ""
+DEFAULT_CHUNK_SIZE = 25  # Fixed chunk size for all requests
 
 # Configuration keys
 CONF_HOST = "host"
@@ -16,13 +14,8 @@ CONF_USERNAME = "username"
 CONF_PASSWORD = "password"
 CONF_SCAN_INTERVAL = "scan_interval"
 CONF_ENABLE_WRITES = "enable_writes"
-CONF_ENABLE_SOLAR = "enable_solar"
-CONF_ENABLE_COUNTERS = "enable_counters"
 CONF_ID_LIST = "id_list"
 CONF_CHUNK_SIZE = "chunk_size"
-CONF_ENABLE_CHUNKING = "enable_chunking"
-CONF_EXCLUDED_IDS = "excluded_ids"
-CONF_STRICT_PARSING = "strict_parsing"
 
 # Page endpoints with dataset parameters
 PAGES = {

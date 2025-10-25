@@ -57,8 +57,6 @@
         "description": "Configure the SVK Heatpump integration settings. Entity management is now handled through the Home Assistant UI - go to Settings > Devices & Services > SVK Heatpump > Entities to enable/disable specific entities. {id_list_description}",
         "data": {
           "scan_interval": "Scan Interval (seconds)",
-          "enable_solar": "Enable Solar Entities",
-          "enable_counters": "Enable Runtime Counters",
           "enable_writes": "Enable Write Controls (Advanced)",
           "id_list": "ID List (Advanced)"
         }
