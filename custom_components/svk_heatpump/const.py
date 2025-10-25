@@ -15,27 +15,6 @@ CONF_SCAN_INTERVAL = "scan_interval"
 CONF_ENABLE_WRITES = "enable_writes"
 CONF_ID_LIST = "id_list"
 
-# Page endpoints with dataset parameters
-PAGES = {
-    "display": "cgi-bin/dataset_display.cgi?dataset=/Operation/Display.dst",
-    "user": "cgi-bin/dataset_display.cgi?dataset=/Operation/User.dst",
-    "heating": "cgi-bin/dataset_display.cgi?dataset=/Operation/Heating.dst",
-    "heatpump": "cgi-bin/dataset_display.cgi?dataset=/Operation/Heatpump.dst",
-    "solar": "cgi-bin/dataset_display.cgi?dataset=/Operation/Solar.dst",
-    "hotwater": "cgi-bin/dataset_display.cgi?dataset=/Operation/Hotwater.dst",
-    # Additional datasets that might be useful
-    "extended_display": "cgi-bin/dataset_display.cgi?dataset=/Settings/Extended%20Display.dst",
-    "alarms": "cgi-bin/dataset_display.cgi?dataset=/Operation/Alarms.dst",
-    "counters": "cgi-bin/dataset_display.cgi?dataset=/Operation/Counters.dst",
-    # Settings pages
-    "settings_heatpump": "cgi-bin/dataset_display.cgi?dataset=/Settings/Heatpump.dst",
-    "settings_heating": "cgi-bin/dataset_display.cgi?dataset=/Settings/Heating.dst",
-    "settings_defrost": "cgi-bin/dataset_display.cgi?dataset=/Settings/Defrost.dst",
-    "settings_service": "cgi-bin/dataset_display.cgi?dataset=/Settings/Service.dst",
-    "settings_solar": "cgi-bin/dataset_display.cgi?dataset=/Settings/Solar%20panel.dst",
-    "settings_hotwater": "cgi-bin/dataset_display.cgi?dataset=/Settings/Hot%20water.dst"
-}
-
 # HTML Interface Grouping Structure
 # Based on the HTML interface navigation structure
 HTML_GROUPS = {

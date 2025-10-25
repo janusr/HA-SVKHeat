@@ -20,7 +20,6 @@ from .const import (
     DEFAULT_IDS,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
-    PAGES,
     HEATPUMP_STATES,
     SEASON_MODES,
     parse_id_list,
