@@ -371,9 +371,9 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                 
                 # Apply temperature sentinel rule
                 if entity_info.get("device_class") == "temperature":
-                    if isinstance(value, (int, float)) and value <= -50.0:
+                    if isinstance(value, (int, float)) and value <= -80.0:
                         sentinel_temps.append({"entity": entity_key, "id": entity_id, "value": value})
-                        _LOGGER.warning("DATA PIPELINE: Entity %s (ID: %s): Temperature %s°C ≤ -50.0°C, marking unavailable",
+                        _LOGGER.warning("DATA PIPELINE: Entity %s (ID: %s): Temperature %s°C ≤ -80.0°C, marking unavailable",
                                        entity_key, entity_id, value)
                         data[entity_key] = None
                         continue
@@ -919,7 +919,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             # Additional check for temperature sentinel values
             entity_info = self.id_to_entity_map.get(entity_id, {})
             if entity_info.get("device_class") == "temperature":
-                if isinstance(value, (int, float)) and value <= -50.0:
+                if isinstance(value, (int, float)) and value <= -80.0:
                     _LOGGER.debug("AVAILABILITY: Entity %s (ID: %s) not available - temperature sentinel value %s°C",
                                  entity_key, entity_id, value)
                     return False

@@ -142,8 +142,8 @@ class SVKHeatpumpSensor(SVKHeatpumpBaseEntity, SensorEntity):
         
         # Apply special handling for temperature sentinel rule
         if self._device_class == "temperature" and value is not None:
-            if isinstance(value, (int, float)) and value <= -50.0:
-                # Temperature sentinel rule: ≤ -50.0°C marks entity unavailable
+            if isinstance(value, (int, float)) and value <= -80.0:
+                # Temperature sentinel rule: ≤ -80.0°C marks entity unavailable
                 _LOGGER.debug("Sensor %s temperature %s°C is below sentinel threshold, marking unavailable", self._entity_key, value)
                 return None
         
