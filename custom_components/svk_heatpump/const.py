@@ -780,30 +780,37 @@ def parse_items(items_list):
             # Parse value with proper type conversion
             raw_value = item['value']
             
-            # Replace line 784 with:
+            # Parse value with proper error handling - don't fall back to raw values
+            # This prevents type mismatches in the data pipeline
             try:
                 parsed_value = _parse_value(raw_value)
                 if parsed_value is None:
-                    _LOGGER.warning("VALUE PARSING RETURNED NULL: id=%s, raw_value=%s", entity_id, raw_value)
-                    parsed_value = raw_value  # Fallback to raw value
+                    _LOGGER.warning("VALUE PARSING RETURNED NULL: id=%s, raw_value=%s - entity will be excluded from results",
+                                   entity_id, raw_value)
+                    # Skip adding this entity to results when parsing returns None
+                    continue
             except Exception as err:
-                _LOGGER.error("VALUE PARSING FAILED: id=%s, raw_value=%s, error=%s",
+                _LOGGER.error("VALUE PARSING FAILED: id=%s, raw_value=%s, error=%s - entity will be excluded from results",
                               entity_id, raw_value, err)
-                parsed_value = raw_value  # Fallback to raw value
+                # Skip adding this entity to results when parsing fails
+                continue
             
+            # Only add entities with successfully parsed values to results
             result[entity_id] = (name, parsed_value)
             _LOGGER.debug("Successfully parsed item ID %s: %s = %s", entity_id, name, parsed_value)
             
-            # Add inside the loop:
-            _LOGGER.info("SAMPLE PARSED ITEM: ID=%s, Name=%s, Value=%s -> %s",
-                         entity_id, name, raw_value, parsed_value)
+            # Add enhanced logging for debugging parsing successes
+            _LOGGER.info("SUCCESSFULLY PARSED: ID=%s, Name=%s, RawValue=%s -> ParsedValue=%s (type: %s)",
+                         entity_id, name, raw_value, parsed_value, type(parsed_value).__name__)
             
         except Exception as err:
             _LOGGER.warning("Error parsing item %s: %s", item, err)
             # Continue processing other items instead of failing completely
             continue
     
-    _LOGGER.info("Successfully parsed %d valid items out of %d total items", len(result), len(items_list))
+    _LOGGER.info("PARSING SUMMARY: Successfully parsed %d items with valid values out of %d total items",
+                 len(result), len(items_list))
+    _LOGGER.debug("Final parsed entities: %s", list(result.keys()))
     return result
 
 

@@ -305,9 +305,20 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             
             # Parse the array of items using the new parse_items function
             try:
+                _LOGGER.info("DATA PIPELINE: Starting JSON parsing with %d items", len(json_data))
+                _LOGGER.debug("DATA PIPELINE: Raw JSON data structure: %s",
+                             [{"id": item.get("id"), "name": item.get("name"), "value": item.get("value")}
+                              for item in json_data[:5]])  # Log first 5 items for debugging
                 parsed_items = parse_items(json_data)
+                _LOGGER.info("DATA PIPELINE: Successfully parsed %d items from JSON response", len(parsed_items))
             except Exception as err:
                 self.parsing_errors.append(f"JSON parsing failed: {err}")
+                _LOGGER.error("DATA PIPELINE: JSON parsing failed with %d items: %s", len(json_data), err)
+                _LOGGER.error("DATA PIPELINE: This is likely the root cause of entities not having values")
+                _LOGGER.error("DATA PIPELINE: Raising UpdateFailed to trigger proper retry mechanisms")
+                _LOGGER.error("DATA PIPELINE: Raw data sample for debugging: %s", json_data[:3] if json_data else "None")
+                # Raise UpdateFailed instead of returning minimal data to ensure proper error reporting
+                # This prevents entities from being created without valid values
                 raise UpdateFailed(f"JSON parsing failed: {err}") from err
             
             if not parsed_items:
@@ -324,8 +335,9 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             unknown_ids = []
             sentinel_temps = []
             clamped_percentages = []
+            parsing_failures = []
             
-            _LOGGER.info("Processing %d parsed items", len(parsed_items))
+            _LOGGER.info("DATA PIPELINE: Processing %d parsed items for entity mapping", len(parsed_items))
             
             for entity_id, (name, value) in parsed_items.items():
                 ids_fetched.append(entity_id)
@@ -333,34 +345,31 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                 # Skip unknown IDs
                 if entity_id not in self.id_to_entity_map:
                     unknown_ids.append({"id": entity_id, "name": name, "value": value})
-                    _LOGGER.debug("Unknown entity ID %s with name %s and value %s", entity_id, name, value)
+                    _LOGGER.debug("DATA PIPELINE: Unknown entity ID %s with name %s and value %s", entity_id, name, value)
                     continue
                 
-                # After line 330, add:
-                if entity_id not in self.id_to_entity_map:
-                    _LOGGER.warning("UNMAPPED ENTITY ID: %s (name: %s, value: %s)",
-                                   entity_id, name, value)
-                    # Continue with detailed logging instead of skipping
-                
                 entity_info = self.id_to_entity_map[entity_id]
                 entity_key = entity_info["key"]
-                _LOGGER.debug("Processing entity ID %s -> %s = %s", entity_id, entity_key, value)
-                
-                entity_info = self.id_to_entity_map[entity_id]
-                entity_key = entity_info["key"]
+                _LOGGER.debug("DATA PIPELINE: Processing entity ID %s -> %s = %s", entity_id, entity_key, value)
                 
                 # Handle different data types
                 if value is None:
+                    # Log null values for debugging
+                    _LOGGER.warning("DATA PIPELINE: Entity %s (ID: %s) has None value - will be unavailable",
+                                   entity_key, entity_id)
+                    parsing_failures.append({"entity": entity_key, "id": entity_id, "reason": "None value", "name": name})
                     # Skip null values but keep last-good value if available
                     if entity_key in self.last_good_values:
                         data[entity_key] = self.last_good_values[entity_key]
+                        _LOGGER.debug("DATA PIPELINE: Using last-good value for entity %s: %s", entity_key, self.last_good_values[entity_key])
                     continue
                 
                 # Apply temperature sentinel rule
                 if entity_info.get("device_class") == "temperature":
                     if isinstance(value, (int, float)) and value <= -50.0:
                         sentinel_temps.append({"entity": entity_key, "id": entity_id, "value": value})
-                        _LOGGER.debug("Entity %s: Temperature %s°C ≤ -50.0°C, marking unavailable", entity_key, value)
+                        _LOGGER.warning("DATA PIPELINE: Entity %s (ID: %s): Temperature %s°C ≤ -50.0°C, marking unavailable",
+                                       entity_key, entity_id, value)
                         data[entity_key] = None
                         continue
                 
@@ -396,6 +405,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             data["ids_fetched"] = ids_fetched
             
             # Store parsing statistics for diagnostics
+            successful_entities = len([k for k, v in data.items() if v is not None and not k.startswith("last_") and not k.startswith("ids_") and not k.startswith("parsing_")])
             data["parsing_stats"] = {
                 "total_ids_requested": len(ids_to_request),
                 "total_ids_received": len(json_data) if isinstance(json_data, list) else 0,
@@ -403,25 +413,58 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                 "unknown_ids_count": len(unknown_ids),
                 "sentinel_temps_count": len(sentinel_temps),
                 "clamped_percentages_count": len(clamped_percentages),
-                "successful_parses": len([k for k, v in data.items() if v is not None and not k.startswith("last_") and not k.startswith("ids_") and not k.startswith("parsing_")]),
+                "parsing_failures_count": len(parsing_failures),
+                "successful_parses": successful_entities,
                 "enabled_entities_count": len([eid for eid in self.id_to_entity_map if self.is_entity_enabled(eid)]),
                 "disabled_entities_count": len([eid for eid in self.id_to_entity_map if not self.is_entity_enabled(eid)]),
-                "is_first_refresh": self.is_first_refresh
+                "is_first_refresh": self.is_first_refresh,
+                "availability_percentage": round((successful_entities / len(self.id_to_entity_map) * 100) if len(self.id_to_entity_map) > 0 else 0, 1)
             }
             
             # Store detailed parsing information for diagnostics
             data["parsing_details"] = {
                 "unknown_ids": unknown_ids,
                 "sentinel_temps": sentinel_temps,
-                "clamped_percentages": clamped_percentages
+                "clamped_percentages": clamped_percentages,
+                "parsing_failures": parsing_failures
             }
             
-            if not data:
-                self.parsing_errors.append("No valid data could be parsed from JSON response")
-                _LOGGER.error("No valid data could be parsed from JSON response")
-                # Return minimal data instead of raising UpdateFailed to allow entities to be created
-                _LOGGER.warning("Returning minimal data to allow entity creation - entities will be unavailable until data is successfully parsed")
-                return {"last_update": datetime.now(timezone.utc), "ids_fetched": [], "parsing_stats": {"total_ids_requested": len(ids_to_request), "total_ids_received": 0, "total_ids_fetched": 0}}
+            # Log comprehensive parsing summary
+            _LOGGER.info("DATA PIPELINE: Parsing summary - %d/%d entities available (%.1f%%)",
+                        successful_entities, len(self.id_to_entity_map),
+                        data["parsing_stats"]["availability_percentage"])
+            _LOGGER.info("DATA PIPELINE: Issues found - %d unknown IDs, %d sentinel temps, %d parsing failures",
+                        len(unknown_ids), len(sentinel_temps), len(parsing_failures))
+            
+            # Enhanced error detection for parsing failures
+            total_enabled_entities = len([eid for eid in self.id_to_entity_map if self.is_entity_enabled(eid)])
+            critical_failure_threshold = 0.5  # If less than 50% of enabled entities parse successfully, consider it a critical failure
+            
+            if total_enabled_entities > 0:
+                success_rate = successful_entities / total_enabled_entities
+                if success_rate < critical_failure_threshold:
+                    self.parsing_errors.append(f"Critical parsing failure: Only {successful_entities}/{total_enabled_entities} ({success_rate:.1%}) entities parsed successfully")
+                    _LOGGER.error("CRITICAL: Parsing failure detected - only %d/%d (%.1f%%) enabled entities parsed successfully",
+                                 successful_entities, total_enabled_entities, success_rate * 100)
+                    _LOGGER.error("This indicates a serious parsing issue that should trigger retry mechanisms")
+                    _LOGGER.error("Common causes: incompatible heat pump model, API changes, or network corruption")
+                    # Raise UpdateFailed to trigger proper retry mechanisms instead of returning partial data
+                    raise UpdateFailed(f"Critical parsing failure: Only {successful_entities}/{total_enabled_entities} ({success_rate:.1%}) entities parsed successfully - check heat pump compatibility")
+            
+            # Check if we have any valid entity data (excluding metadata)
+            valid_entity_data = {k: v for k, v in data.items()
+                               if not k.startswith("last_") and not k.startswith("ids_")
+                               and not k.startswith("parsing_") and v is not None}
+            
+            if not valid_entity_data:
+                self.parsing_errors.append("No valid entity data could be parsed from JSON response")
+                _LOGGER.error("CRITICAL: No valid entity data could be parsed from JSON response")
+                _LOGGER.error("This will cause entities to be unavailable until valid data is received")
+                _LOGGER.error("Parsing details: %d unknown IDs, %d sentinel temps, %d parsing failures",
+                             len(unknown_ids), len(sentinel_temps), len(parsing_failures))
+                # Raise UpdateFailed instead of returning minimal data to ensure proper error reporting
+                # This prevents entities from being created without valid values
+                raise UpdateFailed("No valid entity data could be parsed from JSON response - check heat pump compatibility and network connectivity")
             
             _LOGGER.info("Successfully parsed %d entities from JSON data", len(data))
             _LOGGER.debug("Parsed entities: %s", list(data.keys())[:20])  # Log first 20 entity keys
@@ -430,8 +473,26 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         except Exception as err:
             _LOGGER.error("JSON API update failed: %s", err)
             _LOGGER.error("Raising UpdateFailed to ensure proper error reporting instead of returning empty data")
+            _LOGGER.error("This error will trigger Home Assistant's retry mechanism instead of masking the failure")
+            
+            # Enhanced error logging for debugging
+            if hasattr(err, '__traceback__'):
+                import traceback
+                _LOGGER.error("Full traceback for debugging: %s", traceback.format_exc())
+            
+            # Store detailed error information for diagnostics
+            error_details = {
+                "error_type": type(err).__name__,
+                "error_message": str(err),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "context": "JSON API data update"
+            }
+            
             self.parsing_errors.append(f"JSON API update failed: {err}")
+            self.parsing_errors.append(f"Error details: {error_details}")
+            
             # Raise UpdateFailed instead of returning empty data to ensure proper error reporting
+            # This ensures Home Assistant's retry mechanisms are triggered
             raise UpdateFailed(f"JSON API update failed: {err}") from err
     
     async def _update_data_html(self):
@@ -776,19 +837,19 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         return self.data.get(entity_key)
     
     def is_entity_available(self, entity_key: str) -> bool:
-        """Check if an entity is available."""
-        # For JSON API, don't require successful update to consider entities available
-        # This allows entities to be created even if initial data fetch fails
-        if not self.is_json_client:
-            if not self.last_update_success:
-                _LOGGER.debug("Entity %s not available - last update failed for non-JSON client", entity_key)
-                return False
-            
-            if not self.data:
-                _LOGGER.debug("Entity %s not available - no data for non-JSON client", entity_key)
-                return False
+        """Check if an entity is available with valid, current data.
         
-        # For JSON API, check if the entity exists in the mapping
+        This method now performs comprehensive validation to ensure entities are only
+        marked as available when they have valid, recent data from the heat pump.
+        
+        Args:
+            entity_key: The entity key to check availability for
+            
+        Returns:
+            True if the entity has valid, current data, False otherwise
+        """
+        # For JSON API, require valid and current data to consider entities available
+        # This prevents entities from being marked as available when they have no values
         if self.is_json_client:
             # Find the entity ID for this entity key
             entity_id = None
@@ -797,20 +858,87 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                     entity_id = eid
                     break
             
-            if entity_id is not None:
-                # Entity is considered available if it exists in the mapping,
-                # regardless of whether it had data in the last response
-                # This ensures entities are created even if initial data fetching fails
-                _LOGGER.debug("Entity %s (ID: %s) is available - exists in mapping (JSON API)", entity_key, entity_id)
-                return True
-            else:
-                _LOGGER.debug("Entity %s is not available - not found in mapping", entity_key)
+            if entity_id is None:
+                _LOGGER.debug("AVAILABILITY: Entity %s not available - not found in ID mapping", entity_key)
                 return False
+            
+            # Check if we have any data at all
+            if not self.data:
+                _LOGGER.debug("AVAILABILITY: Entity %s (ID: %s) not available - no data loaded yet", entity_key, entity_id)
+                return False
+            
+            # Check data freshness - ensure data was updated recently
+            last_update = self.data.get("last_update")
+            if last_update is None:
+                _LOGGER.warning("AVAILABILITY: Entity %s (ID: %s) not available - no timestamp in data", entity_key, entity_id)
+                return False
+            
+            # Calculate data age
+            now = datetime.now(timezone.utc)
+            data_age = (now - last_update).total_seconds()
+            max_data_age = 120  # Consider data stale after 2 minutes
+            
+            if data_age > max_data_age:
+                _LOGGER.warning("AVAILABILITY: Entity %s (ID: %s) not available - data is stale (%.1f seconds old, max: %d)",
+                              entity_key, entity_id, data_age, max_data_age)
+                return False
+            
+            # Check if this entity was included in the last successful fetch
+            ids_fetched = self.data.get("ids_fetched", [])
+            if entity_id not in ids_fetched:
+                _LOGGER.warning("AVAILABILITY: Entity %s (ID: %s) not available - not included in last data fetch",
+                              entity_key, entity_id)
+                return False
+            
+            # Check if the entity has a valid, non-None value
+            value = self.get_entity_value(entity_key)
+            if value is None:
+                _LOGGER.debug("AVAILABILITY: Entity %s (ID: %s) not available - value is None", entity_key, entity_id)
+                return False
+            
+            # Additional check for temperature sentinel values
+            entity_info = self.id_to_entity_map.get(entity_id, {})
+            if entity_info.get("device_class") == "temperature":
+                if isinstance(value, (int, float)) and value <= -50.0:
+                    _LOGGER.debug("AVAILABILITY: Entity %s (ID: %s) not available - temperature sentinel value %s°C",
+                                 entity_key, entity_id, value)
+                    return False
+            
+            # Check for parsing errors related to this entity
+            parsing_details = self.data.get("parsing_details", {})
+            parsing_failures = parsing_details.get("parsing_failures", [])
+            for failure in parsing_failures:
+                if failure.get("entity") == entity_key or failure.get("id") == entity_id:
+                    _LOGGER.warning("AVAILABILITY: Entity %s (ID: %s) not available - parsing error: %s",
+                                  entity_key, entity_id, failure.get("reason", "Unknown error"))
+                    return False
+            
+            # Check for sentinel temperature values
+            sentinel_temps = parsing_details.get("sentinel_temps", [])
+            for sentinel in sentinel_temps:
+                if sentinel.get("entity") == entity_key or sentinel.get("id") == entity_id:
+                    _LOGGER.warning("AVAILABILITY: Entity %s (ID: %s) not available - sentinel temperature detected",
+                                  entity_key, entity_id)
+                    return False
+            
+            # If we reach here, the entity has valid, current data
+            _LOGGER.debug("AVAILABILITY: Entity %s (ID: %s) is available - has valid value: %s (data age: %.1fs)",
+                         entity_key, entity_id, value, data_age)
+            return True
+        
+        # For non-JSON API (HTML scraping), maintain existing behavior
+        if not self.last_update_success:
+            _LOGGER.debug("AVAILABILITY: Entity %s not available - last update failed for non-JSON client", entity_key)
+            return False
+        
+        if not self.data:
+            _LOGGER.debug("AVAILABILITY: Entity %s not available - no data for non-JSON client", entity_key)
+            return False
         
         # Check if the entity has a value
         value = self.get_entity_value(entity_key)
         is_available = value is not None
-        _LOGGER.debug("Entity %s availability: %s (value: %s)", entity_key, is_available, value)
+        _LOGGER.debug("AVAILABILITY: Entity %s availability: %s (value: %s)", entity_key, is_available, value)
         return is_available
     
     def get_all_entities_data(self) -> dict:

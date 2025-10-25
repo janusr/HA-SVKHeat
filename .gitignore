@@ -139,6 +139,7 @@ HTML Samples/
 *.ps1
 *.js
 www-request-ucg.js
+.roo
 
 # Documentation (keep only essential files in root)
 Documentation/
