@@ -333,13 +333,27 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             for entity_id, (name, value) in parsed_items.items():
                 ids_fetched.append(entity_id)
                 
+                # Handle string IDs from JSON parsing by converting to integers for consistent lookup
+                # This fixes the issue where HeatPump.RunTime with ID "301" shows as unknown
+                lookup_id = entity_id
+                if isinstance(entity_id, str):
+                    try:
+                        lookup_id = int(entity_id)
+                        _LOGGER.debug("DATA PIPELINE: Converted string ID %s to integer %s for lookup", entity_id, lookup_id)
+                    except (ValueError, TypeError) as err:
+                        _LOGGER.warning("DATA PIPELINE: Failed to convert string ID %s to integer: %s", entity_id, err)
+                        unknown_ids.append({"id": entity_id, "name": name, "value": value})
+                        continue
+                
                 # Skip unknown IDs
-                if entity_id not in self.id_to_entity_map:
+                if lookup_id not in self.id_to_entity_map:
                     unknown_ids.append({"id": entity_id, "name": name, "value": value})
                     _LOGGER.debug("DATA PIPELINE: Unknown entity ID %s with name %s and value %s", entity_id, name, value)
                     continue
                 
-                entity_info = self.id_to_entity_map[entity_id]
+                # Use the integer ID for entity info lookup
+                entity_info = self.id_to_entity_map[lookup_id]
+                
                 entity_key = entity_info["key"]
                 _LOGGER.debug("DATA PIPELINE: Processing entity ID %s -> %s = %s", entity_id, entity_key, value)
                 
