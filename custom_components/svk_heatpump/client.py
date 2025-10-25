@@ -596,8 +596,7 @@ def _compute_digest_response(
 class LOMJsonClient:
     """Client for communicating with SVK LOM320 web module using JSON API with Digest authentication."""
     
-    def __init__(self, host: str, username: str = "", password: str = "", timeout: int = 10,
-                 chunk_size: int = None):
+    def __init__(self, host: str, username: str = "", password: str = "", timeout: int = 10):
         """Initialize the JSON client."""
         self.host = host
         self._base = URL.build(scheme="http", host=host)
@@ -605,10 +604,6 @@ class LOMJsonClient:
         self._password = password
         self._session: Optional[aiohttp.ClientSession] = None
         self._timeout = aiohttp.ClientTimeout(total=timeout, connect=15.0, sock_read=30.0)
-        # Handle backward compatibility for optional parameters
-        if chunk_size is None:
-            from .const import DEFAULT_CHUNK_SIZE
-            chunk_size = DEFAULT_CHUNK_SIZE
         
         self._chunk_size = 25  # Fixed chunk size of 25 for all requests
         # Chunking is always enabled

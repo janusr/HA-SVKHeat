@@ -11,7 +11,6 @@ from homeassistant.exceptions import ConfigEntryNotReady
 from .client import LOMJsonClient, SVKConnectionError, SVKAuthenticationError
 from .const import (
     DOMAIN,
-    DEFAULT_CHUNK_SIZE,
 )
 from .coordinator import SVKHeatpumpDataCoordinator
 
@@ -45,7 +44,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         username,
         password,
         DEFAULT_TIMEOUT,
-        chunk_size=DEFAULT_CHUNK_SIZE,
     )
     _LOGGER.debug("Created LOMJsonClient for %s with timeout %d seconds", host, DEFAULT_TIMEOUT)
     
@@ -170,16 +168,6 @@ async def async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None
             )
         else:
             _LOGGER.debug("Scan interval unchanged at %d seconds", new_scan_interval)
-        
-        # Update client chunking settings if changed
-        if hasattr(client, '_chunk_size'):
-            new_chunk_size = entry.options.get("chunk_size", DEFAULT_CHUNK_SIZE)
-            if client._chunk_size != new_chunk_size:
-                client._chunk_size = new_chunk_size
-                _LOGGER.info("Updated chunk size to %d", new_chunk_size)
-        
-        # Chunking is always enabled, no need to check this option
-        
         
         # Trigger refresh to apply new settings
         _LOGGER.debug("Triggering coordinator refresh to apply new settings...")

@@ -22,10 +22,8 @@ from .const import (
     CONF_ENABLE_WRITES,
     CONF_ID_LIST,
     CONF_SCAN_INTERVAL,
-    CONF_CHUNK_SIZE,
     DEFAULT_IDS,
     DEFAULT_SCAN_INTERVAL,
-    DEFAULT_CHUNK_SIZE,
     DOMAIN,
     DEFAULT_TIMEOUT,
     parse_id_list,
@@ -70,7 +68,6 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._username,
                 self._password,
                 DEFAULT_TIMEOUT,
-                chunk_size=DEFAULT_CHUNK_SIZE,
             )
             
             try:
@@ -234,7 +231,6 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 username,
                 password,
                 DEFAULT_TIMEOUT,
-                chunk_size=DEFAULT_CHUNK_SIZE,
             )
             
             try:
@@ -371,6 +367,7 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
     
     def __init__(self, config_entry: config_entries.ConfigEntry):
         """Initialize options flow."""
+        self.config_entry = config_entry
     
     def _get_options_schema(self) -> vol.Schema:
         """Get the options schema."""
@@ -389,11 +386,6 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
                 CONF_ENABLE_WRITES,
                 default=options.get(CONF_ENABLE_WRITES, False)
             ): bool,
-            # Chunking configuration options
-            vol.Optional(
-                CONF_CHUNK_SIZE,
-                default=options.get(CONF_CHUNK_SIZE, DEFAULT_CHUNK_SIZE)
-            ): int,
         }
         
         # Only include ID list field for legacy configurations

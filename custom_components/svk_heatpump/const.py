@@ -6,7 +6,6 @@ _LOGGER = logging.getLogger(__name__)
 DOMAIN = "svk_heatpump"
 DEFAULT_TIMEOUT = 10
 DEFAULT_SCAN_INTERVAL = 30
-DEFAULT_CHUNK_SIZE = 25  # Fixed chunk size for all requests
 
 # Configuration keys
 CONF_HOST = "host"
@@ -15,7 +14,6 @@ CONF_PASSWORD = "password"
 CONF_SCAN_INTERVAL = "scan_interval"
 CONF_ENABLE_WRITES = "enable_writes"
 CONF_ID_LIST = "id_list"
-CONF_CHUNK_SIZE = "chunk_size"
 
 # Page endpoints with dataset parameters
 PAGES = {
@@ -28,7 +26,65 @@ PAGES = {
     # Additional datasets that might be useful
     "extended_display": "cgi-bin/dataset_display.cgi?dataset=/Settings/Extended%20Display.dst",
     "alarms": "cgi-bin/dataset_display.cgi?dataset=/Operation/Alarms.dst",
-    "counters": "cgi-bin/dataset_display.cgi?dataset=/Operation/Counters.dst"
+    "counters": "cgi-bin/dataset_display.cgi?dataset=/Operation/Counters.dst",
+    # Settings pages
+    "settings_heatpump": "cgi-bin/dataset_display.cgi?dataset=/Settings/Heatpump.dst",
+    "settings_heating": "cgi-bin/dataset_display.cgi?dataset=/Settings/Heating.dst",
+    "settings_defrost": "cgi-bin/dataset_display.cgi?dataset=/Settings/Defrost.dst",
+    "settings_service": "cgi-bin/dataset_display.cgi?dataset=/Settings/Service.dst",
+    "settings_solar": "cgi-bin/dataset_display.cgi?dataset=/Settings/Solar%20panel.dst",
+    "settings_hotwater": "cgi-bin/dataset_display.cgi?dataset=/Settings/Hot%20water.dst"
+}
+
+# HTML Interface Grouping Structure
+# Based on the HTML interface navigation structure
+HTML_GROUPS = {
+    "Operation": {
+        "Display": {
+            "description": "Main operational view entities (temperatures, states)",
+            "pages": ["display"]
+        },
+        "User": {
+            "description": "User-configurable parameters",
+            "pages": ["user"]
+        }
+    },
+    "Settings": {
+        "Heatpump": {
+            "description": "Heat pump settings",
+            "pages": ["heatpump", "settings_heatpump"]
+        },
+        "Extended Display": {
+            "description": "Extended display settings",
+            "pages": ["extended_display"]
+        },
+        "Heating": {
+            "description": "Heating system settings",
+            "pages": ["heating", "settings_heating"]
+        },
+        "Defrost": {
+            "description": "Defrost parameters",
+            "pages": ["settings_defrost"]
+        },
+        "Service": {
+            "description": "Service parameters",
+            "pages": ["settings_service"]
+        },
+        "Solar panel": {
+            "description": "Solar panel settings",
+            "pages": ["solar", "settings_solar"]
+        },
+        "Hot water": {
+            "description": "Hot water settings",
+            "pages": ["hotwater", "settings_hotwater"]
+        }
+    },
+    "Configuration": {
+        "System": {
+            "description": "System configuration",
+            "pages": []  # Configuration entities may not have specific pages
+        }
+    }
 }
 
 # Heat pump state mappings
@@ -76,6 +132,8 @@ TEMP_SENSORS = {
         "name": "Heating Supply Temp",
         "label": "Heating supply",
         "page": "display",
+        "category": "Operation",
+        "group": "Display",
         "device_class": "temperature",
         "unit": "°C",
         "state_class": "measurement"
@@ -84,6 +142,8 @@ TEMP_SENSORS = {
         "name": "Heating Return Temp",
         "label": "Heating return",
         "page": "display",
+        "category": "Operation",
+        "group": "Display",
         "device_class": "temperature",
         "unit": "°C",
         "state_class": "measurement"
@@ -92,6 +152,8 @@ TEMP_SENSORS = {
         "name": "Water Tank Temp",
         "label": "Water tank",
         "page": "display",
+        "category": "Operation",
+        "group": "Display",
         "device_class": "temperature",
         "unit": "°C",
         "state_class": "measurement"
@@ -100,6 +162,8 @@ TEMP_SENSORS = {
         "name": "Ambient Temp",
         "label": "Ambient",
         "page": "display",
+        "category": "Operation",
+        "group": "Display",
         "device_class": "temperature",
         "unit": "°C",
         "state_class": "measurement"
@@ -108,6 +172,8 @@ TEMP_SENSORS = {
         "name": "Room Temp",
         "label": "Room",
         "page": "display",
+        "category": "Operation",
+        "group": "Display",
         "device_class": "temperature",
         "unit": "°C",
         "state_class": "measurement"
@@ -116,6 +182,8 @@ TEMP_SENSORS = {
         "name": "Heating Tank Temp",
         "label": "Heating tank",
         "page": "display",
+        "category": "Operation",
+        "group": "Display",
         "device_class": "temperature",
         "unit": "°C",
         "state_class": "measurement"
@@ -124,6 +192,8 @@ TEMP_SENSORS = {
         "name": "Cold Side Supply Temp",
         "label": "Cold side supply",
         "page": "display",
+        "category": "Operation",
+        "group": "Display",
         "device_class": "temperature",
         "unit": "°C",
         "state_class": "measurement"
@@ -132,6 +202,8 @@ TEMP_SENSORS = {
         "name": "Cold Side Return Temp",
         "label": "Cold side return",
         "page": "display",
+        "category": "Operation",
+        "group": "Display",
         "device_class": "temperature",
         "unit": "°C",
         "state_class": "measurement"
@@ -140,6 +212,8 @@ TEMP_SENSORS = {
         "name": "Evaporator Temp",
         "label": "Evaporator",
         "page": "display",
+        "category": "Operation",
+        "group": "Display",
         "device_class": "temperature",
         "unit": "°C",
         "state_class": "measurement"
@@ -148,6 +222,8 @@ TEMP_SENSORS = {
         "name": "Solar Collector Temp",
         "label": "Solar collector",
         "page": "solar",
+        "category": "Settings",
+        "group": "Solar panel",
         "device_class": "temperature",
         "unit": "°C",
         "state_class": "measurement"
@@ -156,6 +232,8 @@ TEMP_SENSORS = {
         "name": "Solar Water Temp",
         "label": "Solar water",
         "page": "solar",
+        "category": "Settings",
+        "group": "Solar panel",
         "device_class": "temperature",
         "unit": "°C",
         "state_class": "measurement"
@@ -168,6 +246,8 @@ SETPOINT_SENSORS = {
         "name": "Heating Set Point",
         "label": "Heating set point",
         "page": "user",
+        "category": "Operation",
+        "group": "User",
         "device_class": "temperature",
         "unit": "°C",
         "state_class": "measurement"
@@ -176,6 +256,8 @@ SETPOINT_SENSORS = {
         "name": "Hot Water Set Point",
         "label": "Hot water set point",
         "page": "user",
+        "category": "Operation",
+        "group": "User",
         "device_class": "temperature",
         "unit": "°C",
         "state_class": "measurement"
@@ -188,6 +270,8 @@ PERFORMANCE_SENSORS = {
         "name": "Compressor Speed",
         "label": "Compressor speed",
         "page": "heatpump",
+        "category": "Settings",
+        "group": "Heatpump",
         "unit": "V",
         "state_class": "measurement"
     },
@@ -195,6 +279,8 @@ PERFORMANCE_SENSORS = {
         "name": "Compressor Speed",
         "label": "Compressor speed %",
         "page": "heatpump",
+        "category": "Settings",
+        "group": "Heatpump",
         "unit": "%",
         "state_class": "measurement"
     },
@@ -202,6 +288,8 @@ PERFORMANCE_SENSORS = {
         "name": "Cold Pump Speed",
         "label": "Cold pump speed",
         "page": "heatpump",
+        "category": "Settings",
+        "group": "Heatpump",
         "unit": "V",
         "state_class": "measurement"
     },
@@ -209,6 +297,8 @@ PERFORMANCE_SENSORS = {
         "name": "Requested Heating Capacity",
         "label": "Requested capacity",
         "page": "heating",
+        "category": "Settings",
+        "group": "Heating",
         "unit": "%",
         "state_class": "measurement"
     },
@@ -216,6 +306,8 @@ PERFORMANCE_SENSORS = {
         "name": "Actual Capacity",
         "label": "Actual capacity",
         "page": "heating",
+        "category": "Settings",
+        "group": "Heating",
         "unit": "%",
         "state_class": "measurement"
     }
@@ -227,6 +319,8 @@ COUNTER_SENSORS = {
         "name": "Compressor Runtime",
         "label": "Compressor runtime",
         "page": "heatpump",
+        "category": "Settings",
+        "group": "Heatpump",
         "unit": "h",
         "entity_category": "diagnostic",
         "state_class": "total_increasing"
@@ -235,6 +329,8 @@ COUNTER_SENSORS = {
         "name": "Heater Runtime",
         "label": "Heater runtime",
         "page": "heating",
+        "category": "Settings",
+        "group": "Heating",
         "unit": "h",
         "entity_category": "diagnostic",
         "state_class": "total_increasing"
@@ -243,6 +339,78 @@ COUNTER_SENSORS = {
         "name": "Pump Runtime",
         "label": "Pump runtime",
         "page": "heating",
+        "category": "Settings",
+        "group": "Heating",
+        "unit": "h",
+        "entity_category": "diagnostic",
+        "state_class": "total_increasing"
+    },
+    "heatpump_runtime": {
+        "name": "Heat Pump Runtime",
+        "label": "Heat pump runtime",
+        "page": "heatpump",
+        "category": "Settings",
+        "group": "Heatpump",
+        "unit": "h",
+        "entity_category": "diagnostic",
+        "state_class": "total_increasing"
+    },
+    "hot_water_runtime": {
+        "name": "Hot Water Runtime",
+        "label": "Hot water runtime",
+        "page": "hotwater",
+        "category": "Settings",
+        "group": "Hot water",
+        "unit": "h",
+        "entity_category": "diagnostic",
+        "state_class": "total_increasing"
+    },
+    "cold_pump_runtime": {
+        "name": "Cold Pump Runtime",
+        "label": "Cold pump runtime",
+        "page": "heatpump",
+        "category": "Settings",
+        "group": "Heatpump",
+        "unit": "h",
+        "entity_category": "diagnostic",
+        "state_class": "total_increasing"
+    },
+    "heatpump_ap_runtime": {
+        "name": "Heat Pump AP Runtime",
+        "label": "Heat pump AP runtime",
+        "page": "heatpump",
+        "category": "Settings",
+        "group": "Heatpump",
+        "unit": "h",
+        "entity_category": "diagnostic",
+        "state_class": "total_increasing"
+    },
+    "heatpump_hsp_runtime": {
+        "name": "Heat Pump HSP Runtime",
+        "label": "Heat pump HSP runtime",
+        "page": "heatpump",
+        "category": "Settings",
+        "group": "Heatpump",
+        "unit": "h",
+        "entity_category": "diagnostic",
+        "state_class": "total_increasing"
+    },
+    "heating_electric_runtime": {
+        "name": "Heating Electric Runtime",
+        "label": "Heating electric runtime",
+        "page": "heating",
+        "category": "Settings",
+        "group": "Heating",
+        "unit": "h",
+        "entity_category": "diagnostic",
+        "state_class": "total_increasing"
+    },
+    "solar_panel_runtime": {
+        "name": "Solar Panel Runtime",
+        "label": "Solar panel runtime",
+        "page": "solar",
+        "category": "Settings",
+        "group": "Solar panel",
         "unit": "h",
         "entity_category": "diagnostic",
         "state_class": "total_increasing"
@@ -255,19 +423,71 @@ SYSTEM_SENSORS = {
         "name": "IP Address",
         "label": "IP address",
         "page": "display",
+        "category": "Configuration",
+        "group": "System",
+        "entity_category": "diagnostic"
+    },
+    "mac_address": {
+        "name": "MAC Address",
+        "label": "MAC address",
+        "page": "display",
+        "category": "Configuration",
+        "group": "System",
+        "entity_category": "diagnostic"
+    },
+    "app_version": {
+        "name": "App Version",
+        "label": "App version",
+        "page": "display",
+        "category": "Configuration",
+        "group": "System",
+        "entity_category": "diagnostic"
+    },
+    "lup200_software_version": {
+        "name": "LUP200 Software Version",
+        "label": "LUP200 software version",
+        "page": "display",
+        "category": "Configuration",
+        "group": "System",
         "entity_category": "diagnostic"
     },
     "software_version": {
         "name": "Software Version",
         "label": "Software version",
         "page": "display",
+        "category": "Configuration",
+        "group": "System",
         "entity_category": "diagnostic"
     },
     "log_interval": {
         "name": "Log Interval",
         "label": "Log interval",
         "page": "display",
+        "category": "Configuration",
+        "group": "System",
         "entity_category": "diagnostic"
+    }
+}
+
+# System counter sensors (diagnostic)
+SYSTEM_COUNTER_SENSORS = {
+    "defrost_hot_gas_count": {
+        "name": "Defrost Hot Gas Count",
+        "label": "Defrost hot gas count",
+        "page": "settings_service",
+        "category": "Settings",
+        "group": "Service",
+        "entity_category": "diagnostic",
+        "state_class": "total_increasing"
+    },
+    "defrost_air_count": {
+        "name": "Defrost Air Count",
+        "label": "Defrost air count",
+        "page": "settings_service",
+        "category": "Settings",
+        "group": "Service",
+        "entity_category": "diagnostic",
+        "state_class": "total_increasing"
     }
 }
 
@@ -277,6 +497,8 @@ BINARY_SENSORS = {
         "name": "Alarm Active",
         "label": "Alarm active",
         "page": "display",
+        "category": "Operation",
+        "group": "Display",
         "device_class": "problem"
     }
 }
@@ -287,6 +509,8 @@ SELECT_ENTITIES = {
         "name": "Heat Pump State",
         "label": "Heat pump state",
         "page": "display",
+        "category": "Operation",
+        "group": "Display",
         "options": list(HEATPUMP_STATES.keys()),
         "mappings": HEATPUMP_STATES
     },
@@ -294,6 +518,8 @@ SELECT_ENTITIES = {
         "name": "Solar Panel State",
         "label": "Solar panel state",
         "page": "solar",
+        "category": "Settings",
+        "group": "Solar panel",
         "options": list(SOLAR_STATES.keys()),
         "mappings": SOLAR_STATES
     },
@@ -301,6 +527,8 @@ SELECT_ENTITIES = {
         "name": "Season Mode",
         "label": "Season mode",
         "page": "user",
+        "category": "Operation",
+        "group": "User",
         "options": list(SEASON_MODES.keys()),
         "mappings": SEASON_MODES,
         "writable": True
@@ -313,6 +541,8 @@ NUMBER_ENTITIES = {
         "name": "Hot Water Set Point",
         "label": "Hot water set point",
         "page": "user",
+        "category": "Operation",
+        "group": "User",
         "min_value": 40,
         "max_value": 65,
         "step": 1,
@@ -323,6 +553,8 @@ NUMBER_ENTITIES = {
         "name": "Room Set Point",
         "label": "Room set point",
         "page": "user",
+        "category": "Operation",
+        "group": "User",
         "min_value": 10,
         "max_value": 30,
         "step": 1,
@@ -386,43 +618,49 @@ DEFAULT_IDS = "297;253;254;255;256;257;259;260;261;262;263;264;420;386;364;403;4
 # This list contains the essential entities that should be enabled by default
 # These entities provide the core functionality and monitoring capabilities
 # Users can enable additional entities through the UI as needed
+# Organized by HTML groups with 2-4 entities per group maximum
 DEFAULT_ENABLED_ENTITIES = [
-    # Core temperature sensors
+    # Operation/Display: Essential temperature sensors and heat pump state
     253,  # heating_supply_temp
-    254,  # heating_return_temp
     255,  # water_tank_temp
-    256,  # ambient_temp
     257,  # room_temp
-    
-    # Heat pump state and status
     297,  # heatpump_state
-    296,  # heatpump_season_state
-    299,  # capacity_actual
-    300,  # capacity_requested
     
-    # Essential setpoints
+    # Operation/User: Key user-configurable parameters
     193,  # room_setpoint
     383,  # hot_water_setpoint
-    386,  # hot_water_setpoint_actual
-    420,  # heating_setpoint_actual
-    
-    # Operating mode
     278,  # season_mode
     
-    # Important binary outputs
-    220,  # hot_tap_water_output
-    228,  # alarm_output
-    
-    # Solar panel state (if available)
-    364,  # solar_panel_state
-    
-    # Hot water source
-    380,  # hot_water_source
-    
-    # Runtime counters (useful for monitoring)
+    # Settings/Heatpump: Critical heat pump settings
+    299,  # capacity_actual
     447,  # compressor_runtime
+    433,  # compressor_output
+    
+    # Settings/Heating: Essential heating parameters
+    420,  # heating_setpoint_actual
+    403,  # heating_source
+    404,  # heating_control_mode
+    
+    # Settings/Hot water: Key hot water settings
+    380,  # hot_water_source
+    386,  # hot_water_setpoint_actual
+    220,  # hot_tap_water_output
+    
+    # Settings/Solar panel: Basic solar panel status
+    364,  # solar_panel_state
+    263,  # solar_water_temp
+    
+    # Settings/Service: Essential diagnostic entities
+    228,  # alarm_output
     301,  # heatpump_runtime
-    387,  # hot_water_runtime
+    
+    # Settings/Defrost: Critical defrost parameters
+    509,  # defrost_mode
+    517,  # defrost_relative_frost_compressor
+    
+    # Settings/Extended Display: Key extended display entities
+    296,  # heatpump_season_state
+    300,  # capacity_requested
 ]
 
 # Binary output IDs (exposed as binary_sensors)
@@ -722,6 +960,85 @@ def validate_id_list(id_list_str):
         return all(entity_id in ID_MAP for entity_id in ids)
     except ValueError:
         return False
+
+
+def get_entity_group_info(entity_id):
+    """Get the HTML group information for an entity.
+    
+    Args:
+        entity_id (int): The entity ID to look up
+        
+    Returns:
+        dict: Dictionary with category and group information, or None if not found
+    """
+    entity_info = ID_MAP.get(entity_id)
+    if not entity_info or len(entity_info) < 5:
+        return None
+    
+    # Get the entity key from ID_MAP
+    entity_key = entity_info[0]
+    
+    # Check in all entity definition dictionaries
+    for entity_dict in [TEMP_SENSORS, SETPOINT_SENSORS, PERFORMANCE_SENSORS,
+                       COUNTER_SENSORS, SYSTEM_SENSORS, SYSTEM_COUNTER_SENSORS, BINARY_SENSORS,
+                       SELECT_ENTITIES, NUMBER_ENTITIES]:
+        if entity_key in entity_dict:
+            entity_def = entity_dict[entity_key]
+            return {
+                "category": entity_def.get("category"),
+                "group": entity_def.get("group")
+            }
+    
+    return None
+
+
+def get_entities_by_group(category, group):
+    """Get all entities that belong to a specific category and group.
+    
+    Args:
+        category (str): The category (Operation, Settings, Configuration)
+        group (str): The group within the category
+        
+    Returns:
+        list[int]: List of entity IDs that belong to the specified group
+    """
+    result = []
+    
+    for entity_id, entity_info in ID_MAP.items():
+        if len(entity_info) >= 5:
+            entity_key = entity_info[0]
+            group_info = get_entity_group_info(entity_id)
+            
+            if (group_info and
+                group_info.get("category") == category and
+                group_info.get("group") == group):
+                result.append(entity_id)
+    
+    return result
+
+
+def get_all_groups():
+    """Get all available categories and groups.
+    
+    Returns:
+        dict: Dictionary with categories as keys and lists of groups as values
+    """
+    return HTML_GROUPS
+
+
+def get_group_description(category, group):
+    """Get the description for a specific group.
+    
+    Args:
+        category (str): The category
+        group (str): The group within the category
+        
+    Returns:
+        str: The group description, or None if not found
+    """
+    if category in HTML_GROUPS and group in HTML_GROUPS[category]:
+        return HTML_GROUPS[category][group].get("description")
+    return None
 
 
 def parse_items(items_list):

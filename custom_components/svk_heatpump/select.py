@@ -3,6 +3,7 @@ import logging
 from typing import Any, List
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .compat import DISABLED_INTEGRATION
@@ -85,10 +86,17 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
         # Use original_name for friendly display name if available
         friendly_name = self._original_name.replace("_", " ").title() if self._original_name else self._entity_key.replace("_", " ").title()
         
+        # Set entity category based on entity definition
+        entity_category = None
+        from .const import SELECT_ENTITIES
+        if self._entity_key in SELECT_ENTITIES and SELECT_ENTITIES[self._entity_key].get("entity_category"):
+            entity_category = getattr(EntityCategory, SELECT_ENTITIES[self._entity_key]["entity_category"].upper())
+        
         self.entity_description = SelectEntityDescription(
             key=self._entity_key,
             name=friendly_name,
             options=options,
+            entity_category=entity_category,
         )
         
         # Store mappings for reverse lookup

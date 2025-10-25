@@ -17,10 +17,8 @@ from .client import (
 from .const import (
     CONF_ENABLE_WRITES,
     CONF_ID_LIST,
-    CONF_CHUNK_SIZE,
     DEFAULT_IDS,
     DEFAULT_SCAN_INTERVAL,
-    DEFAULT_CHUNK_SIZE,
     DOMAIN,
     PAGES,
     HEATPUMP_STATES,

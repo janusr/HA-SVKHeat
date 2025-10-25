@@ -97,9 +97,18 @@ class SVKHeatpumpSensor(SVKHeatpumpBaseEntity, SensorEntity):
         elif self._state_class == "total_increasing":
             state_class = SensorStateClass.TOTAL_INCREASING
         
-        # Set entity category based on entity type
+        # Set entity category based on entity definition
         entity_category = None
-        if self._entity_key in ["alarm_code"] or "runtime" in self._entity_key or "gain" in self._entity_key:
+        # Get entity category from entity definition dictionaries
+        from .const import COUNTER_SENSORS, SYSTEM_SENSORS, SYSTEM_COUNTER_SENSORS
+        
+        if self._entity_key in COUNTER_SENSORS:
+            entity_category = EntityCategory.DIAGNOSTIC
+        elif self._entity_key in SYSTEM_SENSORS:
+            entity_category = EntityCategory.DIAGNOSTIC
+        elif self._entity_key in SYSTEM_COUNTER_SENSORS:
+            entity_category = EntityCategory.DIAGNOSTIC
+        elif "runtime" in self._entity_key or "gain" in self._entity_key or "count" in self._entity_key:
             entity_category = EntityCategory.DIAGNOSTIC
         
         # Use original_name for friendly display name if available

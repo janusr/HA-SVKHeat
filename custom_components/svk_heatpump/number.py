@@ -8,7 +8,7 @@ from homeassistant.components.number import (
     NumberEntityDescription,
     NumberMode,
 )
-from homeassistant.const import UnitOfTemperature
+from homeassistant.const import EntityCategory, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .compat import DISABLED_INTEGRATION
@@ -86,6 +86,12 @@ class SVKHeatpumpNumber(SVKHeatpumpBaseEntity, NumberEntity):
         # Use original_name for friendly display name if available
         friendly_name = self._original_name.replace("_", " ").title() if self._original_name else self._entity_key.replace("_", " ").title()
         
+        # Set entity category based on entity definition
+        entity_category = None
+        from .const import NUMBER_ENTITIES
+        if self._entity_key in NUMBER_ENTITIES and NUMBER_ENTITIES[self._entity_key].get("entity_category"):
+            entity_category = getattr(EntityCategory, NUMBER_ENTITIES[self._entity_key]["entity_category"].upper())
+        
         self.entity_description = NumberEntityDescription(
             key=self._entity_key,
             name=friendly_name,
@@ -94,6 +100,7 @@ class SVKHeatpumpNumber(SVKHeatpumpBaseEntity, NumberEntity):
             native_step=self._step,
             native_unit_of_measurement=self._unit,
             device_class=device_class,
+            entity_category=entity_category,
         )
         
         # Set mode to slider for better UX

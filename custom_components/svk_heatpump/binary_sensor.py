@@ -7,6 +7,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .compat import DISABLED_INTEGRATION
@@ -72,10 +73,17 @@ class SVKHeatpumpBinarySensor(SVKHeatpumpBaseEntity, BinarySensorEntity):
         
         # Create entity description
         device_class = None
+        entity_category = None
+        
         if self._entity_key == "alarm_active":
             device_class = BinarySensorDeviceClass.PROBLEM
         elif entity_id in [222, 223, 224, 225]:  # Digital outputs
             device_class = BinarySensorDeviceClass.RUNNING
+        
+        # Set entity category based on entity definition
+        from .const import BINARY_SENSORS
+        if self._entity_key in BINARY_SENSORS and BINARY_SENSORS[self._entity_key].get("entity_category"):
+            entity_category = getattr(EntityCategory, BINARY_SENSORS[self._entity_key]["entity_category"].upper())
         
         # Use original_name for friendly display name if available
         friendly_name = self._original_name.replace("_", " ").title() if self._original_name else self._entity_key.replace("_", " ").title()
@@ -84,6 +92,7 @@ class SVKHeatpumpBinarySensor(SVKHeatpumpBaseEntity, BinarySensorEntity):
             key=self._entity_key,
             name=friendly_name,
             device_class=device_class,
+            entity_category=entity_category,
         )
     
     @property
