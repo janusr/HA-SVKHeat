@@ -7,6 +7,30 @@ DOMAIN = "svk_heatpump"
 DEFAULT_TIMEOUT = 10
 DEFAULT_SCAN_INTERVAL = 30
 
+# Device information
+MANUFACTURER = "SVK"
+MODEL = "Heatpump"
+SW_VERSION = "0.0.1"
+
+# Home Assistant platforms to load
+PLATFORMS = ["sensor", "number", "select", "switch"]
+
+# Device groups for entity organization
+DEVICE_GROUPS = {
+    "display": {"name": "Display"},
+    "extended_display": {"name": "Extended Display", "via": "display"},
+    "heating": {"name": "Heating"},
+    "heatpump": {"name": "Heatpump"},
+    "hot_watar": {"name": "Hot Watar"},
+    "service": {"name": "Service"},
+    "solar_panel": {"name": "Solar Panel"},
+    "user": {"name": "User"},
+    "firmwareupgrade": {"name": "Firmwareupgrade"},
+    "groups": {"name": "Groups"},
+    "systemview": {"name": "Systemview"},
+    "defrost": {"name": "Defrost"},
+}
+
 # Configuration keys
 CONF_HOST = "host"
 CONF_USERNAME = "username"

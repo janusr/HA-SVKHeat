@@ -222,20 +222,73 @@
           "unknown": "Unknown"
         }
       }
-    },
-    "number": {
-      "hot_water_setpoint": {
-        "name": "Hot Water Set Point"
-      },
-      "room_setpoint": {
-        "name": "Room Set Point"
-      },
-      "heating_setpoint_monitor": {
-        "name": "Heating Set Point"
-      },
-      "compressor_speed_monitor": {
-        "name": "Compressor Speed Monitor"
-      }
-    }
-  }
+   },
+   "number": {
+     "hot_water_setpoint": {
+       "name": "Hot Water Set Point"
+     },
+     "room_setpoint": {
+       "name": "Room Set Point"
+     },
+     "heating_setpoint_monitor": {
+       "name": "Heating Set Point"
+     },
+     "compressor_speed_monitor": {
+       "name": "Compressor Speed Monitor"
+     }
+   },
+   "switch": {
+     "heating_heatspctrl_toffset": {
+       "name": "Heating Temperature Offset"
+     },
+     "hotwater_hotwater_neutralzone": {
+       "name": "Hot Water Neutral Zone"
+     },
+     "service_parameters_mainswitch": {
+       "name": "Main Switch"
+     },
+     "service_manual_compressor1": {
+       "name": "Manual Compressor 1"
+     },
+     "service_manual_re6": {
+       "name": "Manual RE6"
+     },
+     "service_manual_heater": {
+       "name": "Manual Heater"
+     },
+     "service_manual_hottapwater": {
+       "name": "Manual Hot Tap Water"
+     },
+     "service_manual_coldpump": {
+       "name": "Manual Cold Pump"
+     },
+     "service_manual_coldpumplow": {
+       "name": "Manual Cold Pump Low"
+     },
+     "service_manual_hotsidepump": {
+       "name": "Manual Hot Side Pump"
+     },
+     "service_manual_defrostvalve": {
+       "name": "Manual Defrost Valve"
+     },
+     "service_manual_solarpump": {
+       "name": "Manual Solar Pump"
+     },
+     "service_manual_auxpump": {
+       "name": "Manual Aux Pump"
+     },
+     "service_manual_alarm": {
+       "name": "Manual Alarm"
+     },
+     "service_concrete_mode": {
+       "name": "Concrete Mode"
+     },
+     "user_heatspctrl_toffset": {
+       "name": "User Heating Temperature Offset"
+     },
+     "user_parameters_seasonmode": {
+       "name": "Season Mode"
+     }
+   }
+ }
 }

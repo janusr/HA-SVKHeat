@@ -49,6 +49,11 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 tests/
+code_review_system/
+test_outputs/
+data/
+reports/
+scripts/
 
 # Translations
 *.mo

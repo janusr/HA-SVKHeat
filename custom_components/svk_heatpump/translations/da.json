@@ -222,20 +222,73 @@
           "unknown": "Ukendt"
         }
       }
-    },
-    "number": {
-      "hot_water_setpoint": {
-        "name": "Brugsvandssættemp"
-      },
-      "room_setpoint": {
-        "name": "Rumsættemp"
-      },
-      "heating_setpoint_monitor": {
-        "name": "Varmesættemp"
-      },
-      "compressor_speed_monitor": {
-        "name": "Kompressorhastighed Monitor"
-      }
-    }
-  }
+   },
+   "number": {
+     "hot_water_setpoint": {
+       "name": "Brugsvandssættemp"
+     },
+     "room_setpoint": {
+       "name": "Rumsættemp"
+     },
+     "heating_setpoint_monitor": {
+       "name": "Varmesættemp"
+     },
+     "compressor_speed_monitor": {
+       "name": "Kompressorhastighed Monitor"
+     }
+   },
+   "switch": {
+     "heating_heatspctrl_toffset": {
+       "name": "Varmetemperatur Forskydning"
+     },
+     "hotwater_hotwater_neutralzone": {
+       "name": "Varmtvand Neutralzone"
+     },
+     "service_parameters_mainswitch": {
+       "name": "Hovedafbryder"
+     },
+     "service_manual_compressor1": {
+       "name": "Manuel Kompressor 1"
+     },
+     "service_manual_re6": {
+       "name": "Manuel RE6"
+     },
+     "service_manual_heater": {
+       "name": "Manuel Varmelegeme"
+     },
+     "service_manual_hottapwater": {
+       "name": "Manuel Brugsvand"
+     },
+     "service_manual_coldpump": {
+       "name": "Manuel Koldpumpe"
+     },
+     "service_manual_coldpumplow": {
+       "name": "Manuel Koldpumpe Lav"
+     },
+     "service_manual_hotsidepump": {
+       "name": "Manuel Varmesidepumpe"
+     },
+     "service_manual_defrostvalve": {
+       "name": "Manuel Afisningsventil"
+     },
+     "service_manual_solarpump": {
+       "name": "Manuelpumpe"
+     },
+     "service_manual_auxpump": {
+       "name": "Manuel Hjælpepumpe"
+     },
+     "service_manual_alarm": {
+       "name": "Manuel Alarm"
+     },
+     "service_concrete_mode": {
+       "name": "Beton Tilstand"
+     },
+     "user_heatspctrl_toffset": {
+       "name": "Bruger Varmetemperatur Forskydning"
+     },
+     "user_parameters_seasonmode": {
+       "name": "Sæson Tilstand"
+     }
+   }
+ }
 }

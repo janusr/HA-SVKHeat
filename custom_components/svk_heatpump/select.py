@@ -1,6 +1,6 @@
 """Select platform for SVK Heatpump integration."""
 import logging
-from typing import Any, List
+from typing import Any, List, Optional
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.const import EntityCategory
@@ -14,6 +14,8 @@ from . import coordinator
 # Import specific items from modules
 from .const import DOMAIN
 from .coordinator import SVKHeatpumpDataCoordinator
+from .entity_base import SVKBaseEntity
+from .catalog import SELECT_ENTITIES, ENTITIES
 
 
 def _get_constants():
@@ -22,6 +24,165 @@ def _get_constants():
     return ID_MAP, SEASON_MODES_REVERSE, DEFAULT_ENABLED_ENTITIES
 
 _LOGGER = logging.getLogger(__name__)
+
+
+class SVKSelect(SVKBaseEntity, SelectEntity, CoordinatorEntity):
+    """Representation of a SVK Heatpump select entity."""
+    
+    def __init__(
+        self,
+        coordinator: SVKHeatpumpDataCoordinator,
+        entity_key: str,
+        config_entry_id: str,
+        enabled_by_default: bool = True,
+    ) -> None:
+        """Initialize select entity."""
+        # Extract group key from entity key (first part before underscore)
+        group_key = entity_key.split("_")[0]
+        
+        # Get entity info from catalog
+        entity_info = ENTITIES.get(entity_key, {})
+        name = entity_info.get("name", entity_key.replace("_", " ").title())
+        data_type = entity_info.get("data_type", "")
+        category = entity_info.get("category", "")
+        
+        # Initialize SVKBaseEntity
+        SVKBaseEntity.__init__(self, group_key, name, entity_key)
+        
+        # Initialize CoordinatorEntity
+        CoordinatorEntity.__init__(self, coordinator)
+        
+        # Initialize additional attributes
+        self._entity_key = entity_key
+        self._attr_entity_registry_enabled_default = enabled_by_default
+        
+        _LOGGER.debug("Creating select entity: %s (group: %s, enabled_by_default: %s)",
+                     entity_key, group_key, enabled_by_default)
+        
+        # Set options based on entity type
+        options = []
+        mappings = {}
+        
+        # Default options for enum type
+        if data_type == "enum":
+            # Try to get options from entity info or use defaults based on entity key
+            if entity_key == "defrost_defrost_mode":
+                options = ["Off", "Manual", "Automatic"]
+            elif entity_key == "heating_heating_source":
+                options = ["Heat pump", "Electric", "Manual"]
+            elif entity_key == "heating_heatspctrl_type":
+                options = ["Off", "Curve", "Room", "Outdoor"]
+            elif entity_key == "heatpump_heating_ctrlmode":
+                options = ["Off", "Room", "Outdoor", "Curve"]
+            elif entity_key == "heatpump_cprcontrol_cprmode":
+                options = ["Off", "Standard", "Eco", "Comfort"]
+            elif entity_key == "heatpump_coldpump_mode":
+                options = ["Off", "Auto", "Manual"]
+            elif entity_key == "hotwater_hotwater_source":
+                options = ["Heat pump", "Electric", "Solar"]
+            elif entity_key == "service_parameters_displaymode":
+                options = ["Basic", "Advanced", "Service"]
+            elif entity_key == "solar_solarpanel_sensorselect":
+                options = ["Internal", "External"]
+            elif entity_key == "user_user_language":
+                options = ["English", "Danish", "German", "Swedish"]
+            else:
+                # Default options for unknown enum
+                options = ["Option 1", "Option 2", "Option 3"]
+        
+        # Set icon based on entity name or group
+        icon = None
+        if "mode" in entity_key.lower():
+            icon = "mdi:cog"  # For mode settings
+        elif "source" in entity_key.lower():
+            icon = "mdi:source"  # For source selection
+        elif "display" in entity_key.lower():
+            icon = "mdi:monitor"  # For display settings
+        elif "language" in entity_key.lower():
+            icon = "mdi:translate"  # For language selection
+        elif "sensor" in entity_key.lower():
+            icon = "mdi:sensor"  # For sensor selection
+        
+        # Set entity category based on category
+        entity_category = None
+        if category == "Configuration":
+            entity_category = EntityCategory.CONFIG
+        elif category == "Settings":
+            entity_category = EntityCategory.CONFIG
+        
+        # Create entity description
+        self.entity_description = SelectEntityDescription(
+            key=entity_key,
+            name=name,
+            options=options,
+            icon=icon,
+            entity_category=entity_category,
+        )
+        
+        # Store mappings for reverse lookup
+        self._mappings = mappings
+    
+    @property
+    def unique_id(self) -> str:
+        """Return unique ID for select entity."""
+        return f"{DOMAIN}_{self._group_key}_{self._entity_key}"
+    
+    @property
+    def current_option(self) -> Optional[str]:
+        """Return the current selected option."""
+        value = self.coordinator.get_entity_value(self._entity_key)
+        if value is not None:
+            # Map the internal value to the display option
+            for option, mapped_value in self._mappings.items():
+                if mapped_value == value:
+                    return option
+            # If no mapping found, return the raw value as string
+            return str(value)
+        return None
+    
+    @property
+    def available(self) -> bool:
+        """Return True if entity is available."""
+        # For JSON API, entities should be available even if data fetching fails initially
+        if self.coordinator.is_json_client:
+            is_available = self.coordinator.is_entity_available(self._entity_key)
+            value = self.coordinator.get_entity_value(self._entity_key)
+            _LOGGER.info("JSON API Select %s availability: %s (entity exists in mapping, current value: %s)",
+                         self._entity_key, is_available, value)
+            # Add additional diagnostic info
+            if not is_available:
+                _LOGGER.warning("Entity %s is not available - this may indicate a data fetching or parsing issue", self._entity_key)
+            elif value is None:
+                _LOGGER.warning("Entity %s is available but has no value - likely a parsing or data issue", self._entity_key)
+            return is_available
+        else:
+            # For HTML scraping, require successful update
+            last_update_success = self.coordinator.last_update_success
+            writes_enabled = self.coordinator.config_entry.options.get("enable_writes", False)
+            entity_available = self.coordinator.is_entity_available(self._entity_key)
+            is_available = last_update_success and writes_enabled and entity_available
+            
+            _LOGGER.debug("HTML API Select %s availability: %s (last_update_success: %s, writes_enabled: %s, entity_available: %s)",
+                         self._entity_key, is_available, last_update_success, writes_enabled, entity_available)
+            return is_available
+    
+    async def async_select_option(self, option: str) -> None:
+        """Change the selected option."""
+        if not self.coordinator.config_entry.options.get("enable_writes", False):
+            _LOGGER.warning("Write controls are disabled for %s", self._entity_key)
+            raise ValueError("Write controls are disabled in options")
+        
+        # Map the option to the internal value
+        internal_value = self._mappings.get(option, option)
+        
+        # Set the new value
+        success = await self.coordinator.async_set_parameter(self._entity_key, internal_value)
+        
+        if not success:
+            _LOGGER.error("Failed to set %s to %s", self._entity_key, internal_value)
+            raise ValueError(f"Failed to set {self._entity_key} to {option}")
+        
+        _LOGGER.info("Successfully set %s to %s", self._entity_key, internal_value)
 
 
 class SVKHeatpumpBaseEntity(CoordinatorEntity):
@@ -201,8 +362,43 @@ async def async_setup_entry(
     
     select_entities = []
     
-    # Create select entities based on ID_MAP for JSON API
+    # Create select entities based on SELECT_ENTITIES from catalog
     if coordinator.is_json_client:
+        # Create all select entities from catalog
+        for entity_key in SELECT_ENTITIES:
+            try:
+                # Get entity info from catalog
+                entity_info = ENTITIES.get(entity_key, {})
+                name = entity_info.get("name", entity_key.replace("_", " ").title())
+                category = entity_info.get("category", "")
+                access_type = entity_info.get("access_type", "")
+                
+                # Only include writable entities
+                if access_type != "readwrite":
+                    _LOGGER.debug("Skipping read-only entity %s", entity_key)
+                    continue
+                
+                # Determine if this entity should be enabled by default
+                # For now, enable all select entities from catalog
+                enabled_by_default = True
+                
+                # Create select using new SVKSelect class
+                select = SVKSelect(
+                    coordinator,
+                    entity_key,
+                    config_entry.entry_id,
+                    enabled_by_default=enabled_by_default
+                )
+                
+                select_entities.append(select)
+                _LOGGER.debug("Added select entity: %s (name: %s, enabled_by_default: %s)",
+                             entity_key, name, enabled_by_default)
+            except Exception as err:
+                _LOGGER.error("Failed to create select entity %s: %s", entity_key, err)
+                # Continue with other entities even if one fails
+                continue
+    else:
+        # Fall back to HTML scraping entities for backward compatibility
         # Get constants using lazy import
         ID_MAP, _, DEFAULT_ENABLED_ENTITIES = _get_constants()
         
@@ -237,10 +433,6 @@ async def async_setup_entry(
                 select_entities.append(select_entity)
                 _LOGGER.debug("Added select entity: %s (ID: %s, enabled_by_default: %s)",
                              entity_key, entity_id, enabled_by_default)
-    else:
-        # Fall back to HTML scraping entities for backward compatibility
-        # This would need to be implemented based on the old structure
-        pass
     
     # Add additional select entities for system status
     system_status_desc = SelectEntityDescription(
