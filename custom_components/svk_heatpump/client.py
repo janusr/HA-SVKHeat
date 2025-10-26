@@ -917,6 +917,14 @@ class LOMJsonClient:
         self._digest_last_nonce_time = 0
         _LOGGER.debug("DIAGNOSTIC: Auth session reset complete - nonce_count=0, session_active=False")
     
+    def _start_new_auth_session(self):
+        """Start a new authentication session with fresh nonce count."""
+        _LOGGER.info("DIAGNOSTIC: Starting new authentication session")
+        self._digest_nc = 1  # Start with 1, not 0
+        self._digest_session_active = True
+        self._digest_last_nonce_time = time.time()
+        _LOGGER.debug("DIAGNOSTIC: New auth session started - nonce_count=1, session_active=True")
+    
     async def _request_with_digest_auth(self, path: str, ids: List[int]) -> List[Dict[str, Any]]:
         """Make a request with Digest authentication."""
         import time
@@ -930,6 +938,11 @@ class LOMJsonClient:
         
         assert self._session is not None
         url = self._base.with_path(path)
+        
+        # CRITICAL FIX: Reset authentication session for each new request to avoid nonce conflicts
+        # This prevents the 401 loop caused by stale nonce counts
+        _LOGGER.info("DIAGNOSTIC: Resetting auth session before new request to prevent nonce conflicts")
+        self._reset_auth_session()
         
         # Prepare JSON payload
         payload = {"ids": ids}
@@ -1020,16 +1033,10 @@ class LOMJsonClient:
                                         bool(self._digest_nonce), bool(self._digest_realm))
                             raise SVKAuthenticationError("Invalid Digest authentication parameters received from server")
                         
-                        # FIXED: Proper nonce count management - only increment if we have an active session
-                        if self._digest_session_active:
-                            self._digest_nc += 1
-                            _LOGGER.debug("DIAGNOSTIC: Incremented nonce count to %d for active session", self._digest_nc)
-                        else:
-                            # Start new session with count 1
-                            self._digest_nc = 1
-                            self._digest_session_active = True
-                            self._digest_last_nonce_time = time.time()
-                            _LOGGER.debug("DIAGNOSTIC: Starting new auth session with nonce count 1")
+                        # FIXED: Proper nonce count management - reset session for each new nonce
+                        # Always start a new session when we get a new nonce from server
+                        self._start_new_auth_session()
+                        _LOGGER.debug("DIAGNOSTIC: Started new auth session with fresh nonce count")
                         
                         nc_hex = f"{self._digest_nc:08x}"
                         
@@ -1040,6 +1047,9 @@ class LOMJsonClient:
                         # Use the exact same URI that will be used in the request
                         uri = str(get_url.relative())
                         _LOGGER.debug("PERFORMANCE: Digest auth URI: %s", uri)
+                        _LOGGER.debug("DIAGNOSTIC: Digest auth params - method=GET, uri=%s, username=%s, realm=%s, nonce=%s, nc=%s, cnonce=%s",
+                                   uri, self._username, self._digest_realm,
+                                   self._digest_nonce[:16] if self._digest_nonce else "None", nc_hex, cnonce)
                         auth_header = _compute_digest_response(
                             method="GET",
                             uri=uri,
@@ -1053,6 +1063,7 @@ class LOMJsonClient:
                             nc=nc_hex,
                             cnonce=cnonce,
                         )
+                        _LOGGER.debug("DIAGNOSTIC: Generated Digest auth header: %s", auth_header[:200] + "..." if len(auth_header) > 200 else auth_header)
                         
                         # Retry with Digest authentication
                         _LOGGER.debug("PERFORMANCE: Retrying with Digest authentication")
@@ -1078,10 +1089,9 @@ class LOMJsonClient:
                                 
                                 if is_stale_retry:
                                     # FIXED: Reset nonce count when receiving stale nonce
-                                    _LOGGER.info("DIAGNOSTIC: Server returned stale=true, resetting nonce count and updating nonce")
+                                    _LOGGER.info("DIAGNOSTIC: Server returned stale=true, resetting auth session")
                                     self._digest_nonce = new_auth_params.get('nonce')
-                                    self._digest_nc = 1  # FIXED: Reset to 1 for new nonce session
-                                    self._digest_last_nonce_time = time.time()
+                                    self._start_new_auth_session()  # Use the new method
                                     nc_hex = f"{self._digest_nc:08x}"
                                     new_cnonce = hashlib.md5(f"{time.time()}{random.random()}".encode()).hexdigest()[:16]
                                     
@@ -1588,6 +1598,10 @@ class LOMJsonClient:
                 return False
         
         try:
+            # CRITICAL FIX: Reset authentication session for write operations to prevent nonce conflicts
+            _LOGGER.info("DIAGNOSTIC: Resetting auth session before write operation to prevent nonce conflicts")
+            self._reset_auth_session()
+            
             # First, send an unauthenticated POST request
             _LOGGER.debug("Making unauthenticated POST request to %s", url)
             headers = {}
@@ -1621,15 +1635,9 @@ class LOMJsonClient:
                         raise SVKAuthenticationError("Invalid Digest authentication parameters")
                     
                     # FIXED: Proper nonce count management for write operations
-                    if self._digest_session_active:
-                        self._digest_nc += 1
-                        _LOGGER.debug("DIAGNOSTIC: Write - Incremented nonce count to %d for active session", self._digest_nc)
-                    else:
-                        # Start new session with count 1
-                        self._digest_nc = 1
-                        self._digest_session_active = True
-                        self._digest_last_nonce_time = time.time()
-                        _LOGGER.debug("DIAGNOSTIC: Write - Starting new auth session with nonce count 1")
+                    # Always start a new session for write operations to avoid nonce conflicts
+                    self._start_new_auth_session()
+                    _LOGGER.debug("DIAGNOSTIC: Write - Started new auth session for write operation")
                     
                     nc_hex = f"{self._digest_nc:08x}"
                     

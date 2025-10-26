@@ -173,6 +173,23 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
     @property
     def available(self) -> bool:
         """Return True if entity is available."""
+        # Debug logging to understand the error
+        _LOGGER.debug("DEBUG: Checking availability for %s, type: %s", self._entity_key, type(self))
+        _LOGGER.debug("DEBUG: hasattr coordinator: %s", hasattr(self, 'coordinator'))
+        _LOGGER.debug("DEBUG: hasattr _coordinator: %s", hasattr(self, '_coordinator'))
+        
+        # Try to access coordinator and see what happens
+        try:
+            _LOGGER.debug("DEBUG: coordinator type: %s", type(self.coordinator))
+            _LOGGER.debug("DEBUG: coordinator is_json_client: %s", self.coordinator.is_json_client)
+        except AttributeError as err:
+            _LOGGER.error("DEBUG: AttributeError accessing coordinator: %s", err)
+            # Try alternative access methods
+            if hasattr(self, '_coordinator'):
+                _LOGGER.debug("DEBUG: Trying _coordinator instead")
+                return self._coordinator.is_json_client
+            raise
+        
         # For JSON API, entities should be available even if data fetching fails initially
         if self.coordinator.is_json_client:
             is_available = self.coordinator.is_entity_available(self._entity_key)
@@ -311,6 +328,23 @@ class SVKHeatpumpSensor(SVKHeatpumpBaseEntity, SensorEntity):
     @property
     def available(self) -> bool:
         """Return True if entity is available."""
+        # Debug logging to understand error
+        _LOGGER.debug("DEBUG: Checking availability for %s, type: %s", self._entity_key, type(self))
+        _LOGGER.debug("DEBUG: hasattr coordinator: %s", hasattr(self, 'coordinator'))
+        _LOGGER.debug("DEBUG: hasattr _coordinator: %s", hasattr(self, '_coordinator'))
+        
+        # Try to access coordinator and see what happens
+        try:
+            _LOGGER.debug("DEBUG: coordinator type: %s", type(self.coordinator))
+            _LOGGER.debug("DEBUG: coordinator is_json_client: %s", self.coordinator.is_json_client)
+        except AttributeError as err:
+            _LOGGER.error("DEBUG: AttributeError accessing coordinator: %s", err)
+            # Try alternative access methods
+            if hasattr(self, '_coordinator'):
+                _LOGGER.debug("DEBUG: Trying _coordinator instead")
+                return self._coordinator.is_json_client
+            raise
+        
         # For JSON API, entities should be available even if data fetching fails initially
         if self.coordinator.is_json_client:
             is_available = self.coordinator.is_entity_available(self._entity_key)
