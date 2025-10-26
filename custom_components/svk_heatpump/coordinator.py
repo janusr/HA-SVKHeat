@@ -12,7 +12,6 @@ from .client import (
     SVKConnectionError,
     SVKAuthenticationError,
     SVKParseError,
-    SVKHeatpumpParser,
 )
 from .const import (
     CONF_ENABLE_WRITES,
@@ -77,18 +76,14 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
     def __init__(
         self,
         hass: HomeAssistant,
-        client,  # Can be either SVKHeatpumpClient or LOMJsonClient
+        client,  # LOMJsonClient
         scan_interval: int = DEFAULT_SCAN_INTERVAL,
         config_entry=None
     ):
         """Initialize."""
         self.client = client
         self.config_entry = config_entry
-        self.is_json_client = isinstance(client, LOMJsonClient)
-        
-        # For backward compatibility with HTML scraping
-        if not self.is_json_client:
-            self.parser = SVKHeatpumpParser()
+        self.is_json_client = True  # Always using LOMJsonClient
         
         # Initialize ID list for JSON API
         if self.is_json_client:
@@ -220,12 +215,8 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             # Start the client session if not already started
             await self.client.start()
             
-            # Use JSON API if available
-            if self.is_json_client:
-                return await self._update_data_json()
-            else:
-                # Fall back to HTML scraping for backward compatibility
-                return await self._update_data_html()
+            # Use JSON API
+            return await self._update_data_json()
                 
         except SVKAuthenticationError as err:
             # Provide helpful error message for authentication issues
@@ -535,129 +526,6 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             # This ensures Home Assistant's retry mechanisms are triggered
             raise UpdateFailed(f"JSON API update failed: {err}") from err
     
-    async def _update_data_html(self):
-        """Update data using HTML scraping (backward compatibility)."""
-        # Fetch all pages using the new client implementation
-        pages_html = {}
-        
-        # Fetch display page
-        try:
-            display_html = await self.client.get_display()
-            if display_html:
-                pages_html["display"] = display_html
-        except Exception as err:
-            _LOGGER.warning("Failed to fetch display page: %s", err)
-        
-        # Fetch user page
-        try:
-            user_html = await self.client.get_user()
-            if user_html:
-                pages_html["user"] = user_html
-        except Exception as err:
-            _LOGGER.warning("Failed to fetch user page: %s", err)
-        
-        # Fetch heating page
-        try:
-            heating_html = await self.client.get_heating()
-            if heating_html:
-                pages_html["heating"] = heating_html
-        except Exception as err:
-            _LOGGER.warning("Failed to fetch heating page: %s", err)
-        
-        # Fetch heatpump page
-        try:
-            heatpump_html = await self.client.get_heatpump()
-            if heatpump_html:
-                pages_html["heatpump"] = heatpump_html
-        except Exception as err:
-            _LOGGER.warning("Failed to fetch heatpump page: %s", err)
-        
-        # Fetch solar page
-        try:
-            solar_html = await self.client.get_solar()
-            if solar_html:
-                pages_html["solar"] = solar_html
-        except Exception as err:
-            _LOGGER.warning("Failed to fetch solar page: %s", err)
-        
-        # Fetch hot water page
-        try:
-            hotwater_html = await self.client.get_hotwater()
-            if hotwater_html:
-                pages_html["hotwater"] = hotwater_html
-        except Exception as err:
-            _LOGGER.warning("Failed to fetch hotwater page: %s", err)
-        
-        if not pages_html:
-            raise UpdateFailed("No pages could be retrieved from the device")
-        
-        # Parse all pages
-        data = {}
-        
-        # Parse display page
-        if "display" in pages_html:
-            try:
-                display_data = self.parser.parse_display_page(pages_html["display"])
-                data.update(display_data)
-                _LOGGER.debug("Parsed display page: %s", display_data)
-            except SVKParseError as err:
-                _LOGGER.error("Failed to parse display page: %s", err)
-        
-        # Parse user page
-        if "user" in pages_html:
-            try:
-                user_data = self.parser.parse_user_page(pages_html["user"])
-                data.update(user_data)
-                _LOGGER.debug("Parsed user page: %s", user_data)
-            except SVKParseError as err:
-                _LOGGER.error("Failed to parse user page: %s", err)
-        
-        # Parse heating page
-        if "heating" in pages_html:
-            try:
-                heating_data = self.parser.parse_heating_page(pages_html["heating"])
-                data.update(heating_data)
-                _LOGGER.debug("Parsed heating page: %s", heating_data)
-            except SVKParseError as err:
-                _LOGGER.error("Failed to parse heating page: %s", err)
-        
-        # Parse heatpump page
-        if "heatpump" in pages_html:
-            try:
-                heatpump_data = self.parser.parse_heatpump_page(pages_html["heatpump"])
-                data.update(heatpump_data)
-                _LOGGER.debug("Parsed heatpump page: %s", heatpump_data)
-            except SVKParseError as err:
-                _LOGGER.error("Failed to parse heatpump page: %s", err)
-        
-        # Parse solar page
-        if "solar" in pages_html:
-            try:
-                solar_data = self.parser.parse_solar_page(pages_html["solar"])
-                data.update(solar_data)
-                _LOGGER.debug("Parsed solar page: %s", solar_data)
-            except SVKParseError as err:
-                _LOGGER.error("Failed to parse solar page: %s", err)
-        
-        # Parse hot water page
-        if "hotwater" in pages_html:
-            try:
-                hotwater_data = self.parser.parse_hotwater_page(pages_html["hotwater"])
-                data.update(hotwater_data)
-                _LOGGER.debug("Parsed hot water page: %s", hotwater_data)
-            except SVKParseError as err:
-                _LOGGER.error("Failed to parse hot water page: %s", err)
-        
-        # Add metadata
-        data["last_update"] = datetime.now(timezone.utc)
-        data["pages_fetched"] = list(pages_html.keys())
-        
-        if not data:
-            raise UpdateFailed("No data could be parsed from any page")
-        
-        _LOGGER.debug("Total data parsed: %d items", len(data))
-        return data
-    
     def _map_heatpump_state(self, value):
         """Map heatpump state enum value."""
         # Handle numeric enum values
@@ -714,37 +582,26 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
     async def async_set_parameter(self, parameter: str, value) -> bool:
         """Set a parameter value."""
         try:
-            if self.is_json_client:
-                # For JSON API, we need to find the entity ID for this parameter
-                entity_id = None
-                for eid, info in self.id_to_entity_map.items():
-                    if info["key"] == parameter:
-                        entity_id = eid
-                        break
-                
-                if entity_id is None:
-                    _LOGGER.error("Unknown parameter for JSON API: %s", parameter)
-                    return False
-                
-                # Write the value using the JSON API
-                success = await self.client.write_value(entity_id, value)
-                
-                if success:
-                    # Trigger a refresh to get the updated value
-                    await self.async_request_refresh()
-                    return True
-                else:
-                    return False
+            # For JSON API, we need to find the entity ID for this parameter
+            entity_id = None
+            for eid, info in self.id_to_entity_map.items():
+                if info["key"] == parameter:
+                    entity_id = eid
+                    break
+            
+            if entity_id is None:
+                _LOGGER.error("Unknown parameter for JSON API: %s", parameter)
+                return False
+            
+            # Write the value using the JSON API
+            success = await self.client.write_value(entity_id, value)
+            
+            if success:
+                # Trigger a refresh to get the updated value
+                await self.async_request_refresh()
+                return True
             else:
-                # Use the HTML scraping method for backward compatibility
-                success = await self.client.set_parameter(parameter, value)
-                
-                if success:
-                    # Trigger a refresh to get the updated value
-                    await self.async_request_refresh()
-                    return True
-                else:
-                    return False
+                return False
                 
         except Exception as err:
             _LOGGER.error("Failed to set %s to %s: %s", parameter, value, err)
@@ -752,94 +609,22 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
     
     def get_enabled_entities(self, config_entry):
         """Get list of enabled entities based on configuration."""
-        # If using JSON API, return entities based on DEFAULT_ENABLED_ENTITIES
-        if self.is_json_client:
-            enabled_entities = []
-            
-            # Check if user has configured a custom ID list (backward compatibility)
-            if self.user_configured_ids:
-                # Use the user's configured ID list
-                for entity_id in self.user_configured_ids:
-                    if entity_id in self.id_to_entity_map:
-                        entity_key = self.id_to_entity_map[entity_id]["key"]
-                        enabled_entities.append(entity_key)
-            else:
-                # Use DEFAULT_ENABLED_ENTITIES as the default enabled entities
-                _, DEFAULT_ENABLED_ENTITIES = _get_constants()
-                for entity_id in DEFAULT_ENABLED_ENTITIES:
-                    if entity_id in self.id_to_entity_map:
-                        entity_key = self.id_to_entity_map[entity_id]["key"]
-                        enabled_entities.append(entity_key)
-            
-            return enabled_entities
-        
-        # Fall back to HTML scraping entities for backward compatibility
         enabled_entities = []
         
-        # Always include basic entities
-        enabled_entities.extend([
-            "heating_supply_temp",
-            "heating_return_temp",
-            "water_tank_temp",
-            "ambient_temp",
-            "room_temp",
-            "heating_setpoint",
-            "hot_water_setpoint",
-            "heatpump_state",
-            "alarm_active",
-            "compressor_speed_v",
-            "compressor_speed_percent",
-            "requested_capacity",
-            "actual_capacity",
-            "ip_address",
-            "software_version",
-        ])
-        
-        # Add optional entities based on configuration
-        options = config_entry.options
-        
-        # Always include solar entities
-        enabled_entities.extend([
-            "solar_collector_temp",
-            "solar_water_temp",
-            "solar_panel_state",
-        ])
-        
-        # Always include runtime counters
-        enabled_entities.extend([
-            "compressor_runtime",
-            "heater_runtime",
-            "pump_runtime",
-        ])
-        
-        # Add additional temperature sensors if available
-        additional_temps = [
-            "heating_tank_temp",
-            "cold_side_supply_temp",
-            "cold_side_return_temp",
-            "evaporator_temp",
-        ]
-        enabled_entities.extend(additional_temps)
-        
-        # Add performance sensors
-        performance_sensors = [
-            "cold_pump_speed",
-        ]
-        enabled_entities.extend(performance_sensors)
-        
-        # Add system info
-        system_info = [
-            "log_interval",
-        ]
-        enabled_entities.extend(system_info)
-        
-        # Add control entities if writes are enabled
-        if options.get(CONF_ENABLE_WRITES, False):
-            enabled_entities.extend([
-                "season_mode",
-                "hot_water_setpoint_control",
-                "room_setpoint_control",
-            ])
+        # Check if user has configured a custom ID list (backward compatibility)
+        if self.user_configured_ids:
+            # Use the user's configured ID list
+            for entity_id in self.user_configured_ids:
+                if entity_id in self.id_to_entity_map:
+                    entity_key = self.id_to_entity_map[entity_id]["key"]
+                    enabled_entities.append(entity_key)
+        else:
+            # Use DEFAULT_ENABLED_ENTITIES as the default enabled entities
+            _, DEFAULT_ENABLED_ENTITIES = _get_constants()
+            for entity_id in DEFAULT_ENABLED_ENTITIES:
+                if entity_id in self.id_to_entity_map:
+                    entity_key = self.id_to_entity_map[entity_id]["key"]
+                    enabled_entities.append(entity_key)
         
         return enabled_entities
     
@@ -887,102 +672,84 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         Returns:
             True if the entity has valid, current data, False otherwise
         """
-        # For JSON API, require valid and current data to consider entities available
-        # This prevents entities from being marked as available when they have no values
-        if self.is_json_client:
-            # Find the entity ID for this entity key
-            entity_id = None
-            for eid, info in self.id_to_entity_map.items():
-                if info["key"] == entity_key:
-                    entity_id = eid
-                    break
-            
-            if entity_id is None:
-                _LOGGER.debug("AVAILABILITY: Entity %s not available - not found in ID mapping", entity_key)
-                return False
-            
-            # Check if we have any data at all
-            if not self.data:
-                _LOGGER.debug("AVAILABILITY: Entity %s (ID: %s) not available - no data loaded yet", entity_key, entity_id)
-                return False
-            
-            # Check data freshness - ensure data was updated recently
-            last_update = self.data.get("last_update")
-            if last_update is None:
-                _LOGGER.warning("AVAILABILITY: Entity %s (ID: %s) not available - no timestamp in data", entity_key, entity_id)
-                return False
-            
-            # Calculate data age
-            now = datetime.now(timezone.utc)
-            data_age = (now - last_update).total_seconds()
-            max_data_age = 120  # Consider data stale after 2 minutes
-            
-            if data_age > max_data_age:
-                _LOGGER.warning("AVAILABILITY: Entity %s (ID: %s) not available - data is stale (%.1f seconds old, max: %d)",
-                              entity_key, entity_id, data_age, max_data_age)
-                return False
-            
-            # Check if this entity was included in the last successful fetch
-            ids_fetched = self.data.get("ids_fetched", [])
-            if entity_id not in ids_fetched:
-                _LOGGER.warning("AVAILABILITY: Entity %s (ID: %s) not available - not included in last data fetch",
-                              entity_key, entity_id)
-                _LOGGER.warning("AVAILABILITY: DEBUG - IDs fetched: %s, Entity ID: %s, Entity in DEFAULT_IDS: %s",
-                              ids_fetched[:20], entity_id, entity_id in self.id_list)
-                return False
-            
-            # Check if the entity has a valid, non-None value
-            value = self.get_entity_value(entity_key)
-            if value is None:
-                _LOGGER.warning("AVAILABILITY: Entity %s (ID: %s) not available - value is None - this may indicate a data fetching or parsing issue", entity_key, entity_id)
-                _LOGGER.warning("AVAILABILITY: DEBUG - Entity %s (ID: %s) value=None, data keys: %s",
-                              entity_key, entity_id, list(self.data.keys())[:20] if self.data else "No data")
-                return False
-            
-            # Additional check for temperature sentinel values
-            entity_info = self.id_to_entity_map.get(entity_id, {})
-            if entity_info.get("device_class") == "temperature":
-                if isinstance(value, (int, float)) and value <= -80.0:
-                    _LOGGER.debug("AVAILABILITY: Entity %s (ID: %s) not available - temperature sentinel value %s°C",
-                                 entity_key, entity_id, value)
-                    return False
-            
-            # Check for parsing errors related to this entity
-            parsing_details = self.data.get("parsing_details", {})
-            parsing_failures = parsing_details.get("parsing_failures", [])
-            for failure in parsing_failures:
-                if failure.get("entity") == entity_key or failure.get("id") == entity_id:
-                    _LOGGER.warning("AVAILABILITY: Entity %s (ID: %s) not available - parsing error: %s",
-                                  entity_key, entity_id, failure.get("reason", "Unknown error"))
-                    return False
-            
-            # Check for sentinel temperature values
-            sentinel_temps = parsing_details.get("sentinel_temps", [])
-            for sentinel in sentinel_temps:
-                if sentinel.get("entity") == entity_key or sentinel.get("id") == entity_id:
-                    _LOGGER.warning("AVAILABILITY: Entity %s (ID: %s) not available - sentinel temperature detected",
-                                  entity_key, entity_id)
-                    return False
-            
-            # If we reach here, the entity has valid, current data
-            _LOGGER.debug("AVAILABILITY: Entity %s (ID: %s) is available - has valid value: %s (data age: %.1fs)",
-                         entity_key, entity_id, value, data_age)
-            return True
+        # Find the entity ID for this entity key
+        entity_id = None
+        for eid, info in self.id_to_entity_map.items():
+            if info["key"] == entity_key:
+                entity_id = eid
+                break
         
-        # For non-JSON API (HTML scraping), maintain existing behavior
-        if not self.last_update_success:
-            _LOGGER.debug("AVAILABILITY: Entity %s not available - last update failed for non-JSON client", entity_key)
+        if entity_id is None:
+            _LOGGER.debug("AVAILABILITY: Entity %s not available - not found in ID mapping", entity_key)
             return False
         
+        # Check if we have any data at all
         if not self.data:
-            _LOGGER.debug("AVAILABILITY: Entity %s not available - no data for non-JSON client", entity_key)
+            _LOGGER.debug("AVAILABILITY: Entity %s (ID: %s) not available - no data loaded yet", entity_key, entity_id)
             return False
         
-        # Check if the entity has a value
+        # Check data freshness - ensure data was updated recently
+        last_update = self.data.get("last_update")
+        if last_update is None:
+            _LOGGER.warning("AVAILABILITY: Entity %s (ID: %s) not available - no timestamp in data", entity_key, entity_id)
+            return False
+        
+        # Calculate data age
+        now = datetime.now(timezone.utc)
+        data_age = (now - last_update).total_seconds()
+        max_data_age = 120  # Consider data stale after 2 minutes
+        
+        if data_age > max_data_age:
+            _LOGGER.warning("AVAILABILITY: Entity %s (ID: %s) not available - data is stale (%.1f seconds old, max: %d)",
+                          entity_key, entity_id, data_age, max_data_age)
+            return False
+        
+        # Check if this entity was included in the last successful fetch
+        ids_fetched = self.data.get("ids_fetched", [])
+        if entity_id not in ids_fetched:
+            _LOGGER.warning("AVAILABILITY: Entity %s (ID: %s) not available - not included in last data fetch",
+                          entity_key, entity_id)
+            _LOGGER.warning("AVAILABILITY: DEBUG - IDs fetched: %s, Entity ID: %s, Entity in DEFAULT_IDS: %s",
+                          ids_fetched[:20], entity_id, entity_id in self.id_list)
+            return False
+        
+        # Check if the entity has a valid, non-None value
         value = self.get_entity_value(entity_key)
-        is_available = value is not None
-        _LOGGER.debug("AVAILABILITY: Entity %s availability: %s (value: %s)", entity_key, is_available, value)
-        return is_available
+        if value is None:
+            _LOGGER.warning("AVAILABILITY: Entity %s (ID: %s) not available - value is None - this may indicate a data fetching or parsing issue", entity_key, entity_id)
+            _LOGGER.warning("AVAILABILITY: DEBUG - Entity %s (ID: %s) value=None, data keys: %s",
+                          entity_key, entity_id, list(self.data.keys())[:20] if self.data else "No data")
+            return False
+        
+        # Additional check for temperature sentinel values
+        entity_info = self.id_to_entity_map.get(entity_id, {})
+        if entity_info.get("device_class") == "temperature":
+            if isinstance(value, (int, float)) and value <= -80.0:
+                _LOGGER.debug("AVAILABILITY: Entity %s (ID: %s) not available - temperature sentinel value %s°C",
+                             entity_key, entity_id, value)
+                return False
+        
+        # Check for parsing errors related to this entity
+        parsing_details = self.data.get("parsing_details", {})
+        parsing_failures = parsing_details.get("parsing_failures", [])
+        for failure in parsing_failures:
+            if failure.get("entity") == entity_key or failure.get("id") == entity_id:
+                _LOGGER.warning("AVAILABILITY: Entity %s (ID: %s) not available - parsing error: %s",
+                              entity_key, entity_id, failure.get("reason", "Unknown error"))
+                return False
+        
+        # Check for sentinel temperature values
+        sentinel_temps = parsing_details.get("sentinel_temps", [])
+        for sentinel in sentinel_temps:
+            if sentinel.get("entity") == entity_key or sentinel.get("id") == entity_id:
+                _LOGGER.warning("AVAILABILITY: Entity %s (ID: %s) not available - sentinel temperature detected",
+                              entity_key, entity_id)
+                return False
+        
+        # If we reach here, the entity has valid, current data
+        _LOGGER.debug("AVAILABILITY: Entity %s (ID: %s) is available - has valid value: %s (data age: %.1fs)",
+                     entity_key, entity_id, value, data_age)
+        return True
     
     def get_all_entities_data(self) -> dict:
         """Get data for all available entities, including disabled ones.
@@ -990,9 +757,6 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         Returns:
             Dictionary with all entity data, including enabled/disabled status
         """
-        if not self.is_json_client or not self.data:
-            return {}
-        
         all_entities = {}
         
         for entity_id, entity_info in self.id_to_entity_map.items():
@@ -1014,9 +778,6 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
     
     def get_entity_info(self, entity_key: str):
         """Get entity information (unit, device_class, state_class, original_name) for JSON API."""
-        if not self.is_json_client:
-            return None
-        
         # Find the entity info for this entity key
         for entity_id, info in self.id_to_entity_map.items():
             if info["key"] == entity_key:

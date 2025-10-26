@@ -65,45 +65,44 @@ async def async_get_config_entry_diagnostics(
         },
     }
     
-    # Add JSON API diagnostics if available
-    if hasattr(coordinator, 'is_json_client') and coordinator.is_json_client:
-        json_diagnostics = coordinator.get_json_diagnostics()
-        diagnostics_data["json_api_diagnostics"] = json_diagnostics
+    # Add JSON API diagnostics
+    json_diagnostics = coordinator.get_json_diagnostics()
+    diagnostics_data["json_api_diagnostics"] = json_diagnostics
+    
+    # Add formatted table of raw JSON data
+    if coordinator.last_raw_json:
+        diagnostics_data["raw_json_table"] = coordinator.format_json_as_table()
+    
+    # Add entity availability summary
+    if coordinator.data:
+        diagnostics_data["entity_availability"] = json_diagnostics.get("entity_availability", {})
+    
+    # Add parsing statistics and errors
+    if coordinator.data and "parsing_stats" in coordinator.data:
+        diagnostics_data["parsing_statistics"] = coordinator.data["parsing_stats"]
+        diagnostics_data["parsing_details"] = coordinator.data.get("parsing_details", {})
         
-        # Add formatted table of raw JSON data
-        if coordinator.last_raw_json:
-            diagnostics_data["raw_json_table"] = coordinator.format_json_as_table()
-        
-        # Add entity availability summary
-        if coordinator.data:
-            diagnostics_data["entity_availability"] = json_diagnostics.get("entity_availability", {})
-        
-        # Add parsing statistics and errors
-        if coordinator.data and "parsing_stats" in coordinator.data:
-            diagnostics_data["parsing_statistics"] = coordinator.data["parsing_stats"]
-            diagnostics_data["parsing_details"] = coordinator.data.get("parsing_details", {})
-            
-            # Enhanced parsing diagnostics from const.py parse_items function
-            from . import const
-            if hasattr(const.parse_items, '_last_parsing_stats'):
-                diagnostics_data["enhanced_parsing_statistics"] = const.parse_items._last_parsing_stats
-            if hasattr(const.parse_items, '_last_parsing_errors'):
-                diagnostics_data["parsing_errors"] = const.parse_items._last_parsing_errors
-            if hasattr(const.parse_items, '_last_parsing_warnings'):
-                diagnostics_data["parsing_warnings"] = const.parse_items._last_parsing_warnings
-        
-        # Add unavailable entities list
-        unavailable_entities = coordinator.get_unavailable_entities()
-        if unavailable_entities:
-            diagnostics_data["unavailable_entities"] = unavailable_entities
-        
-        # Add entity type counting
-        entity_type_counts = count_entities_by_type(coordinator)
-        diagnostics_data["entity_type_counts"] = entity_type_counts
-        
-        # Add detailed unavailable entity analysis
-        unavailable_analysis = identify_unavailable_entities(coordinator)
-        diagnostics_data["unavailable_entity_analysis"] = unavailable_analysis
+        # Enhanced parsing diagnostics from const.py parse_items function
+        from . import const
+        if hasattr(const.parse_items, '_last_parsing_stats'):
+            diagnostics_data["enhanced_parsing_statistics"] = const.parse_items._last_parsing_stats
+        if hasattr(const.parse_items, '_last_parsing_errors'):
+            diagnostics_data["parsing_errors"] = const.parse_items._last_parsing_errors
+        if hasattr(const.parse_items, '_last_parsing_warnings'):
+            diagnostics_data["parsing_warnings"] = const.parse_items._last_parsing_warnings
+    
+    # Add unavailable entities list
+    unavailable_entities = coordinator.get_unavailable_entities()
+    if unavailable_entities:
+        diagnostics_data["unavailable_entities"] = unavailable_entities
+    
+    # Add entity type counting
+    entity_type_counts = count_entities_by_type(coordinator)
+    diagnostics_data["entity_type_counts"] = entity_type_counts
+    
+    # Add detailed unavailable entity analysis
+    unavailable_analysis = identify_unavailable_entities(coordinator)
+    diagnostics_data["unavailable_entity_analysis"] = unavailable_analysis
     
     # Add current data if available
     if coordinator.data:
@@ -132,17 +131,14 @@ async def async_get_config_entry_diagnostics(
         "session_closed": client._session.closed if client._session else None,
     }
     
-    # Add base_url if available (SVKHeatpumpClient has it, LOMJsonClient doesn't)
-    if hasattr(client, 'base_url'):
-        client_info["base_url"] = client.base_url
-    elif hasattr(client, '_base'):
+    # Add base_url for LOMJsonClient
+    if hasattr(client, '_base'):
         client_info["base_url"] = str(client._base)
     
-    # Add authentication status without exposing credentials
-    if hasattr(client, '_auth') and client._auth:
-        client_info["auth_configured"] = True
-        client_info["auth_type"] = type(client._auth).__name__
-        # Don't include the actual auth object or its attributes
+    # Add authentication status for LOMJsonClient
+    if hasattr(client, '_username') and hasattr(client, '_password'):
+        client_info["auth_configured"] = bool(client._username and client._password)
+        client_info["auth_type"] = "digest"
     else:
         client_info["auth_configured"] = False
     
@@ -165,9 +161,6 @@ async def async_get_config_entry_diagnostics(
                 "nonce_count": getattr(client, '_digest_nc', None),
             }
             client_info["digest_auth_info"] = digest_info
-    elif hasattr(client, '_auth') and client._auth:
-        # This is SVKHeatpumpClient with Digest auth
-        client_info["auth_scheme"] = "digest"
     
     # Redact sensitive information for privacy (only credentials, keep host/base_url for debugging)
     diagnostics_data["client_info"] = _redact_auth_data(async_redact_data(client_info, {"_auth", "auth", "_username", "_password"}))
@@ -228,17 +221,14 @@ def get_connection_debug_info(client) -> Dict[str, Any]:
         "session_closed": client._session.closed if client and client._session else None,
     }
     
-    # Add base_url if available (SVKHeatpumpClient has it, LOMJsonClient doesn't)
-    if client and hasattr(client, 'base_url'):
-        debug_info["base_url"] = client.base_url
-    elif client and hasattr(client, '_base'):
+    # Add base_url for LOMJsonClient
+    if client and hasattr(client, '_base'):
         debug_info["base_url"] = str(client._base)
     
-    # Add authentication status without exposing credentials
-    if client and hasattr(client, '_auth') and client._auth:
-        debug_info["auth_configured"] = True
-        debug_info["auth_type"] = type(client._auth).__name__
-        # Don't include the actual auth object or its attributes
+    # Add authentication status for LOMJsonClient
+    if client and hasattr(client, '_username') and hasattr(client, '_password'):
+        debug_info["auth_configured"] = bool(client._username and client._password)
+        debug_info["auth_type"] = "digest"
     else:
         debug_info["auth_configured"] = False
     
@@ -251,9 +241,6 @@ def get_connection_debug_info(client) -> Dict[str, Any]:
         # Add last status code if available
         if hasattr(client, '_last_status_code'):
             debug_info["last_status_code"] = client._last_status_code
-    elif client and hasattr(client, '_auth') and client._auth:
-        # This is SVKHeatpumpClient with Digest auth
-        debug_info["auth_scheme"] = "digest"
     
     # Redact only credentials, keep host/base_url for debugging
     return async_redact_data(debug_info, {"_auth", "auth"})
@@ -282,45 +269,44 @@ def create_diagnostics_report(hass: HomeAssistant, config_entry: ConfigEntry) ->
     # Add connection debug info
     report["connection_debug"] = _redact_auth_data(get_connection_debug_info(client))
     
-    # Add JSON API diagnostics if available
-    if hasattr(client, 'is_json_client') and client.is_json_client:
-        json_diagnostics = coordinator.get_json_diagnostics()
-        report["json_api_diagnostics"] = json_diagnostics
+    # Add JSON API diagnostics
+    json_diagnostics = coordinator.get_json_diagnostics()
+    report["json_api_diagnostics"] = json_diagnostics
+    
+    # Add formatted table of raw JSON data
+    if coordinator.last_raw_json:
+        report["raw_json_table"] = coordinator.format_json_as_table()
+    
+    # Add entity availability summary
+    if coordinator.data:
+        report["entity_availability"] = json_diagnostics.get("entity_availability", {})
+    
+    # Add parsing statistics and errors
+    if coordinator.data and "parsing_stats" in coordinator.data:
+        report["parsing_statistics"] = coordinator.data["parsing_stats"]
+        report["parsing_details"] = coordinator.data.get("parsing_details", {})
         
-        # Add formatted table of raw JSON data
-        if coordinator.last_raw_json:
-            report["raw_json_table"] = coordinator.format_json_as_table()
-        
-        # Add entity availability summary
-        if coordinator.data:
-            report["entity_availability"] = json_diagnostics.get("entity_availability", {})
-        
-        # Add parsing statistics and errors
-        if coordinator.data and "parsing_stats" in coordinator.data:
-            report["parsing_statistics"] = coordinator.data["parsing_stats"]
-            report["parsing_details"] = coordinator.data.get("parsing_details", {})
-            
-            # Enhanced parsing diagnostics from const.py parse_items function
-            from . import const
-            if hasattr(const.parse_items, '_last_parsing_stats'):
-                report["enhanced_parsing_statistics"] = const.parse_items._last_parsing_stats
-            if hasattr(const.parse_items, '_last_parsing_errors'):
-                report["parsing_errors"] = const.parse_items._last_parsing_errors
-            if hasattr(const.parse_items, '_last_parsing_warnings'):
-                report["parsing_warnings"] = const.parse_items._last_parsing_warnings
-        
-        # Add unavailable entities list
-        unavailable_entities = coordinator.get_unavailable_entities()
-        if unavailable_entities:
-            report["unavailable_entities"] = unavailable_entities
-        
-        # Add entity type counting
-        entity_type_counts = count_entities_by_type(coordinator)
-        report["entity_type_counts"] = entity_type_counts
-        
-        # Add detailed unavailable entity analysis
-        unavailable_analysis = identify_unavailable_entities(coordinator)
-        report["unavailable_entity_analysis"] = unavailable_analysis
+        # Enhanced parsing diagnostics from const.py parse_items function
+        from . import const
+        if hasattr(const.parse_items, '_last_parsing_stats'):
+            report["enhanced_parsing_statistics"] = const.parse_items._last_parsing_stats
+        if hasattr(const.parse_items, '_last_parsing_errors'):
+            report["parsing_errors"] = const.parse_items._last_parsing_errors
+        if hasattr(const.parse_items, '_last_parsing_warnings'):
+            report["parsing_warnings"] = const.parse_items._last_parsing_warnings
+    
+    # Add unavailable entities list
+    unavailable_entities = coordinator.get_unavailable_entities()
+    if unavailable_entities:
+        report["unavailable_entities"] = unavailable_entities
+    
+    # Add entity type counting
+    entity_type_counts = count_entities_by_type(coordinator)
+    report["entity_type_counts"] = entity_type_counts
+    
+    # Add detailed unavailable entity analysis
+    unavailable_analysis = identify_unavailable_entities(coordinator)
+    report["unavailable_entity_analysis"] = unavailable_analysis
     
     # Add HTML parsing debug info
     report["parsing_debug"] = get_html_debug_info(coordinator)
@@ -354,9 +340,6 @@ def create_diagnostics_report(hass: HomeAssistant, config_entry: ConfigEntry) ->
 
 def count_entities_by_type(coordinator) -> Dict[str, Any]:
     """Count entities by type (temperature, percentage, binary, etc.)."""
-    if not hasattr(coordinator, 'is_json_client') or not coordinator.is_json_client:
-        return {"error": "Not using JSON API"}
-    
     if not hasattr(coordinator, 'id_to_entity_map'):
         return {"error": "No entity mapping available"}
     
@@ -412,9 +395,6 @@ def count_entities_by_type(coordinator) -> Dict[str, Any]:
 
 def identify_unavailable_entities(coordinator) -> Dict[str, Any]:
     """Identify unavailable entities with detailed information."""
-    if not hasattr(coordinator, 'is_json_client') or not coordinator.is_json_client:
-        return {"error": "Not using JSON API"}
-    
     if not hasattr(coordinator, 'id_to_entity_map'):
         return {"error": "No entity mapping available"}
     
