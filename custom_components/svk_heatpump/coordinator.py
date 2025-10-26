@@ -275,8 +275,10 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             
             # Read entities based on whether this is first refresh or not
             _LOGGER.debug("About to call client.read_values - this is a potential blocking point")
+            _LOGGER.info("DIAGNOSTIC: Attempting to read %d IDs from heat pump at %s", len(ids_to_request), self.client.host if hasattr(self.client, 'host') else 'unknown')
             json_data = await self.client.read_values(ids_to_request)
             _LOGGER.debug("Returned from client.read_values - got %d items", len(json_data) if json_data else 0)
+            _LOGGER.info("DIAGNOSTIC: Read values returned %s", "SUCCESS" if json_data else "FAILURE")
             
             # Add after line 284:
             _LOGGER.info("RECEIVED IDs: %s", [item.get('id') for item in json_data[:20]])

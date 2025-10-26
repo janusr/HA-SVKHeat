@@ -183,9 +183,17 @@ class SVKSensor(SVKBaseEntity, SensorEntity, CoordinatorEntity):
                          self._entity_key, is_available, value)
             # Add additional diagnostic info
             if not is_available:
-                _LOGGER.warning("Entity %s is not available - this may indicate a data fetching or parsing issue", self._entity_key)
+                _LOGGER.warning("DIAGNOSTIC: Entity %s is not available - this may indicate a data fetching or parsing issue", self._entity_key)
+                # Log detailed availability reasons
+                if hasattr(self._coordinator, 'data') and self._coordinator.data:
+                    _LOGGER.warning("DIAGNOSTIC: Coordinator data exists, last_update: %s",
+                                 self._coordinator.data.get('last_update', 'None'))
+                    _LOGGER.warning("DIAGNOSTIC: Parsing stats: %s",
+                                 self._coordinator.data.get('parsing_stats', 'None'))
+                else:
+                    _LOGGER.warning("DIAGNOSTIC: No coordinator data available - this indicates a fundamental connection issue")
             elif value is None:
-                _LOGGER.warning("Entity %s is available but has no value - likely a parsing or data issue", self._entity_key)
+                _LOGGER.warning("DIAGNOSTIC: Entity %s is available but has no value - likely a parsing or data issue", self._entity_key)
             return is_available
         else:
             # For HTML scraping, require successful update

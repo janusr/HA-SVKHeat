@@ -972,8 +972,10 @@ class LOMJsonClient:
                     if resp.status == 401:
                         auth_header = resp.headers.get('WWW-Authenticate', '')
                         _LOGGER.info("PERFORMANCE: Received 401 - WWW-Authenticate header: %s", auth_header)
+                        _LOGGER.error("DIAGNOSTIC: Authentication failed - server returned 401 for host %s", self.host)
+                        _LOGGER.error("DIAGNOSTIC: Auth header received: %s", auth_header[:200] if auth_header else "None")
                         if not auth_header.startswith('Digest '):
-                            _LOGGER.error("Server does not support Digest authentication - auth scheme: %s", auth_header[:50])
+                            _LOGGER.error("DIAGNOSTIC: Server does not support Digest authentication - auth scheme: %s", auth_header[:50])
                             raise SVKAuthenticationError("Server does not support Digest authentication. Please check if your device supports Digest authentication.")
                         
                         # Parse WWW-Authenticate header
@@ -1076,6 +1078,7 @@ class LOMJsonClient:
                     
                     # Check for success
                     if resp.status == 200:
+                        _LOGGER.info("DIAGNOSTIC: Successfully authenticated to heat pump at %s", self.host)
                         _LOGGER.debug("Successfully authenticated and received response")
                         _LOGGER.debug("Response headers: %s", dict(resp.headers))
                         _LOGGER.debug("Content-Type: %s", resp.headers.get('Content-Type', 'unknown'))
@@ -1131,7 +1134,8 @@ class LOMJsonClient:
                         _LOGGER.error("Access forbidden - check user permissions")
                         raise SVKAuthenticationError("Access forbidden - user may not have required permissions")
                     elif resp.status == 404:
-                        _LOGGER.error("JSON API endpoint not found - device may not support JSON API")
+                        _LOGGER.error("DIAGNOSTIC: JSON API endpoint not found at %s - device may not support JSON API", get_url)
+                        _LOGGER.error("DIAGNOSTIC: This device model may not support the JSON API - check if HTML scraping should be used instead")
                         raise SVKConnectionError("JSON API endpoint not found - device may not support this API")
                     elif resp.status >= 500:
                         _LOGGER.error("Server error %d - device may be experiencing issues", resp.status)
