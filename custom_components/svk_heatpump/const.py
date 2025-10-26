@@ -21,7 +21,7 @@ DEVICE_GROUPS = {
     "extended_display": {"name": "Extended Display", "via": "display"},
     "heating": {"name": "Heating"},
     "heatpump": {"name": "Heatpump"},
-    "hot_watar": {"name": "Hot Watar"},
+    "hotwater": {"name": "Hot Water"},
     "service": {"name": "Service"},
     "solar_panel": {"name": "Solar Panel"},
     "user": {"name": "User"},
