@@ -272,6 +272,14 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                 
                 # Add after line 271:
                 _LOGGER.info("REQUESTED IDs: %s", ids_to_request[:20])  # First 20 IDs
+                
+                # DEBUG: Check if problematic entities are in the request list
+                problem_entities = [380, 384]  # IDs for hotwater_hotwater_source and hotwater_hotwater_neutralzone
+                for problem_id in problem_entities:
+                    if problem_id in ids_to_request:
+                        _LOGGER.info("DEBUG: Problem entity ID %s is included in request list", problem_id)
+                    else:
+                        _LOGGER.warning("DEBUG: Problem entity ID %s is NOT in request list - this explains unavailability!", problem_id)
             
             # Read entities based on whether this is first refresh or not
             _LOGGER.debug("About to call client.read_values - this is a potential blocking point")
@@ -282,6 +290,15 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             
             # Add after line 284:
             _LOGGER.info("RECEIVED IDs: %s", [item.get('id') for item in json_data[:20]])
+            
+            # DEBUG: Check if problematic entities are in the response
+            problem_entities = [380, 384]  # IDs for hotwater_hotwater_source and hotwater_hotwater_neutralzone
+            received_ids = [item.get('id') for item in json_data]
+            for problem_id in problem_entities:
+                if str(problem_id) in received_ids:
+                    _LOGGER.info("DEBUG: Problem entity ID %s is present in JSON response", problem_id)
+                else:
+                    _LOGGER.warning("DEBUG: Problem entity ID %s is MISSING from JSON response - this explains unavailability!", problem_id)
             
             _LOGGER.info("Received raw JSON data with %d items", len(json_data) if json_data else 0)
             _LOGGER.debug("Raw JSON data sample: %s", json_data[:5] if json_data and len(json_data) > 0 else "None")
@@ -910,12 +927,16 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             if entity_id not in ids_fetched:
                 _LOGGER.warning("AVAILABILITY: Entity %s (ID: %s) not available - not included in last data fetch",
                               entity_key, entity_id)
+                _LOGGER.warning("AVAILABILITY: DEBUG - IDs fetched: %s, Entity ID: %s, Entity in DEFAULT_IDS: %s",
+                              ids_fetched[:20], entity_id, entity_id in self.id_list)
                 return False
             
             # Check if the entity has a valid, non-None value
             value = self.get_entity_value(entity_key)
             if value is None:
-                _LOGGER.debug("AVAILABILITY: Entity %s (ID: %s) not available - value is None", entity_key, entity_id)
+                _LOGGER.warning("AVAILABILITY: Entity %s (ID: %s) not available - value is None - this may indicate a data fetching or parsing issue", entity_key, entity_id)
+                _LOGGER.warning("AVAILABILITY: DEBUG - Entity %s (ID: %s) value=None, data keys: %s",
+                              entity_key, entity_id, list(self.data.keys())[:20] if self.data else "No data")
                 return False
             
             # Additional check for temperature sentinel values

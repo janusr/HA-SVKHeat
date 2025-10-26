@@ -26,7 +26,7 @@ def _get_constants():
 _LOGGER = logging.getLogger(__name__)
 
 
-class SVKSelect(SVKBaseEntity, SelectEntity, CoordinatorEntity):
+class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
     """Representation of a SVK Heatpump select entity."""
     
     def __init__(
@@ -46,15 +46,13 @@ class SVKSelect(SVKBaseEntity, SelectEntity, CoordinatorEntity):
         data_type = entity_info.get("data_type", "")
         category = entity_info.get("category", "")
         
-        # Initialize SVKBaseEntity
-        SVKBaseEntity.__init__(self, group_key, name, entity_key)
-        
-        # Initialize CoordinatorEntity
-        CoordinatorEntity.__init__(self, coordinator)
+        # Initialize SVKHeatpumpBaseEntity (which inherits from CoordinatorEntity)
+        super().__init__(coordinator, config_entry_id)
         
         # Initialize additional attributes
         self._entity_key = entity_key
         self._attr_entity_registry_enabled_default = enabled_by_default
+        self._group_key = group_key  # For unique_id property
         
         _LOGGER.debug("Creating select entity: %s (group: %s, enabled_by_default: %s)",
                      entity_key, group_key, enabled_by_default)

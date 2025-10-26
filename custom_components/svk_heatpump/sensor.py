@@ -57,7 +57,7 @@ class SVKHeatpumpBaseEntity(CoordinatorEntity):
         return self.coordinator.device_info
 
 
-class SVKSensor(SVKBaseEntity, SensorEntity, CoordinatorEntity):
+class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
     """Representation of a SVK Heatpump sensor."""
     
     def __init__(
@@ -78,15 +78,13 @@ class SVKSensor(SVKBaseEntity, SensorEntity, CoordinatorEntity):
         unit = entity_info.get("unit", "")
         category = entity_info.get("category", "")
         
-        # Initialize SVKBaseEntity
-        SVKBaseEntity.__init__(self, group_key, name, entity_key)
-        
-        # Initialize CoordinatorEntity
-        CoordinatorEntity.__init__(self, coordinator)
+        # Initialize SVKHeatpumpBaseEntity (which inherits from CoordinatorEntity)
+        super().__init__(coordinator, config_entry_id)
         
         # Initialize additional attributes
         self._entity_key = entity_key
         self._attr_entity_registry_enabled_default = enabled_by_default
+        self._group_key = group_key  # For unique_id property
         
         _LOGGER.debug("Creating sensor entity: %s (group: %s, enabled_by_default: %s)",
                      entity_key, group_key, enabled_by_default)
@@ -138,7 +136,7 @@ class SVKSensor(SVKBaseEntity, SensorEntity, CoordinatorEntity):
     @property
     def native_value(self) -> Any:
         """Return the state of the sensor."""
-        value = self._coordinator.get_entity_value(self._entity_key)
+        value = self.coordinator.get_entity_value(self._entity_key)
         
         # Log value retrieval for debugging
         if value is None:
@@ -176,20 +174,20 @@ class SVKSensor(SVKBaseEntity, SensorEntity, CoordinatorEntity):
     def available(self) -> bool:
         """Return True if entity is available."""
         # For JSON API, entities should be available even if data fetching fails initially
-        if self._coordinator.is_json_client:
-            is_available = self._coordinator.is_entity_available(self._entity_key)
-            value = self._coordinator.get_entity_value(self._entity_key)
+        if self.coordinator.is_json_client:
+            is_available = self.coordinator.is_entity_available(self._entity_key)
+            value = self.coordinator.get_entity_value(self._entity_key)
             _LOGGER.info("JSON API Sensor %s availability: %s (entity exists in mapping, current value: %s)",
                          self._entity_key, is_available, value)
             # Add additional diagnostic info
             if not is_available:
                 _LOGGER.warning("DIAGNOSTIC: Entity %s is not available - this may indicate a data fetching or parsing issue", self._entity_key)
                 # Log detailed availability reasons
-                if hasattr(self._coordinator, 'data') and self._coordinator.data:
+                if hasattr(self.coordinator, 'data') and self.coordinator.data:
                     _LOGGER.warning("DIAGNOSTIC: Coordinator data exists, last_update: %s",
-                                 self._coordinator.data.get('last_update', 'None'))
+                                 self.coordinator.data.get('last_update', 'None'))
                     _LOGGER.warning("DIAGNOSTIC: Parsing stats: %s",
-                                 self._coordinator.data.get('parsing_stats', 'None'))
+                                 self.coordinator.data.get('parsing_stats', 'None'))
                 else:
                     _LOGGER.warning("DIAGNOSTIC: No coordinator data available - this indicates a fundamental connection issue")
             elif value is None:
@@ -197,10 +195,10 @@ class SVKSensor(SVKBaseEntity, SensorEntity, CoordinatorEntity):
             return is_available
         else:
             # For HTML scraping, require successful update
-            is_available = self._coordinator.last_update_success and self._coordinator.is_entity_available(self._entity_key)
-            value = self._coordinator.get_entity_value(self._entity_key)
+            is_available = self.coordinator.last_update_success and self.coordinator.is_entity_available(self._entity_key)
+            value = self.coordinator.get_entity_value(self._entity_key)
             _LOGGER.info("HTML API Sensor %s availability: %s (last_update_success: %s, current value: %s)",
-                         self._entity_key, is_available, self._coordinator.last_update_success, value)
+                         self._entity_key, is_available, self.coordinator.last_update_success, value)
             return is_available
 
 
@@ -423,29 +421,22 @@ async def async_setup_entry(
         entity_category=EntityCategory.DIAGNOSTIC,
     )
     
-    class AlarmCountSensor(SVKBaseEntity, SensorEntity, CoordinatorEntity):
+    class AlarmCountSensor(SVKHeatpumpBaseEntity, SensorEntity):
         """Sensor for alarm count."""
         _attr_entity_registry_enabled_default = True
         
         def __init__(self, coordinator, config_entry_id):
-            # Initialize SVKBaseEntity with group_key "system" for alarm count
-            SVKBaseEntity.__init__(self, "system", "Alarm Count", "alarm_count")
-            # Initialize CoordinatorEntity
-            CoordinatorEntity.__init__(self, coordinator)
-            self._coordinator = coordinator
-            self._config_entry_id = config_entry_id
+            # Initialize SVKHeatpumpBaseEntity (which inherits from CoordinatorEntity)
+            super().__init__(coordinator, config_entry_id)
+            self._attr_name = "Alarm Count"
+            self._attr_unique_id = f"{DOMAIN}_system_alarm_count"
             self.entity_description = alarm_count_desc
-        
-        @property
-        def unique_id(self) -> str:
-            """Return unique ID for sensor."""
-            return f"{DOMAIN}_system_alarm_count"
         
         @property
         def native_value(self) -> int:
             """Return the number of active alarms."""
-            if self._coordinator.data:
-                alarm_summary = self._coordinator.get_alarm_summary()
+            if self.coordinator.data:
+                alarm_summary = self.coordinator.get_alarm_summary()
                 return alarm_summary.get("count", 0)
             return 0
     
@@ -463,29 +454,22 @@ async def async_setup_entry(
         entity_category=EntityCategory.DIAGNOSTIC,
     )
     
-    class LastUpdateSensor(SVKBaseEntity, SensorEntity, CoordinatorEntity):
+    class LastUpdateSensor(SVKHeatpumpBaseEntity, SensorEntity):
         """Sensor for last update timestamp."""
         _attr_entity_registry_enabled_default = True
         
         def __init__(self, coordinator, config_entry_id):
-            # Initialize SVKBaseEntity with group_key "system" for last update
-            SVKBaseEntity.__init__(self, "system", "Last Update", "last_update_sensor")
-            # Initialize CoordinatorEntity
-            CoordinatorEntity.__init__(self, coordinator)
-            self._coordinator = coordinator
-            self._config_entry_id = config_entry_id
+            # Initialize SVKHeatpumpBaseEntity (which inherits from CoordinatorEntity)
+            super().__init__(coordinator, config_entry_id)
+            self._attr_name = "Last Update"
+            self._attr_unique_id = f"{DOMAIN}_system_last_update_sensor"
             self.entity_description = last_update_desc
-        
-        @property
-        def unique_id(self) -> str:
-            """Return unique ID for sensor."""
-            return f"{DOMAIN}_system_last_update_sensor"
         
         @property
         def native_value(self) -> Any:
             """Return the last update timestamp."""
-            if self._coordinator.data:
-                value = self._coordinator.data.get("last_update")
+            if self.coordinator.data:
+                value = self.coordinator.data.get("last_update")
                 # Ensure we always return a datetime object with timezone
                 if isinstance(value, (int, float)):
                     # Convert Unix timestamp to datetime with timezone

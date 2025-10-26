@@ -610,12 +610,16 @@ class LOMJsonClient:
         
         self._max_retries = 3  # Maximum number of retries for failed requests
         self._retry_delay = 0.5  # Initial retry delay in seconds
-        self._digest_nonce = None  # Store nonce for subsequent requests
-        self._digest_opaque = None  # Store opaque for subsequent requests
-        self._digest_realm = None  # Store realm for subsequent requests
+        
+        # Digest authentication session state - FIXED: Proper session management
+        self._digest_nonce = None  # Store nonce for current session
+        self._digest_opaque = None  # Store opaque for current session
+        self._digest_realm = None  # Store realm for current session
         self._digest_qop = "auth"  # Quality of protection
         self._digest_algorithm = "MD5"  # Hash algorithm
-        self._digest_nc = 0  # Nonce count
+        self._digest_nc = 0  # Nonce count - FIXED: Reset per session, not per request
+        self._digest_session_active = False  # Track if we have an active auth session
+        self._digest_last_nonce_time = 0  # Track when we last received a nonce
         self._last_status_code = None  # Track last HTTP status code for diagnostics
         
         # Track failed IDs for better error handling
@@ -899,6 +903,19 @@ class LOMJsonClient:
         if self._session and not self._session.closed:
             await self._session.close()
             self._session = None
+        # Reset authentication state when closing session
+        self._reset_auth_session()
+    
+    def _reset_auth_session(self):
+        """Reset authentication session state - FIXED: Proper session management."""
+        _LOGGER.info("DIAGNOSTIC: Resetting authentication session state")
+        self._digest_nonce = None
+        self._digest_opaque = None
+        self._digest_realm = None
+        self._digest_nc = 0
+        self._digest_session_active = False
+        self._digest_last_nonce_time = 0
+        _LOGGER.debug("DIAGNOSTIC: Auth session reset complete - nonce_count=0, session_active=False")
     
     async def _request_with_digest_auth(self, path: str, ids: List[int]) -> List[Dict[str, Any]]:
         """Make a request with Digest authentication."""
@@ -993,14 +1010,27 @@ class LOMJsonClient:
                         self._digest_realm = auth_params.get('realm')
                         self._digest_qop = auth_params.get('qop', 'auth')
                         self._digest_algorithm = auth_params.get('algorithm', 'MD5')
+                        self._digest_last_nonce_time = time.time()
+                        
+                        _LOGGER.info("DIAGNOSTIC: Received new auth parameters - realm=%s, nonce=%s, stale=%s",
+                                   self._digest_realm, self._digest_nonce[:16] if self._digest_nonce else "None", is_stale)
                         
                         if not self._digest_nonce or not self._digest_realm:
                             _LOGGER.error("Missing required Digest authentication parameters: nonce=%s, realm=%s",
                                         bool(self._digest_nonce), bool(self._digest_realm))
                             raise SVKAuthenticationError("Invalid Digest authentication parameters received from server")
                         
-                        # Increment nonce count
-                        self._digest_nc += 1
+                        # FIXED: Proper nonce count management - only increment if we have an active session
+                        if self._digest_session_active:
+                            self._digest_nc += 1
+                            _LOGGER.debug("DIAGNOSTIC: Incremented nonce count to %d for active session", self._digest_nc)
+                        else:
+                            # Start new session with count 1
+                            self._digest_nc = 1
+                            self._digest_session_active = True
+                            self._digest_last_nonce_time = time.time()
+                            _LOGGER.debug("DIAGNOSTIC: Starting new auth session with nonce count 1")
+                        
                         nc_hex = f"{self._digest_nc:08x}"
                         
                         # Generate cnonce
@@ -1033,20 +1063,29 @@ class LOMJsonClient:
                         self._last_status_code = resp.status
                         _LOGGER.info("PERFORMANCE: Digest auth request completed in %.2fs, status: %d", auth_duration, resp.status)
                         
-                        # Handle 401 with stale=true - retry once with new nonce
-                        if resp.status == 401 and not is_stale:
-                            _LOGGER.debug("Digest authentication failed, checking for stale nonce")
+                        # Handle 401 with stale=true - FIXED: Proper stale nonce handling
+                        if resp.status == 401:
+                            _LOGGER.debug("DIAGNOSTIC: Digest authentication failed, checking for stale nonce")
                             resp_text = await resp.text(errors="ignore")
                             new_auth_header = resp.headers.get('WWW-Authenticate', '')
-                            _LOGGER.debug("New WWW-Authenticate header: %s", new_auth_header)
+                            _LOGGER.debug("DIAGNOSTIC: New WWW-Authenticate header: %s", new_auth_header[:200] if new_auth_header else "None")
+                            
                             if new_auth_header.startswith('Digest '):
                                 new_auth_params = _parse_www_authenticate(new_auth_header)
-                                if new_auth_params.get('stale', '').lower() == 'true':
-                                    # Update nonce and retry
+                                is_stale_retry = new_auth_params.get('stale', '').lower() == 'true'
+                                
+                                _LOGGER.info("DIAGNOSTIC: Stale nonce detected: %s, previous stale: %s", is_stale_retry, is_stale)
+                                
+                                if is_stale_retry:
+                                    # FIXED: Reset nonce count when receiving stale nonce
+                                    _LOGGER.info("DIAGNOSTIC: Server returned stale=true, resetting nonce count and updating nonce")
                                     self._digest_nonce = new_auth_params.get('nonce')
-                                    self._digest_nc += 1
+                                    self._digest_nc = 1  # FIXED: Reset to 1 for new nonce session
+                                    self._digest_last_nonce_time = time.time()
                                     nc_hex = f"{self._digest_nc:08x}"
                                     new_cnonce = hashlib.md5(f"{time.time()}{random.random()}".encode()).hexdigest()[:16]
+                                    
+                                    _LOGGER.debug("DIAGNOSTIC: New nonce: %s, reset nc to: %s", self._digest_nonce[:16] if self._digest_nonce else "None", nc_hex)
                                     
                                     auth_header = _compute_digest_response(
                                         method="GET",
@@ -1063,8 +1102,17 @@ class LOMJsonClient:
                                     )
                                     
                                     headers["Authorization"] = auth_header
+                                    _LOGGER.debug("DIAGNOSTIC: Retrying with updated nonce and reset count")
                                     resp = await self._session.get(get_url, headers=headers, allow_redirects=False)
                                     self._last_status_code = resp.status
+                                elif not is_stale:
+                                    # FIXED: Handle non-stale 401 (invalid credentials)
+                                    _LOGGER.error("DIAGNOSTIC: Authentication failed with non-stale 401 - credentials may be invalid")
+                                    _LOGGER.error("DIAGNOSTIC: Auth params: realm=%s, nonce=%s",
+                                                self._digest_realm, self._digest_nonce[:16] if self._digest_nonce else "None")
+                                    # Don't retry - this is likely invalid credentials
+                                    self._reset_auth_session()
+                                    raise SVKAuthenticationError("Invalid username or password")
                         
                         # Handle redirects manually and re-attach Digest header
                         if resp.status in (302, 303, 307, 308):
@@ -1564,12 +1612,25 @@ class LOMJsonClient:
                     self._digest_realm = auth_params.get('realm')
                     self._digest_qop = auth_params.get('qop', 'auth')
                     self._digest_algorithm = auth_params.get('algorithm', 'MD5')
+                    self._digest_last_nonce_time = time.time()
+                    
+                    _LOGGER.info("DIAGNOSTIC: Write - Received new auth parameters - realm=%s, nonce=%s",
+                               self._digest_realm, self._digest_nonce[:16] if self._digest_nonce else "None")
                     
                     if not self._digest_nonce or not self._digest_realm:
                         raise SVKAuthenticationError("Invalid Digest authentication parameters")
                     
-                    # Increment nonce count
-                    self._digest_nc += 1
+                    # FIXED: Proper nonce count management for write operations
+                    if self._digest_session_active:
+                        self._digest_nc += 1
+                        _LOGGER.debug("DIAGNOSTIC: Write - Incremented nonce count to %d for active session", self._digest_nc)
+                    else:
+                        # Start new session with count 1
+                        self._digest_nc = 1
+                        self._digest_session_active = True
+                        self._digest_last_nonce_time = time.time()
+                        _LOGGER.debug("DIAGNOSTIC: Write - Starting new auth session with nonce count 1")
+                    
                     nc_hex = f"{self._digest_nc:08x}"
                     
                     # Generate cnonce
@@ -1619,9 +1680,20 @@ class LOMJsonClient:
                     except (aiohttp.ContentTypeError, ValueError):
                         return False
                 
-                # Handle errors
+                # Handle errors with improved diagnostics
                 if resp.status == 401:
-                    raise SVKAuthenticationError("Invalid username or password")
+                    _LOGGER.error("DIAGNOSTIC: Write operation failed with 401 - checking for stale nonce")
+                    error_auth_header = resp.headers.get('WWW-Authenticate', '')
+                    if error_auth_header.startswith('Digest '):
+                        error_auth_params = _parse_www_authenticate(error_auth_header)
+                        if error_auth_params.get('stale', '').lower() == 'true':
+                            _LOGGER.info("DIAGNOSTIC: Write - Server returned stale nonce, resetting session")
+                            self._reset_auth_session()
+                            # Could retry here, but for simplicity we'll fail and let the caller retry
+                        else:
+                            _LOGGER.error("DIAGNOSTIC: Write - Invalid credentials detected")
+                            self._reset_auth_session()
+                    raise SVKAuthenticationError("Invalid username or password for write operation")
                 
                 text = await resp.text(errors="ignore")
                 raise SVKConnectionError(f"HTTP {resp.status} {url}: {text[:160]}")

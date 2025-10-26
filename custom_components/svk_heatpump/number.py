@@ -31,7 +31,7 @@ def _get_constants():
 _LOGGER = logging.getLogger(__name__)
 
 
-class SVKNumber(SVKBaseEntity, NumberEntity, CoordinatorEntity):
+class SVKNumber(SVKHeatpumpBaseEntity, NumberEntity):
     """Representation of a SVK Heatpump number entity."""
     
     def __init__(
@@ -55,15 +55,13 @@ class SVKNumber(SVKBaseEntity, NumberEntity, CoordinatorEntity):
         max_value = entity_info.get("max_value", 100)
         step = entity_info.get("step", 1)
         
-        # Initialize SVKBaseEntity
-        SVKBaseEntity.__init__(self, group_key, name, entity_key)
-        
-        # Initialize CoordinatorEntity
-        CoordinatorEntity.__init__(self, coordinator)
+        # Initialize SVKHeatpumpBaseEntity (which inherits from CoordinatorEntity)
+        super().__init__(coordinator, config_entry_id)
         
         # Initialize additional attributes
         self._entity_key = entity_key
         self._attr_entity_registry_enabled_default = enabled_by_default
+        self._group_key = group_key  # For unique_id property
         
         _LOGGER.debug("Creating number entity: %s (group: %s, min: %s, max: %s, step: %s, unit: %s)",
                      entity_key, group_key, min_value, max_value, step, unit)
@@ -449,23 +447,16 @@ async def async_setup_entry(
         device_class=NumberDeviceClass.TEMPERATURE,
     )
     
-    class HeatingSetpointMonitor(SVKBaseEntity, NumberEntity, CoordinatorEntity):
+    class HeatingSetpointMonitor(SVKHeatpumpBaseEntity, NumberEntity):
         """Read-only monitor for heating setpoint."""
         _attr_entity_registry_enabled_default = False
         
         def __init__(self, coordinator, config_entry_id):
-            # Initialize SVKBaseEntity with group_key "system" for monitor
-            SVKBaseEntity.__init__(self, "system", "Heating Set Point Monitor", "heating_setpoint_monitor")
-            # Initialize CoordinatorEntity
-            CoordinatorEntity.__init__(self, coordinator)
-            self._coordinator = coordinator
-            self._config_entry_id = config_entry_id
+            # Initialize SVKHeatpumpBaseEntity (which inherits from CoordinatorEntity)
+            super().__init__(coordinator, config_entry_id)
+            self._attr_name = "Heating Set Point Monitor"
+            self._attr_unique_id = f"{DOMAIN}_system_heating_setpoint_monitor"
             self.entity_description = heating_setpoint_desc
-        
-        @property
-        def unique_id(self) -> str:
-            """Return unique ID for number entity."""
-            return f"{DOMAIN}_system_heating_setpoint_monitor"
         
         @property
         def native_value(self) -> Optional[float]:
@@ -505,28 +496,21 @@ async def async_setup_entry(
         device_class=None,
     )
     
-    class CompressorSpeedMonitor(SVKBaseEntity, NumberEntity, CoordinatorEntity):
+    class CompressorSpeedMonitor(SVKHeatpumpBaseEntity, NumberEntity):
         """Read-only monitor for compressor speed."""
         _attr_entity_registry_enabled_default = False
         
         def __init__(self, coordinator, config_entry_id):
-            # Initialize SVKBaseEntity with group_key "system" for monitor
-            SVKBaseEntity.__init__(self, "system", "Compressor Speed Monitor", "compressor_speed_monitor")
-            # Initialize CoordinatorEntity
-            CoordinatorEntity.__init__(self, coordinator)
-            self._coordinator = coordinator
-            self._config_entry_id = config_entry_id
+            # Initialize SVKHeatpumpBaseEntity (which inherits from CoordinatorEntity)
+            super().__init__(coordinator, config_entry_id)
+            self._attr_name = "Compressor Speed Monitor"
+            self._attr_unique_id = f"{DOMAIN}_system_compressor_speed_monitor"
             self.entity_description = compressor_speed_desc
-        
-        @property
-        def unique_id(self) -> str:
-            """Return unique ID for number entity."""
-            return f"{DOMAIN}_system_compressor_speed_monitor"
         
         @property
         def native_value(self) -> Optional[float]:
             """Return the current compressor speed percentage."""
-            value = self._coordinator.get_entity_value("compressor_speed_pct")
+            value = self.coordinator.get_entity_value("compressor_speed_pct")
             if value is not None:
                 try:
                     return float(value)
@@ -538,8 +522,8 @@ async def async_setup_entry(
         def available(self) -> bool:
             """This monitor should be available when data is present."""
             return (
-                self._coordinator.last_update_success
-                and self._coordinator.is_entity_available("compressor_speed_pct")
+                self.coordinator.last_update_success
+                and self.coordinator.is_entity_available("compressor_speed_pct")
             )
         
         async def async_set_native_value(self, value: float) -> None:
