@@ -15,9 +15,13 @@ from .config_flow import SVKHeatpumpConfigFlow
 from .const import (
     DOMAIN,
 )
+import homeassistant.config_entries as config_entries
 from .coordinator import SVKHeatpumpDataCoordinator
 
-__all__ = ["SVKHeatpumpConfigFlow"]
+__all__ = ["DOMAIN", "PLATFORMS", "async_setup", "async_setup_entry", "async_unload_entry", "async_update_listener", "SVKHeatpumpConfigFlow"]
+
+# Register the config flow handler
+config_entries.HANDLERS.register(DOMAIN)(SVKHeatpumpConfigFlow)
 
 _LOGGER = logging.getLogger(__name__)
 

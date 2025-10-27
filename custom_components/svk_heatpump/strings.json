@@ -1,0 +1,53 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "SVK Heatpump",
+        "description": "Configure your SVK heat pump connection",
+        "data": {
+          "host": "Host",
+          "username": "Username (optional)",
+          "password": "Password (optional)"
+        }
+      },
+      "entity_management": {
+        "title": "Entity Management",
+        "description": "The SVK Heatpump integration has been successfully configured. You can manage which entities are enabled through the Home Assistant UI."
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate SVK Heatpump",
+        "description": "Please update your credentials for the SVK heat pump at {host}"
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the heat pump",
+      "invalid_auth": "Invalid authentication",
+      "invalid_response": "Invalid response from the heat pump",
+      "timeout": "Connection timeout",
+      "unknown": "Unknown error",
+      "unexpected_auth_scheme": "Device does not support Digest authentication",
+      "invalid_data_format": "Invalid data format received",
+      "html_error_response": "Received HTML error page",
+      "parse_error": "Failed to parse response",
+      "invalid_reauth": "Invalid reauthentication request"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "SVK Heatpump Options",
+        "description": "{id_list_description}",
+        "data": {
+          "scan_interval": "Scan Interval (seconds)",
+          "enable_writes": "Enable Write Operations",
+          "id_list": "Custom ID List (semicolon separated)"
+        }
+      }
+    },
+    "error": {
+      "invalid_scan_interval": "Scan interval must be between 10 and 120 seconds",
+      "invalid_id_list": "Invalid ID list format",
+      "reload_failed": "Failed to reload configuration"
+    }
+  }
+}

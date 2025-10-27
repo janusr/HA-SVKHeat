@@ -39,9 +39,6 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow):
     """Handle a config flow for SVK Heatpump."""
 
     VERSION = 1
-    
-    # Set the domain for compatibility
-    DOMAIN = DOMAIN
 
     def __init__(self) -> None:
         """Initialize the config flow."""
