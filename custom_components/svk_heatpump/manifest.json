@@ -1,7 +1,7 @@
 {
   "domain": "svk_heatpump",
   "name": "SVK Heatpump",
-  "version": "0.0.12",
+  "version": "0.1.1",
   "documentation": "https://github.com/janusr/HA-SVKHeat#readme",
   "issue_tracker": "https://github.com/janusr/HA-SVKHeat/issues",
   "codeowners": ["@janusr"],
