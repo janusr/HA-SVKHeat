@@ -418,7 +418,13 @@ class LOMJsonClient:
         if not self._session:
             await self.start()
 
-        url = self._base.with_path(path)
+        # Parse the path to separate actual path from query parameters
+        if '?' in path:
+            actual_path, query_string = path.split('?', 1)
+            url = self._base.with_path(actual_path).with_query(query_string)
+        else:
+            actual_path = path
+            url = self._base.with_path(path)
         max_auth_retries = 2  # Maximum authentication attempts
         base_delay = 0.5  # Base delay for exponential backoff
 
@@ -432,9 +438,7 @@ class LOMJsonClient:
                     )
 
                     # Compute digest response with stored parameters
-                    uri = str(url.path) + (
-                        f"?{url.query_string}" if url.query_string else ""
-                    )
+                    uri = actual_path
                     digest_header = self._compute_digest_response(
                         method=method,
                         uri=uri,
@@ -505,9 +509,7 @@ class LOMJsonClient:
                             )
 
                         # Step 3: Compute Digest response
-                        uri = str(url.path) + (
-                            f"?{url.query_string}" if url.query_string else ""
-                        )
+                        uri = actual_path
                         digest_header = self._compute_digest_response(
                             method=method,
                             uri=uri,
