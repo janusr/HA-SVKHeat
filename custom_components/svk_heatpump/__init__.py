@@ -27,6 +27,11 @@ PLATFORMS: list[Platform] = [
 ]
 
 
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Set up the SVK Heatpump component."""
+    return True
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up SVK Heatpump from a config entry."""
     _LOGGER.info("Setting up SVK Heatpump integration for entry %s", entry.entry_id)
