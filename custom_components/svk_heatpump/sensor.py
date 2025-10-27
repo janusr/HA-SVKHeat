@@ -205,64 +205,17 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
     @property
     def available(self) -> bool:
         """Return True if entity is available."""
-        # Debug logging to understand the error
-        _LOGGER.debug(
-            "DEBUG: Checking availability for %s, type: %s",
-            self._entity_key,
-            type(self),
-        )
-        _LOGGER.debug("DEBUG: hasattr coordinator: %s", hasattr(self, "coordinator"))
-        _LOGGER.debug("DEBUG: hasattr _coordinator: %s", hasattr(self, "_coordinator"))
-
-        # Try to access coordinator and see what happens
-        try:
-            _LOGGER.debug("DEBUG: coordinator type: %s", type(self.coordinator))
-            _LOGGER.debug(
-                "DEBUG: coordinator is_json_client: %s", self.coordinator.is_json_client
-            )
-        except AttributeError as err:
-            _LOGGER.error("DEBUG: AttributeError accessing coordinator: %s", err)
-            # Try alternative access methods
-            if hasattr(self, "_coordinator"):
-                _LOGGER.debug("DEBUG: Trying _coordinator instead")
-                return self._coordinator.is_json_client
-            raise
-
         # For JSON API, entities should be available even if data fetching fails initially
         if self.coordinator.is_json_client:
             is_available = self.coordinator.is_entity_available(self._entity_key)
             value = self.coordinator.get_entity_value(self._entity_key)
-            _LOGGER.info(
+            _LOGGER.debug(
                 "JSON API Sensor %s availability: %s (entity exists in mapping, current value: %s)",
                 self._entity_key,
                 is_available,
                 value,
             )
-            # Add additional diagnostic info
-            if not is_available:
-                _LOGGER.warning(
-                    "DIAGNOSTIC: Entity %s is not available - this may indicate a data fetching or parsing issue",
-                    self._entity_key,
-                )
-                # Log detailed availability reasons
-                if hasattr(self.coordinator, "data") and self.coordinator.data:
-                    _LOGGER.warning(
-                        "DIAGNOSTIC: Coordinator data exists, last_update: %s",
-                        self.coordinator.data.get("last_update", "None"),
-                    )
-                    _LOGGER.debug(
-                        "DIAGNOSTIC: Parsing stats: %s",
-                        self.coordinator.data.get("parsing_stats", "None"),
-                    )
-                else:
-                    _LOGGER.warning(
-                        "DIAGNOSTIC: No coordinator data available - this indicates a fundamental connection issue"
-                    )
-            elif value is None:
-                _LOGGER.warning(
-                    "DIAGNOSTIC: Entity %s is available but has no value - likely a parsing or data issue",
-                    self._entity_key,
-                )
+            # Removed excessive diagnostic logging to prevent log storms
             return is_available
         else:
             # For HTML scraping, require successful update
@@ -271,7 +224,7 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
                 and self.coordinator.is_entity_available(self._entity_key)
             )
             value = self.coordinator.get_entity_value(self._entity_key)
-            _LOGGER.info(
+            _LOGGER.debug(
                 "HTML API Sensor %s availability: %s (last_update_success: %s, current value: %s)",
                 self._entity_key,
                 is_available,
@@ -427,50 +380,17 @@ class SVKHeatpumpSensor(SVKHeatpumpBaseEntity, SensorEntity):
     @property
     def available(self) -> bool:
         """Return True if entity is available."""
-        # Debug logging to understand error
-        _LOGGER.debug(
-            "DEBUG: Checking availability for %s, type: %s",
-            self._entity_key,
-            type(self),
-        )
-        _LOGGER.debug("DEBUG: hasattr coordinator: %s", hasattr(self, "coordinator"))
-        _LOGGER.debug("DEBUG: hasattr _coordinator: %s", hasattr(self, "_coordinator"))
-
-        # Try to access coordinator and see what happens
-        try:
-            _LOGGER.debug("DEBUG: coordinator type: %s", type(self.coordinator))
-            _LOGGER.debug(
-                "DEBUG: coordinator is_json_client: %s", self.coordinator.is_json_client
-            )
-        except AttributeError as err:
-            _LOGGER.error("DEBUG: AttributeError accessing coordinator: %s", err)
-            # Try alternative access methods
-            if hasattr(self, "_coordinator"):
-                _LOGGER.debug("DEBUG: Trying _coordinator instead")
-                return self._coordinator.is_json_client
-            raise
-
         # For JSON API, entities should be available even if data fetching fails initially
         if self.coordinator.is_json_client:
             is_available = self.coordinator.is_entity_available(self._entity_key)
             value = self.coordinator.get_entity_value(self._entity_key)
-            _LOGGER.info(
+            _LOGGER.debug(
                 "JSON API Sensor %s availability: %s (entity exists in mapping, current value: %s)",
                 self._entity_key,
                 is_available,
                 value,
             )
-            # Add additional diagnostic info
-            if not is_available:
-                _LOGGER.warning(
-                    "Entity %s is not available - this may indicate a data fetching or parsing issue",
-                    self._entity_key,
-                )
-            elif value is None:
-                _LOGGER.warning(
-                    "Entity %s is available but has no value - likely a parsing or data issue",
-                    self._entity_key,
-                )
+            # Removed excessive diagnostic logging to prevent log storms
             return is_available
         else:
             # For HTML scraping, require successful update
@@ -479,7 +399,7 @@ class SVKHeatpumpSensor(SVKHeatpumpBaseEntity, SensorEntity):
                 and self.coordinator.is_entity_available(self._entity_key)
             )
             value = self.coordinator.get_entity_value(self._entity_key)
-            _LOGGER.info(
+            _LOGGER.debug(
                 "HTML API Sensor %s availability: %s (last_update_success: %s, current value: %s)",
                 self._entity_key,
                 is_available,

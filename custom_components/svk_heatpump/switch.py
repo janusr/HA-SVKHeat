@@ -164,23 +164,13 @@ class SVKSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
         if self.coordinator.is_json_client:
             is_available = self.coordinator.is_entity_available(self._entity_key)
             value = self.coordinator.get_entity_value(self._entity_key)
-            _LOGGER.info(
+            _LOGGER.debug(
                 "JSON API Switch %s availability: %s (entity exists in mapping, current value: %s)",
                 self._entity_key,
                 is_available,
                 value,
             )
-            # Add additional diagnostic info
-            if not is_available:
-                _LOGGER.warning(
-                    "Entity %s is not available - this may indicate a data fetching or parsing issue",
-                    self._entity_key,
-                )
-            elif value is None:
-                _LOGGER.warning(
-                    "Entity %s is available but has no value - likely a parsing or data issue",
-                    self._entity_key,
-                )
+            # Removed excessive diagnostic logging to prevent log storms
             return is_available
         else:
             # For HTML scraping, require successful update
@@ -332,23 +322,13 @@ class SVKHeatpumpSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
         if self.coordinator.is_json_client:
             is_available = self.coordinator.is_entity_available(self._entity_key)
             value = self.coordinator.get_entity_value(self._entity_key)
-            _LOGGER.info(
+            _LOGGER.debug(
                 "JSON API Switch %s availability: %s (entity exists in mapping, current value: %s)",
                 self._entity_key,
                 is_available,
                 value,
             )
-            # Add additional diagnostic info
-            if not is_available:
-                _LOGGER.warning(
-                    "Entity %s is not available - this may indicate a data fetching or parsing issue",
-                    self._entity_key,
-                )
-            elif value is None:
-                _LOGGER.warning(
-                    "Entity %s is available but has no value - likely a parsing or data issue",
-                    self._entity_key,
-                )
+            # Removed excessive diagnostic logging to prevent log storms
             return is_available
         else:
             # For HTML scraping, require successful update
