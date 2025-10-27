@@ -4,6 +4,7 @@ import asyncio
 import logging
 import traceback
 from datetime import datetime, timedelta, timezone
+from typing import Any
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
