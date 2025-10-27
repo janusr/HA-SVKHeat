@@ -191,20 +191,16 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
             # Removed excessive diagnostic logging to prevent log storms
             return is_available
         else:
-            # For HTML scraping, require successful update
+            # For HTML scraping, require successful update but NOT writes_enabled
             last_update_success = self.coordinator.last_update_success
-            writes_enabled = self.coordinator.config_entry.options.get(
-                "enable_writes", False
-            )
             entity_available = self.coordinator.is_entity_available(self._entity_key)
-            is_available = last_update_success and writes_enabled and entity_available
+            is_available = last_update_success and entity_available
 
             _LOGGER.debug(
-                "HTML API Select %s availability: %s (last_update_success: %s, writes_enabled: %s, entity_available: %s)",
+                "HTML API Select %s availability: %s (last_update_success: %s, entity_available: %s)",
                 self._entity_key,
                 is_available,
                 last_update_success,
-                writes_enabled,
                 entity_available,
             )
             return is_available
@@ -228,6 +224,17 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
             raise ValueError(f"Failed to set {self._entity_key} to {option}")
 
         _LOGGER.info("Successfully set %s to %s", self._entity_key, internal_value)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional state attributes."""
+        attributes = {}
+        
+        # Add write_enabled attribute to indicate if write controls are enabled
+        writes_enabled = self.coordinator.config_entry.options.get("enable_writes", False)
+        attributes["write_enabled"] = writes_enabled
+        
+        return attributes
 
 
 class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
@@ -354,23 +361,7 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
             )
             return False
 
-        # Check if writes are enabled for writable entities
-        if self._writable:
-            writes_enabled = self.coordinator.config_entry.options.get(
-                "enable_writes", False
-            )
-            entity_available = self.coordinator.is_entity_available(self._entity_key)
-            is_available = writes_enabled and entity_available
-            _LOGGER.debug(
-                "Select %s availability: %s (writable: %s, writes_enabled: %s, entity_available: %s)",
-                self._entity_key,
-                is_available,
-                self._writable,
-                writes_enabled,
-                entity_available,
-            )
-            return is_available
-
+        # Entity availability should not depend on writes_enabled
         entity_available = self.coordinator.is_entity_available(self._entity_key)
         _LOGGER.debug(
             "Select %s availability: %s (writable: %s, entity_available: %s)",
@@ -406,6 +397,17 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
             raise ValueError(f"Failed to set {self._entity_key} to {option}")
 
         _LOGGER.info("Successfully set %s to %s", self._entity_key, internal_value)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional state attributes."""
+        attributes = {}
+        
+        # Add write_enabled attribute to indicate if write controls are enabled
+        writes_enabled = self.coordinator.config_entry.options.get("enable_writes", False)
+        attributes["write_enabled"] = writes_enabled
+        
+        return attributes
 
 
 class SVKHeatpumpHeatpumpStateSelect(SVKHeatpumpSelect):

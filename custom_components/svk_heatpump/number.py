@@ -163,18 +163,14 @@ class SVKNumber(SVKHeatpumpBaseEntity, NumberEntity):
     def available(self) -> bool:
         """Return True if entity is available."""
         last_update_success = self.coordinator.last_update_success
-        writes_enabled = self.coordinator.config_entry.options.get(
-            "enable_writes", False
-        )
         entity_available = self.coordinator.is_entity_available(self._entity_key)
-        is_available = last_update_success and writes_enabled and entity_available
+        is_available = last_update_success and entity_available
 
         _LOGGER.debug(
-            "Number %s availability: %s (last_update_success: %s, writes_enabled: %s, entity_available: %s)",
+            "Number %s availability: %s (last_update_success: %s, entity_available: %s)",
             self._entity_key,
             is_available,
             last_update_success,
-            writes_enabled,
             entity_available,
         )
         return is_available
@@ -200,6 +196,17 @@ class SVKNumber(SVKHeatpumpBaseEntity, NumberEntity):
             raise ValueError(f"Failed to set {self._entity_key} to {value}")
 
         _LOGGER.info("Successfully set %s to %s", self._entity_key, value)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional state attributes."""
+        attributes = {}
+        
+        # Add write_enabled attribute to indicate if write controls are enabled
+        writes_enabled = self.coordinator.config_entry.options.get("enable_writes", False)
+        attributes["write_enabled"] = writes_enabled
+        
+        return attributes
 
 
 class SVKHeatpumpNumber(SVKHeatpumpBaseEntity, NumberEntity):
@@ -261,12 +268,12 @@ class SVKHeatpumpNumber(SVKHeatpumpBaseEntity, NumberEntity):
         # Set entity category based on entity definition
         entity_category = None
 
-        if self._entity_key in NUMBER_ENTITIES and NUMBER_ENTITIES[
-            self._entity_key
-        ].get("entity_category"):
+        if self._entity_key in ENTITIES and ENTITIES.get(
+            self._entity_key, {}
+        ).get("category"):
             entity_category = getattr(
                 EntityCategory,
-                NUMBER_ENTITIES[self._entity_key]["entity_category"].upper(),
+                ENTITIES[self._entity_key]["category"].upper(),
             )
 
         self.entity_description = NumberEntityDescription(
@@ -305,18 +312,14 @@ class SVKHeatpumpNumber(SVKHeatpumpBaseEntity, NumberEntity):
     def available(self) -> bool:
         """Return True if entity is available."""
         last_update_success = self.coordinator.last_update_success
-        writes_enabled = self.coordinator.config_entry.options.get(
-            "enable_writes", False
-        )
         entity_available = self.coordinator.is_entity_available(self._entity_key)
-        is_available = last_update_success and writes_enabled and entity_available
+        is_available = last_update_success and entity_available
 
         _LOGGER.debug(
-            "Number %s availability: %s (last_update_success: %s, writes_enabled: %s, entity_available: %s)",
+            "Number %s availability: %s (last_update_success: %s, entity_available: %s)",
             self._entity_key,
             is_available,
             last_update_success,
-            writes_enabled,
             entity_available,
         )
         return is_available
@@ -342,6 +345,17 @@ class SVKHeatpumpNumber(SVKHeatpumpBaseEntity, NumberEntity):
             raise ValueError(f"Failed to set {self._entity_key} to {value}")
 
         _LOGGER.info("Successfully set %s to %s", self._entity_key, value)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional state attributes."""
+        attributes = {}
+        
+        # Add write_enabled attribute to indicate if write controls are enabled
+        writes_enabled = self.coordinator.config_entry.options.get("enable_writes", False)
+        attributes["write_enabled"] = writes_enabled
+        
+        return attributes
 
 
 class SVKHeatpumpHotWaterSetpoint(SVKNumber):

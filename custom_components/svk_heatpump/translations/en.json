@@ -54,11 +54,14 @@
     "step": {
       "init": {
         "title": "SVK Heatpump Options",
-        "description": "Configure the SVK Heatpump integration settings. Entity management is now handled through the Home Assistant UI - go to Settings > Devices & Services > SVK Heatpump > Entities to enable/disable specific entities. {id_list_description}",
+        "description": "Configure the SVK Heatpump integration settings. Entity management is now handled through the Home Assistant UI - go to Settings > Devices & Services > SVK Heatpump > Entities to enable/disable specific entities. {id_list_description}\n\nWarning: This option allows sending commands to your heat pump. Incorrect settings could potentially affect heat pump operation. Only enable this if you understand implications and accept the risks.",
         "data": {
           "scan_interval": "Scan Interval (seconds)",
           "enable_writes": "Enable Write Controls (Advanced)",
           "id_list": "ID List (Advanced)"
+        },
+        "data_description": {
+          "enable_writes": "Warning: This option allows sending commands to your heat pump. Incorrect settings could potentially affect heat pump operation. Only enable this if you understand the implications and accept the risks."
         }
       }
     },

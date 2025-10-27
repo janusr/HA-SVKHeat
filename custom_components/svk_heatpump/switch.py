@@ -173,20 +173,16 @@ class SVKSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
             # Removed excessive diagnostic logging to prevent log storms
             return is_available
         else:
-            # For HTML scraping, require successful update
+            # For HTML scraping, require successful update but NOT writes_enabled
             last_update_success = self.coordinator.last_update_success
-            writes_enabled = self.coordinator.config_entry.options.get(
-                "enable_writes", False
-            )
             entity_available = self.coordinator.is_entity_available(self._entity_key)
-            is_available = last_update_success and writes_enabled and entity_available
+            is_available = last_update_success and entity_available
 
             _LOGGER.debug(
-                "HTML API Switch %s availability: %s (last_update_success: %s, writes_enabled: %s, entity_available: %s)",
+                "HTML API Switch %s availability: %s (last_update_success: %s, entity_available: %s)",
                 self._entity_key,
                 is_available,
                 last_update_success,
-                writes_enabled,
                 entity_available,
             )
             return is_available
@@ -220,6 +216,17 @@ class SVKSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
             raise ValueError(f"Failed to turn off {self._entity_key}")
 
         _LOGGER.info("Successfully turned off %s", self._entity_key)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional state attributes."""
+        attributes = {}
+        
+        # Add write_enabled attribute to indicate if write controls are enabled
+        writes_enabled = self.coordinator.config_entry.options.get("enable_writes", False)
+        attributes["write_enabled"] = writes_enabled
+        
+        return attributes
 
 
 class SVKHeatpumpSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
@@ -331,20 +338,16 @@ class SVKHeatpumpSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
             # Removed excessive diagnostic logging to prevent log storms
             return is_available
         else:
-            # For HTML scraping, require successful update
+            # For HTML scraping, require successful update but NOT writes_enabled
             last_update_success = self.coordinator.last_update_success
-            writes_enabled = self.coordinator.config_entry.options.get(
-                "enable_writes", False
-            )
             entity_available = self.coordinator.is_entity_available(self._entity_key)
-            is_available = last_update_success and writes_enabled and entity_available
+            is_available = last_update_success and entity_available
 
             _LOGGER.debug(
-                "HTML API Switch %s availability: %s (last_update_success: %s, writes_enabled: %s, entity_available: %s)",
+                "HTML API Switch %s availability: %s (last_update_success: %s, entity_available: %s)",
                 self._entity_key,
                 is_available,
                 last_update_success,
-                writes_enabled,
                 entity_available,
             )
             return is_available
@@ -378,6 +381,17 @@ class SVKHeatpumpSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
             raise ValueError(f"Failed to turn off {self._entity_key}")
 
         _LOGGER.info("Successfully turned off %s", self._entity_key)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional state attributes."""
+        attributes = {}
+        
+        # Add write_enabled attribute to indicate if write controls are enabled
+        writes_enabled = self.coordinator.config_entry.options.get("enable_writes", False)
+        attributes["write_enabled"] = writes_enabled
+        
+        return attributes
 
 
 async def async_setup_entry(

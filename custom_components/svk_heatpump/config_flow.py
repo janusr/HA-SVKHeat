@@ -35,10 +35,13 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class SVKHeatpumpConfigFlow(config_entries.ConfigFlow):
     """Handle a config flow for SVK Heatpump."""
 
     VERSION = 1
+    
+    # Set the domain for compatibility
+    DOMAIN = DOMAIN
 
     def __init__(self) -> None:
         """Initialize the config flow."""
@@ -63,9 +66,9 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._abort_if_unique_id_configured()
 
             client = LOMJsonClient(
-                self._host,
-                self._username,
-                self._password,
+                self._host or "",
+                self._username or "",
+                self._password or "",
                 DEFAULT_TIMEOUT,
             )
 
@@ -262,11 +265,11 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # Always proceed to create entry after showing the explanation
         return self.async_create_entry(
-            title=f"SVK Heatpump ({self._host})",
+            title=f"SVK Heatpump ({self._host or 'unknown'})",
             data={
-                CONF_HOST: self._host,
-                CONF_USERNAME: self._username,
-                CONF_PASSWORD: self._password,
+                CONF_HOST: self._host or "",
+                CONF_USERNAME: self._username or "",
+                CONF_PASSWORD: self._password or "",
             },
             options={
                 # Keep empty options for new configurations
@@ -291,14 +294,27 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
+            if self._reauth_entry is None:
+                errors["base"] = "invalid_reauth"
+                return self.async_show_form(
+                    step_id="reauth_confirm",
+                    data_schema=vol.Schema(
+                        {
+                            vol.Optional(CONF_USERNAME, default=""): str,
+                            vol.Optional(CONF_PASSWORD, default=""): str,
+                        }
+                    ),
+                    errors=errors,
+                )
+            
             host = self._reauth_entry.data[CONF_HOST]
             username = user_input.get(CONF_USERNAME, "")
             password = user_input.get(CONF_PASSWORD, "")
 
             client = LOMJsonClient(
-                host,
-                username,
-                password,
+                host or "",
+                username or "",
+                password or "",
                 DEFAULT_TIMEOUT,
             )
 
@@ -413,17 +429,18 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         )
                         _LOGGER.debug("Sample items during reauth: %s", sample_items)
                         # Update entry with new credentials
-                        self.hass.config_entries.async_update_entry(
-                            self._reauth_entry,
-                            data={
-                                **self._reauth_entry.data,
-                                CONF_USERNAME: username,
-                                CONF_PASSWORD: password,
-                            },
-                        )
-                        await self.hass.config_entries.async_reload(
-                            self._reauth_entry.entry_id
-                        )
+                        if self._reauth_entry is not None:
+                            self.hass.config_entries.async_update_entry(
+                                self._reauth_entry,
+                                data={
+                                    **self._reauth_entry.data,
+                                    CONF_USERNAME: username,
+                                    CONF_PASSWORD: password,
+                                },
+                            )
+                            await self.hass.config_entries.async_reload(
+                                self._reauth_entry.entry_id
+                            )
                         return self.async_abort(reason="reauth_successful")
 
             except SVKAuthenticationError as auth_err:
@@ -512,16 +529,21 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize options flow."""
-        self.config_entry = config_entry
+        self._entry_id = config_entry.entry_id
 
     def _get_options_schema(self) -> vol.Schema:
         """Get the options schema."""
-        options = self.config_entry.options
+        config_entry = self.hass.config_entries.async_get_entry(self._entry_id)
+        options = config_entry.options
 
         # Check if this is a legacy configuration with custom ID list
         has_custom_id_list = (
             CONF_ID_LIST in options and options.get(CONF_ID_LIST) != DEFAULT_IDS
         )
+
+        # Get the warning description for enable_writes
+        # We'll use a hardcoded warning here since we can't easily access translations in schema
+        # The warning will be shown in the form display instead
 
         # Build schema based on configuration type
         schema_fields = {
@@ -530,7 +552,8 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
                 default=options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
             ): int,
             vol.Optional(
-                CONF_ENABLE_WRITES, default=options.get(CONF_ENABLE_WRITES, False)
+                CONF_ENABLE_WRITES,
+                default=options.get(CONF_ENABLE_WRITES, False)
             ): bool,
         }
 
@@ -560,7 +583,8 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
                     errors[CONF_SCAN_INTERVAL] = "invalid_scan_interval"
 
                 # Handle ID list only for legacy configurations
-                if CONF_ID_LIST in self.config_entry.options:
+                config_entry = self.hass.config_entries.async_get_entry(self._entry_id)
+                if CONF_ID_LIST in config_entry.options:
                     id_list_str = user_input.get(CONF_ID_LIST, "").strip()
 
                     # If empty, use default
@@ -581,9 +605,7 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
 
                     # Trigger coordinator reload to apply new settings
                     try:
-                        await self.hass.config_entries.async_reload(
-                            self.config_entry.entry_id
-                        )
+                        await self.hass.config_entries.async_reload(self._entry_id)
                     except Exception as ex:
                         _LOGGER.error("Failed to reload config entry: %s", ex)
                         errors["base"] = "reload_failed"
@@ -603,9 +625,10 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
                 errors["base"] = "unknown"
 
         # Determine if this is a legacy configuration
+        config_entry = self.hass.config_entries.async_get_entry(self._entry_id)
         has_custom_id_list = (
-            CONF_ID_LIST in self.config_entry.options
-            and self.config_entry.options.get(CONF_ID_LIST) != DEFAULT_IDS
+            CONF_ID_LIST in config_entry.options
+            and config_entry.options.get(CONF_ID_LIST) != DEFAULT_IDS
         )
 
         # Set appropriate description placeholders
