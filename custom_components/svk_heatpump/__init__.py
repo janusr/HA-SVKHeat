@@ -11,10 +11,13 @@ from homeassistant.exceptions import ConfigEntryNotReady
 
 from .client import LOMJsonClient, SVKAuthenticationError, SVKConnectionError
 from . import config_flow
+from .config_flow import SVKHeatpumpConfigFlow
 from .const import (
     DOMAIN,
 )
 from .coordinator import SVKHeatpumpDataCoordinator
+
+__all__ = ["SVKHeatpumpConfigFlow"]
 
 _LOGGER = logging.getLogger(__name__)
 
