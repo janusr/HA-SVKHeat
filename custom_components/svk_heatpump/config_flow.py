@@ -74,17 +74,35 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 # Start the client session
                 await client.start()
                 
-                # Use default IDs for validation
-                test_ids = parse_id_list(DEFAULT_IDS)
+                # First, test basic connectivity
+                _LOGGER.info("Testing basic connectivity to heat pump")
+                connection_test = await client.test_connection()
+                if not connection_test:
+                    _LOGGER.error("Basic connectivity test failed for host %s", self._host)
+                    errors["base"] = "cannot_connect"
+                    await client.close()
+                    return self.async_show_form(
+                        step_id="user",
+                        data_schema=vol.Schema({
+                            vol.Required(CONF_HOST): str,
+                            vol.Optional(CONF_USERNAME, default=""): str,
+                            vol.Optional(CONF_PASSWORD, default=""): str,
+                        }),
+                        errors=errors,
+                    )
+                
+                # If basic connectivity works, try with actual data request
+                # Use a smaller subset of essential IDs for validation to avoid timeout
+                essential_ids = [253, 254, 255, 256, 257]  # Core temperature sensors
                 
                 # Validate connection by calling read_values with test IDs
                 # Accept any successful JSON response as validation
-                _LOGGER.debug("Testing connection with %d test IDs: %s", len(test_ids), test_ids[:5])  # Log first 5 IDs
+                _LOGGER.debug("Testing connection with %d essential IDs: %s", len(essential_ids), essential_ids)  # Log first 5 IDs
                 
                 # Add timeout protection to prevent blocking Home Assistant startup
                 try:
                     json_data = await asyncio.wait_for(
-                        client.read_values(test_ids),
+                        client.read_values(essential_ids),
                         timeout=15.0  # 15 second timeout for connection test
                     )
                 except asyncio.TimeoutError:
@@ -237,20 +255,33 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 # Start the client session
                 await client.start()
                 
-                # Use default IDs for validation (backward compatibility)
-                # If user has custom ID list in options, use that for validation
-                id_list_str = self._reauth_entry.options.get(CONF_ID_LIST, DEFAULT_IDS)
-                if not id_list_str:  # Handle empty case for new configurations
-                    id_list_str = DEFAULT_IDS
-                test_ids = parse_id_list(id_list_str)
+                # First, test basic connectivity
+                _LOGGER.info("Testing basic connectivity during reauth")
+                connection_test = await client.test_connection()
+                if not connection_test:
+                    _LOGGER.error("Basic connectivity test failed during reauth for host %s", host)
+                    errors["base"] = "cannot_connect"
+                    await client.close()
+                    return self.async_show_form(
+                        step_id="reauth_confirm",
+                        data_schema=vol.Schema({
+                            vol.Optional(CONF_USERNAME, default=""): str,
+                            vol.Optional(CONF_PASSWORD, default=""): str,
+                        }),
+                        errors=errors,
+                    )
+                
+                # If basic connectivity works, try with actual data request
+                # Use a smaller subset of essential IDs for validation to avoid timeout
+                essential_ids = [253, 254, 255, 256, 257]  # Core temperature sensors
                 
                 # Validate connection by calling read_values with test IDs
-                _LOGGER.debug("Testing connection during reauth with %d test IDs: %s", len(test_ids), test_ids[:5])  # Log first 5 IDs
+                _LOGGER.debug("Testing connection during reauth with %d essential IDs: %s", len(essential_ids), essential_ids)  # Log first 5 IDs
                 
                 # Add timeout protection to prevent blocking Home Assistant startup
                 try:
                     json_data = await asyncio.wait_for(
-                        client.read_values(test_ids),
+                        client.read_values(essential_ids),
                         timeout=15.0  # 15 second timeout for connection test
                     )
                 except asyncio.TimeoutError:

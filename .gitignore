@@ -145,6 +145,7 @@ HTML Samples/
 *.js
 www-request-ucg.js
 .roo
+docs/
 
 # Documentation (keep only essential files in root)
 Documentation/

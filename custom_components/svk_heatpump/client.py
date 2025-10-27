@@ -470,13 +470,36 @@ class LOMJsonClient:
         try:
             response_text = await resp.text()
             
+            # Check for empty response before JSON parsing
+            if not response_text or not response_text.strip():
+                _LOGGER.error("Empty response received from GET request")
+                _LOGGER.error("Response status: %d, Content-Type: %s, Content-Length: %s",
+                             resp.status, resp.headers.get('Content-Type', 'unknown'),
+                             resp.headers.get('Content-Length', 'unknown'))
+                _LOGGER.error("Requested IDs: %s", ids)
+                raise SVKConnectionError("Empty response body from GET request")
+            
             # Parse JSON from the text
             import json
-            data = json.loads(response_text)
+            try:
+                data = json.loads(response_text)
+                _LOGGER.debug("GET request JSON data with %d items", len(data) if isinstance(data, list) else "unknown")
+            except json.JSONDecodeError as json_err:
+                _LOGGER.error("JSON decode error in GET request: %s", json_err)
+                _LOGGER.error("Response status: %d, Content-Type: %s, Content-Length: %s",
+                             resp.status, resp.headers.get('Content-Type', 'unknown'),
+                             resp.headers.get('Content-Length', 'unknown'))
+                _LOGGER.error("Raw response text (first 200 chars): %s", repr(response_text[:200]))
+                raise SVKParseError("json", f"JSON decode error in GET: {json_err}") from json_err
             
-            # Check for empty or blank response
+            # Check for empty or blank response after parsing
             if not data:
-                raise SVKConnectionError("Empty response body")
+                _LOGGER.error("Empty JSON data received from GET request")
+                _LOGGER.error("Response status: %d, Content-Type: %s, Content-Length: %s",
+                             resp.status, resp.headers.get('Content-Type', 'unknown'),
+                             resp.headers.get('Content-Length', 'unknown'))
+                _LOGGER.error("Requested IDs: %s", ids)
+                raise SVKConnectionError("Empty JSON response body from GET request")
             
             # Use flexible parsing to handle different response formats
             result = self._parse_json_response_flexible(data, response_text)
@@ -528,11 +551,31 @@ class LOMJsonClient:
                 _LOGGER.info("PERFORMANCE: Simplified digest auth completed in %.2fs (auth=%.2fs, total=%.2fs) for %d IDs",
                            total_duration, auth_duration, total_duration, len(ids))
                 return result
-            except SVKConnectionError:
+            except SVKConnectionError as conn_err:
                 # Fall back to POST with JSON payload
-                _LOGGER.debug("PERFORMANCE: GET failed, falling back to POST with JSON payload")
-                payload = {"ids": ids}
-                resp = await self._simple_digest_auth_request("/cgi-bin/json_values.cgi", method="POST", json=payload)
+                _LOGGER.debug("PERFORMANCE: GET failed with '%s', falling back to POST with JSON payload", conn_err)
+                
+                # Implement retry logic for empty responses
+                max_retries = 2
+                for attempt in range(max_retries + 1):
+                    try:
+                        _LOGGER.debug("POST attempt %d/%d for %d IDs", attempt + 1, max_retries + 1, len(ids))
+                        payload = {"ids": ids}
+                        
+                        # Add small delay between retries to avoid overwhelming device
+                        if attempt > 0:
+                            await asyncio.sleep(0.5 * attempt)
+                        
+                        resp = await self._simple_digest_auth_request("/cgi-bin/json_values.cgi", method="POST", json=payload)
+                        
+                        # If we get here, the POST request was successful
+                        break
+                    except SVKConnectionError as retry_err:
+                        _LOGGER.warning("POST attempt %d failed: %s", attempt + 1, retry_err)
+                        if attempt == max_retries:
+                            _LOGGER.error("All POST attempts failed, raising last error")
+                            raise retry_err
+                        continue
                 
                 # Parse JSON response with enhanced error handling
                 try:
@@ -542,14 +585,26 @@ class LOMJsonClient:
                     
                     # Parse JSON from the text
                     import json
-                    data = json.loads(response_text)
-                    _LOGGER.debug("Received JSON data with %d items", len(data) if isinstance(data, list) else "unknown")
-                    _LOGGER.debug("Raw JSON response type: %s", type(data))
-                    
-                    # Check for empty or blank response
-                    if not data:
-                        _LOGGER.error("Empty JSON response received")
-                        raise SVKConnectionError("Empty response body")
+                    try:
+                        data = json.loads(response_text)
+                        _LOGGER.debug("Received JSON data with %d items", len(data) if isinstance(data, list) else "unknown")
+                        _LOGGER.debug("Raw JSON response type: %s", type(data))
+                        
+                        # Check for empty or blank response
+                        if not data:
+                            _LOGGER.error("Empty JSON response received")
+                            _LOGGER.error("Response status: %d, Content-Type: %s, Content-Length: %s",
+                                         resp.status, resp.headers.get('Content-Type', 'unknown'),
+                                         resp.headers.get('Content-Length', 'unknown'))
+                            _LOGGER.error("Raw response text: %s", repr(response_text))
+                            raise SVKConnectionError("Empty response body")
+                    except json.JSONDecodeError as json_err:
+                        _LOGGER.error("JSON decode error: %s", json_err)
+                        _LOGGER.error("Response status: %d, Content-Type: %s, Content-Length: %s",
+                                     resp.status, resp.headers.get('Content-Type', 'unknown'),
+                                     resp.headers.get('Content-Length', 'unknown'))
+                        _LOGGER.error("Raw response text (first 200 chars): %s", repr(response_text[:200]))
+                        raise SVKParseError("json", f"JSON decode error: {json_err}") from json_err
                     
                     # Use flexible parsing to handle different response formats
                     try:
@@ -894,3 +949,52 @@ class LOMJsonClient:
         
         finally:
             resp.release()
+    
+    async def test_connection(self) -> bool:
+        """
+        Test basic connectivity to the heat pump.
+        
+        Returns:
+            True if connection test succeeds, False otherwise
+        """
+        try:
+            _LOGGER.info("Testing connection to heat pump at %s", self.host)
+            
+            # Try a minimal request with just one essential ID
+            test_ids = [253]  # heating_supply_temp - essential sensor
+            
+            # Start session if needed
+            if not self._session:
+                await self.start()
+            
+            # Try GET request first
+            try:
+                result = await self._request_with_get_params(test_ids)
+                if result and len(result) > 0:
+                    _LOGGER.info("Connection test successful via GET method")
+                    return True
+            except Exception as get_err:
+                _LOGGER.debug("GET method failed in connection test: %s", get_err)
+            
+            # Try POST request as fallback
+            try:
+                payload = {"ids": test_ids}
+                resp = await self._simple_digest_auth_request("/cgi-bin/json_values.cgi", method="POST", json=payload)
+                
+                response_text = await resp.text()
+                if response_text and response_text.strip():
+                    _LOGGER.info("Connection test successful via POST method")
+                    resp.release()
+                    return True
+                else:
+                    _LOGGER.error("Empty response in POST connection test")
+                    resp.release()
+                    return False
+            except Exception as post_err:
+                _LOGGER.error("POST method failed in connection test: %s", post_err)
+            
+            return False
+            
+        except Exception as err:
+            _LOGGER.error("Connection test failed: %s", err)
+            return False

@@ -82,12 +82,36 @@ Advanced Options
 * **Enable Writes**: Allow control of heat pump parameters (default: ``False``)
   * When enabled, you can adjust setpoints and operational parameters
   * Requires careful consideration as changes affect heat pump operation
-* **ID List**: Custom list of entity IDs to monitor (advanced)
-  * Leave empty for default configuration (165+ entities)
-  * Format: Comma-separated list of numeric IDs (e.g., ``253,254,255``)
 * **Authentication Method**: Auto-detect between Digest and Basic authentication
   * Digest authentication is recommended for security
   * Basic authentication fallback for older firmware versions
+
+Legacy Configuration
+~~~~~~~~~~~~~~~~~~~~~
+
+For users upgrading from previous versions of this integration:
+
+* **ID List**: Custom list of entity IDs (legacy feature)
+  * Only shown for existing configurations with custom entity IDs
+  * New installations use UI-based entity management (recommended)
+  * Format: Comma-separated list of numeric IDs (e.g., ``253,254,255``)
+
+Modern Entity Management
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+New installations use the Home Assistant UI for entity selection:
+
+1. Go to **Settings** → **Devices & Services**
+2. Find your SVK Heat Pump integration
+3. Click **Configure** or **1 device** to access entity options
+4. Enable/disable entities through the checkbox interface
+5. Changes take effect immediately without restart
+
+This approach provides:
+* User-friendly entity selection with descriptive names
+* No need to reference numeric IDs
+* Easy toggling of entities based on your needs
+* Automatic updates when new entities are added
 
 API Implementation
 -----------------
@@ -589,11 +613,14 @@ HTML Scraping Issues
 * **Causes**:
   * Firmware version doesn't support certain features
   * Entity disabled in configuration
-  * ID list filtering out desired entities
+  * Legacy ID list filtering out desired entities (for upgraded configurations)
 
 * **Solutions**:
   1. Check heat pump model and supported features
-  2. Verify ID list configuration (if used)
+  2. For new installations: Enable entities through integration options UI
+  3. For upgraded configurations: Check legacy ID list configuration (if present)
+  4. Enable all entities in integration options
+  5. Check entity availability in Developer Tools
   3. Enable all entities in integration options
   4. Check entity availability in Developer Tools
 
@@ -619,7 +646,8 @@ Integration Settings
 * **Entity Selection**: Enable only needed entities
   * **Essential Only**: Core temperatures and status (50-75 entities)
   * **Full Monitoring**: All 165+ entities for comprehensive oversight
-  * **Custom Selection**: Manual ID list for specific requirements
+  * **Modern UI Selection**: Use integration options to select entities by name
+  * **Legacy ID List**: For upgraded configurations with custom entity requirements
 
 * **Write Controls**: Enable only when needed
   * **Monitoring Only**: Disable writes to prevent accidental changes
@@ -656,6 +684,11 @@ Testing
 * **Integration Tests**: Use development Home Assistant instance
 * **Manual Testing**: Test with actual SVK heat pump hardware
 * **Mock Testing**: Use mock responses for CI/CD pipelines
+
+Real Device Testing
+~~~~~~~~~~~~~~~~~~~
+
+For developers working with actual SVK hardware, see `docs/REAL_DEVICE_TESTING.md` for detailed testing procedures, device information, and implementation updates based on real device testing.
 
 Project Structure
 ~~~~~~~~~~~~~
