@@ -108,10 +108,9 @@ class LOMJsonClient:
     
     def _parse_json_response_flexible(self, data: Any, response_text: str = "") -> List[Dict[str, Any]]:
         """
-        Parse JSON response with flexible format handling.
+        Parse JSON response with simplified format handling.
         
-        Enhanced to better handle the actual heat pump response format which appears
-        to be a dictionary with numeric keys containing nested objects with name/value fields.
+        Simplified to handle the dictionary format directly without excessive conversion attempts.
         
         Args:
             data: The parsed JSON data
@@ -123,27 +122,8 @@ class LOMJsonClient:
         Raises:
             SVKInvalidDataFormatError: If the data format is not supported
         """
-        # Add diagnostic logging at the beginning of the method
-        _LOGGER.info("RAW JSON RESPONSE: %s", response_text[:1000])  # First 1000 chars
-        _LOGGER.info("PARSED ITEMS COUNT: %d", len(data) if data else 0)
-        
-        _LOGGER.debug("Parsing JSON response with flexible format handling")
+        _LOGGER.debug("Parsing JSON response with simplified format handling")
         _LOGGER.debug("Response data type: %s", type(data))
-        if isinstance(data, (list, dict)):
-            _LOGGER.debug("Response data size: %d items", len(data))
-        
-        # Enhanced structure logging
-        _LOGGER.info("JSON RESPONSE STRUCTURE: type=%s, keys=%s, sample=%s",
-                     type(data), list(data.keys())[:10] if isinstance(data, dict) else "N/A",
-                     str(data)[:500])
-        
-        # Log a sample of the raw data for debugging (only first few items to avoid log spam)
-        if isinstance(data, list) and len(data) > 0:
-            _LOGGER.debug("Sample response data (first 2 items): %s", data[:2])
-        elif isinstance(data, dict) and len(data) > 0:
-            sample_keys = list(data.keys())[:3]
-            sample_items = {k: data[k] for k in sample_keys}
-            _LOGGER.debug("Sample response data (first 3 keys): %s", sample_items)
         
         # Handle list format (expected format)
         if isinstance(data, list):
@@ -163,7 +143,7 @@ class LOMJsonClient:
                     f"List has {len(data)} items but none contain 'id' field"
                 )
         
-        # Handle dict format (alternative format) - Enhanced for heat pump format
+        # Handle dict format (heat pump format)
         elif isinstance(data, dict):
             _LOGGER.debug("Processing dict format with %d keys", len(data))
             
@@ -175,8 +155,7 @@ class LOMJsonClient:
                     "Response appears to be an error message rather than data"
                 )
             
-            # ENHANCED: Handle the actual heat pump format: {"253": {"name": "...", "value": "..."}, ...}
-            # This appears to be the actual format returned by the heat pump
+            # Handle the heat pump format: {"253": {"name": "...", "value": "..."}, ...}
             dict_items = []
             for key, value in data.items():
                 try:
@@ -191,8 +170,6 @@ class LOMJsonClient:
                             "name": str(value['name']),
                             "value": str(value['value'])
                         })
-                        _LOGGER.debug("Successfully parsed heat pump format item: ID=%s, Name=%s, Value=%s",
-                                   entity_id, value['name'], value['value'])
                     # Check if value is a simple dict with just a value field
                     elif isinstance(value, dict) and 'value' in value:
                         dict_items.append({
@@ -200,8 +177,6 @@ class LOMJsonClient:
                             "name": f"entity_{entity_id}",
                             "value": str(value['value'])
                         })
-                        _LOGGER.debug("Parsed simplified heat pump format item: ID=%s, Value=%s",
-                                   entity_id, value['value'])
                     # Check if value is a simple value
                     elif not isinstance(value, dict):
                         dict_items.append({
@@ -209,79 +184,24 @@ class LOMJsonClient:
                             "name": f"entity_{entity_id}",
                             "value": str(value)
                         })
-                        _LOGGER.debug("Parsed simple key-value item: ID=%s, Value=%s", entity_id, value)
-                    else:
-                        # Complex nested structure that we don't recognize
-                        _LOGGER.warning("Unrecognized nested structure for ID %s: %s", entity_id, str(value)[:100])
-                        # Try to extract any useful information
-                        if isinstance(value, dict):
-                            # Use first string value we find
-                            for sub_key, sub_value in value.items():
-                                if isinstance(sub_value, (str, int, float, bool)):
-                                    dict_items.append({
-                                        "id": str(entity_id),
-                                        "name": f"entity_{entity_id}_{sub_key}",
-                                        "value": str(sub_value)
-                                    })
-                                    _LOGGER.debug("Extracted nested value for ID %s: %s=%s", entity_id, sub_key, sub_value)
-                                    break
                 
                 except (ValueError, TypeError):
                     # Key is not a numeric ID, skip it
-                    _LOGGER.debug("Skipping non-numeric key: %s", key)
                     continue
             
             if dict_items:
-                _LOGGER.info("Successfully converted heat pump dict format to list with %d items", len(dict_items))
+                _LOGGER.debug("Successfully converted heat pump dict format to list with %d items", len(dict_items))
                 return dict_items
-            
-            # Check if it's a simple key-value format (fallback)
-            if all(isinstance(k, (str, int, float)) for k in data.keys()):
-                _LOGGER.debug("Converting simple dict format to list")
-                items = []
-                for id_val, value in data.items():
-                    items.append({
-                        "id": str(id_val),
-                        "name": f"item_{id_val}",
-                        "value": str(value)
-                    })
-                _LOGGER.debug("Converted dict to list with %d items", len(items))
-                return items
-            
-            # Check if it's a nested format with items under a key
-            for possible_key in ['data', 'items', 'values', 'result']:
-                if possible_key in data and isinstance(data[possible_key], list):
-                    _LOGGER.debug("Found nested list under key '%s'", possible_key)
-                    nested_data = data[possible_key]
-                    if nested_data:  # Non-empty list
-                        return self._parse_json_response_flexible(nested_data, response_text)
             
             # Check if it's a single item format
             if 'id' in data and 'value' in data:
                 _LOGGER.debug("Found single item format, converting to list")
                 return [data]
             
-            # Try to extract any numeric keys as IDs (fallback)
-            numeric_items = []
-            for key, value in data.items():
-                try:
-                    int_key = int(key)
-                    numeric_items.append({
-                        "id": str(int_key),
-                        "name": f"item_{int_key}",
-                        "value": str(value)
-                    })
-                except (ValueError, TypeError):
-                    continue
-            
-            if numeric_items:
-                _LOGGER.debug("Extracted %d numeric-key items from dict", len(numeric_items))
-                return numeric_items
-            
             raise SVKInvalidDataFormatError(
                 "list or dict with recognizable structure",
                 f"dict with keys: {list(data.keys())[:5]}",
-                "Dict format not recognized. Expected list, simple dict, or nested dict with 'data'/'items' key"
+                "Dict format not recognized. Expected list or heat pump dict format"
             )
         
         # Handle single value (unlikely but possible)
@@ -474,7 +394,10 @@ class LOMJsonClient:
         
         # Step 1: Make unauthenticated request to get WWW-Authenticate header
         _LOGGER.debug(f"Making initial request to {url}")
-        resp = await self._session.request(method, url, allow_redirects=False, **kwargs)
+        # For GET requests, we need to allow redirects to avoid 400 errors
+        # Also need to handle the query string properly for GET requests
+        allow_redirects = method != "GET"
+        resp = await self._session.request(method, url, allow_redirects=allow_redirects, **kwargs)
         
         # Step 2: Handle authentication challenge
         if resp.status == 401:
@@ -494,7 +417,7 @@ class LOMJsonClient:
                 raise SVKAuthenticationError("Missing required Digest authentication parameters")
             
             # Step 3: Compute Digest response
-            uri = str(url.path)  # Simple URI format - this is key!
+            uri = str(url.path) + (f"?{url.query_string}" if url.query_string else "")  # Include query parameters
             digest_header = self._compute_digest_response(
                 method=method,
                 uri=uri,
@@ -526,6 +449,57 @@ class LOMJsonClient:
         
         return resp
     
+    async def _request_with_get_params(self, ids: List[int]) -> List[Dict[str, Any]]:
+        """
+        Make a GET request with semicolon-separated IDs as query parameters.
+        
+        Args:
+            ids: List of register IDs to request
+            
+        Returns:
+            List of dictionaries with 'id', 'name', and 'value' fields
+            
+        Raises:
+            SVKConnectionError: If the request fails
+        """
+        ids_str = ";".join(str(id) for id in ids)
+        url_path = f"/cgi-bin/json_values.cgi?ids={ids_str}"
+        
+        # Make the request and parse the response
+        resp = await self._simple_digest_auth_request(url_path, method="GET")
+        try:
+            response_text = await resp.text()
+            
+            # Parse JSON from the text
+            import json
+            data = json.loads(response_text)
+            
+            # Check for empty or blank response
+            if not data:
+                raise SVKConnectionError("Empty response body")
+            
+            # Use flexible parsing to handle different response formats
+            result = self._parse_json_response_flexible(data, response_text)
+            return result
+            
+        except (aiohttp.ContentTypeError, ValueError, json.JSONDecodeError) as err:
+            if not response_text.strip():
+                raise SVKConnectionError("Blank response body") from err
+            
+            # Log the full response for debugging
+            _LOGGER.error("Invalid JSON response received. Status: %d, Content-Type: %s, Response (first 500 chars): %s",
+                         resp.status, resp.headers.get('Content-Type', 'unknown'), response_text[:500])
+            
+            # Check if it's an HTML error page
+            html_error = self._detect_html_error_page(response_text)
+            if html_error:
+                raise SVKHTMLResponseError(resp.status, html_error)
+            
+            raise SVKParseError("json", f"Invalid JSON response: {response_text[:100]}") from err
+        
+        finally:
+            resp.release()
+    
     async def _request_with_digest_auth(self, path: str, ids: List[int]) -> List[Dict[str, Any]]:
         """Make a request with simplified Digest authentication."""
         import time
@@ -537,11 +511,7 @@ class LOMJsonClient:
             _LOGGER.debug("Starting new session for digest auth")
             await self.start()
         
-        # Use the working JSON endpoint
-        url_path = "/cgi-bin/json_values.cgi"
-        payload = {"ids": ids}
-        
-        _LOGGER.info("PERFORMANCE: Making simplified digest auth request to: %s", url_path)
+        _LOGGER.info("PERFORMANCE: Making simplified digest auth request for %d IDs", len(ids))
         _LOGGER.debug("Requesting %d IDs: %s", len(ids), ids[:10])  # Log first 10 IDs
         
         try:
@@ -549,59 +519,70 @@ class LOMJsonClient:
             _LOGGER.debug("PERFORMANCE: Starting simplified digest auth with 30 second timeout")
             auth_start = time.time()
             
-            # Use POST with JSON payload (matches working diagnostic approach)
-            resp = await self._simple_digest_auth_request(url_path, method="POST", json=payload)
-            
-            auth_duration = time.time() - auth_start
-            total_duration = time.time() - start_time
-            _LOGGER.info("PERFORMANCE: Simplified digest auth completed in %.2fs (auth=%.2fs, total=%.2fs) for %d IDs",
-                       total_duration, auth_duration, total_duration, len(ids))
-            
-            # Parse JSON response with enhanced error handling
+            # Try GET with query parameters first
             try:
-                # Read raw response first for debugging
-                response_text = await resp.text()
-                _LOGGER.debug("Raw response (first 200 chars): %s", response_text[:200])
+                _LOGGER.debug("PERFORMANCE: Trying GET with query parameters")
+                result = await self._request_with_get_params(ids)
+                auth_duration = time.time() - auth_start
+                total_duration = time.time() - start_time
+                _LOGGER.info("PERFORMANCE: Simplified digest auth completed in %.2fs (auth=%.2fs, total=%.2fs) for %d IDs",
+                           total_duration, auth_duration, total_duration, len(ids))
+                return result
+            except SVKConnectionError:
+                # Fall back to POST with JSON payload
+                _LOGGER.debug("PERFORMANCE: GET failed, falling back to POST with JSON payload")
+                payload = {"ids": ids}
+                resp = await self._simple_digest_auth_request("/cgi-bin/json_values.cgi", method="POST", json=payload)
                 
-                # Parse JSON from the text
-                import json
-                data = json.loads(response_text)
-                _LOGGER.debug("Received JSON data with %d items", len(data) if isinstance(data, list) else "unknown")
-                _LOGGER.debug("Raw JSON response type: %s", type(data))
-                
-                # Check for empty or blank response
-                if not data:
-                    _LOGGER.error("Empty JSON response received")
-                    raise SVKConnectionError("Empty response body")
-                
-                # Use flexible parsing to handle different response formats
+                # Parse JSON response with enhanced error handling
                 try:
-                    result = self._parse_json_response_flexible(data, response_text)
-                    _LOGGER.debug("Successfully parsed response, returning %d items", len(result))
-                    return result
-                except SVKInvalidDataFormatError as format_err:
-                    _LOGGER.error("Data format error: %s", format_err.message)
-                    _LOGGER.debug("Full response that caused format error: %s", response_text[:1000])
-                    raise
+                    # Read raw response first for debugging
+                    response_text = await resp.text()
+                    _LOGGER.debug("Raw response (first 200 chars): %s", response_text[:200])
+                    
+                    # Parse JSON from the text
+                    import json
+                    data = json.loads(response_text)
+                    _LOGGER.debug("Received JSON data with %d items", len(data) if isinstance(data, list) else "unknown")
+                    _LOGGER.debug("Raw JSON response type: %s", type(data))
+                    
+                    # Check for empty or blank response
+                    if not data:
+                        _LOGGER.error("Empty JSON response received")
+                        raise SVKConnectionError("Empty response body")
+                    
+                    # Use flexible parsing to handle different response formats
+                    try:
+                        result = self._parse_json_response_flexible(data, response_text)
+                        _LOGGER.debug("Successfully parsed response, returning %d items", len(result))
+                        auth_duration = time.time() - auth_start
+                        total_duration = time.time() - start_time
+                        _LOGGER.info("PERFORMANCE: Simplified digest auth completed in %.2fs (auth=%.2fs, total=%.2fs) for %d IDs",
+                                   total_duration, auth_duration, total_duration, len(ids))
+                        return result
+                    except SVKInvalidDataFormatError as format_err:
+                        _LOGGER.error("Data format error: %s", format_err.message)
+                        _LOGGER.debug("Full response that caused format error: %s", response_text[:1000])
+                        raise
+                    
+                except (aiohttp.ContentTypeError, ValueError, json.JSONDecodeError) as err:
+                    # We already have the response_text from above
+                    if not response_text.strip():
+                        raise SVKConnectionError("Blank response body") from err
+                    
+                    # Log the full response for debugging
+                    _LOGGER.error("Invalid JSON response received. Status: %d, Content-Type: %s, Response (first 500 chars): %s",
+                                 resp.status, resp.headers.get('Content-Type', 'unknown'), response_text[:500])
+                    
+                    # Check if it's an HTML error page
+                    html_error = self._detect_html_error_page(response_text)
+                    if html_error:
+                        raise SVKHTMLResponseError(resp.status, html_error)
+                    
+                    raise SVKParseError("json", f"Invalid JSON response: {response_text[:100]}") from err
                 
-            except (aiohttp.ContentTypeError, ValueError, json.JSONDecodeError) as err:
-                # We already have the response_text from above
-                if not response_text.strip():
-                    raise SVKConnectionError("Blank response body") from err
-                
-                # Log the full response for debugging
-                _LOGGER.error("Invalid JSON response received. Status: %d, Content-Type: %s, Response (first 500 chars): %s",
-                             resp.status, resp.headers.get('Content-Type', 'unknown'), response_text[:500])
-                
-                # Check if it's an HTML error page
-                html_error = self._detect_html_error_page(response_text)
-                if html_error:
-                    raise SVKHTMLResponseError(resp.status, html_error)
-                
-                raise SVKParseError("json", f"Invalid JSON response: {response_text[:100]}") from err
-            
-            finally:
-                resp.release()
+                finally:
+                    resp.release()
                 
         except asyncio.TimeoutError:
             total_duration = time.time() - start_time
