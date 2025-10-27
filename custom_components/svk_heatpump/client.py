@@ -72,7 +72,7 @@ class SVKWriteError(Exception):
 
 
 class LOMJsonClient:
-    """Client for communicating with SVK LOM320 web module using JSON API with simplified Digest authentication."""
+    """Client for communicating with SVK LOM320 web module using JSON API with Digest authentication."""
 
     def __init__(self, host: str, username: str, password: str, timeout: int = 10):
         """Initialize the JSON client."""
@@ -86,12 +86,10 @@ class LOMJsonClient:
         )
 
         self._chunk_size = 25  # Fixed chunk size of 25 for all requests
-        # Chunking is always enabled
-
         self._max_retries = 3  # Maximum number of retries for failed requests
         self._retry_delay = 0.5  # Initial retry delay in seconds
 
-        # Enhanced authentication state tracking
+        # Authentication state tracking
         self._auth_nonce = None  # Current nonce for authentication
         self._auth_realm = None  # Current realm for authentication
         self._auth_qop = None  # Current qop for authentication
@@ -102,37 +100,30 @@ class LOMJsonClient:
             300  # Nonce validity duration in seconds (5 minutes)
         )
 
-        # Connection state tracking
-        self._connection_state = "disconnected"  # Track connection state
-        self._last_connection_check = 0  # Timestamp of last connection check
-        self._connection_check_interval = 60  # Connection check interval in seconds
-
-        # Simplified Digest authentication - removed complex session management
-        self._last_status_code = None  # Track last HTTP status code for diagnostics
+        # Default ID list - configurable
+        self._default_ids = [
+            299, 255, 256, 257, 258, 259, 262, 263, 422, 388, 298, 376, 505, 302,
+            435, 301, 382, 405, 222, 223, 224, 225, 234, 438, 437
+        ]
 
         # Track failed IDs for better error handling
-        self._failed_ids = set()  # IDs that consistently fail
-        self._unsupported_ids = set()  # IDs that are not supported by the API
+        self._failed_ids: set[int] = set()  # IDs that consistently fail
+        self._unsupported_ids: set[int] = set()  # IDs that are not supported by the API
 
-    def _parse_json_response_flexible(
-        self, data: Any, response_text: str = ""
-    ) -> list[dict[str, Any]]:
+    def _parse_json_response(self, data: Any) -> list[dict[str, Any]]:
         """
-        Parse JSON response with simplified format handling.
-
-        Simplified to handle the dictionary format directly without excessive conversion attempts.
+        Parse JSON response in the expected format: [{"id": "299", "name": "HeatPump.CapacityAct", "value": "25.2"}, ...]
 
         Args:
             data: The parsed JSON data
-            response_text: Raw response text for debugging
 
         Returns:
             List of dictionaries with 'id', 'name', and 'value' fields
 
         Raises:
-            SVKInvalidDataFormatError: If the data format is not supported
+            SVKInvalidDataFormatError: If the data format is not as expected
         """
-        _LOGGER.debug("Parsing JSON response with simplified format handling")
+        _LOGGER.debug("Parsing JSON response")
         _LOGGER.debug("Response data type: %s", type(data))
 
         # Handle list format (expected format)
@@ -140,7 +131,7 @@ class LOMJsonClient:
             _LOGGER.debug("Processing list format with %d items", len(data))
             valid_items = 0
             for item in data:
-                if isinstance(item, dict) and "id" in item:
+                if isinstance(item, dict) and "id" in item and "name" in item and "value" in item:
                     valid_items += 1
 
             if valid_items > 0:
@@ -148,12 +139,12 @@ class LOMJsonClient:
                 return data
             else:
                 raise SVKInvalidDataFormatError(
-                    "list with dictionaries containing 'id' field",
+                    "list with dictionaries containing 'id', 'name', and 'value' fields",
                     "list without valid items",
-                    f"List has {len(data)} items but none contain 'id' field",
+                    f"List has {len(data)} items but none contain required fields",
                 )
 
-        # Handle dict format (heat pump format)
+        # Handle dict format (alternative format)
         elif isinstance(data, dict):
             _LOGGER.debug("Processing dict format with %d keys", len(data))
 
@@ -215,25 +206,15 @@ class LOMJsonClient:
                 )
                 return dict_items
 
-            # Check if it's a single item format
-            if "id" in data and "value" in data:
-                _LOGGER.debug("Found single item format, converting to list")
-                return [data]
-
             raise SVKInvalidDataFormatError(
                 "list or dict with recognizable structure",
                 f"dict with keys: {list(data.keys())[:5]}",
                 "Dict format not recognized. Expected list or heat pump dict format",
             )
 
-        # Handle single value (unlikely but possible)
-        elif isinstance(data, str | int | float | bool):
-            _LOGGER.debug("Processing single value format: %s", data)
-            return [{"id": "0", "name": "single_value", "value": str(data)}]
-
         else:
             raise SVKInvalidDataFormatError(
-                "list, dict, or single value",
+                "list or dict",
                 f"{type(data).__name__}",
                 f"Unsupported data type: {type(data).__name__}",
             )
@@ -273,8 +254,6 @@ class LOMJsonClient:
             r"<h1[^>]*>([^<]+Internal Server Error[^<]*)</h1>",
         ]
 
-        import re
-
         for pattern in error_patterns:
             match = re.search(pattern, text, re.IGNORECASE)
             if match:
@@ -298,7 +277,7 @@ class LOMJsonClient:
 
         return "HTML Error Page"
 
-    async def start(self):
+    async def start(self) -> None:
         """Start the client session."""
         if self._session:
             return
@@ -317,17 +296,15 @@ class LOMJsonClient:
             cookie_jar=aiohttp.CookieJar(unsafe=True),
         )
 
-    async def close(self):
+    async def close(self) -> None:
         """Close the HTTP session."""
         if self._session and not self._session.closed:
             await self._session.close()
             self._session = None
-        # No complex session state to reset with simplified auth
-        pass
 
     def _parse_www_authenticate(self, header: str) -> dict[str, str]:
         """Parse WWW-Authenticate header for Digest authentication."""
-        auth_params = {}
+        auth_params: dict[str, str] = {}
         if not header.startswith("Digest "):
             return auth_params
 
@@ -360,7 +337,7 @@ class LOMJsonClient:
         algorithm: str = "MD5",
         opaque: str | None = None,
     ) -> str:
-        """Compute Digest authentication response - simplified version."""
+        """Compute Digest authentication response."""
         cnonce = self._generate_cnonce()
         nc = "00000001"  # Simple fixed nonce count
 
@@ -432,86 +409,11 @@ class LOMJsonClient:
         self._last_auth_time = 0
         _LOGGER.debug("Authentication state invalidated")
 
-    async def _validate_connection_state(self) -> bool:
-        """
-        Validate and update connection state.
-
-        Returns:
-            True if connection is valid, False otherwise
-        """
-        current_time = time.time()
-
-        # Skip validation if we checked recently
-        if current_time - self._last_connection_check < self._connection_check_interval:
-            return self._connection_state == "connected"
-
-        try:
-            if not self._session:
-                await self.start()
-
-            # Make a simple connection check with minimal timeout
-            test_url = self._base.with_path("/")
-            test_timeout = aiohttp.ClientTimeout(total=5, connect=3)
-
-            async with self._session.request(
-                "HEAD", test_url, timeout=test_timeout, allow_redirects=True
-            ) as resp:
-                if (
-                    resp.status < 500
-                ):  # Any non-server error indicates connection is working
-                    self._connection_state = "connected"
-                    self._last_connection_check = current_time
-                    _LOGGER.debug("Connection state validated: connected")
-                    return True
-                else:
-                    _LOGGER.warning(
-                        "Connection check failed with status %d", resp.status
-                    )
-                    self._connection_state = "disconnected"
-                    self._last_connection_check = current_time
-                    return False
-
-        except Exception as err:
-            _LOGGER.warning("Connection validation failed: %s", err)
-            self._connection_state = "disconnected"
-            self._last_connection_check = current_time
-            return False
-
-    async def _recover_connection(self):
-        """Attempt to recover the connection."""
-        _LOGGER.info("Attempting connection recovery")
-
-        try:
-            # Close existing session
-            if self._session and not self._session.closed:
-                await self._session.close()
-                self._session = None
-
-            # Invalidate authentication
-            self._invalidate_authentication()
-
-            # Create new session
-            await self.start()
-
-            # Validate new connection
-            if await self._validate_connection_state():
-                _LOGGER.info("Connection recovery successful")
-                self._connection_state = "connected"
-            else:
-                _LOGGER.error("Connection recovery failed")
-                self._connection_state = "disconnected"
-
-        except Exception as err:
-            _LOGGER.error("Connection recovery failed with exception: %s", err)
-            self._connection_state = "disconnected"
-
-    async def _simple_digest_auth_request(
+    async def _digest_auth_request(
         self, path: str, method: str = "GET", **kwargs
     ) -> aiohttp.ClientResponse:
         """
-        Make an authenticated request using enhanced Digest authentication with retry logic.
-
-        Enhanced with nonce validation, connection state management, and exponential backoff.
+        Make an authenticated request using Digest authentication with retry logic.
         """
         if not self._session:
             await self.start()
@@ -522,12 +424,6 @@ class LOMJsonClient:
 
         for auth_attempt in range(max_auth_retries + 1):
             try:
-                # Validate connection state before making request
-                if self._connection_state != "connected":
-                    if not await self._validate_connection_state():
-                        _LOGGER.info("Connection not valid, attempting recovery")
-                        await self._recover_connection()
-
                 # Check if we have valid authentication
                 if self._is_authentication_valid():
                     # Use existing authentication
@@ -544,10 +440,10 @@ class LOMJsonClient:
                         uri=uri,
                         username=self._username,
                         password=self._password,
-                        realm=self._auth_realm,
-                        nonce=self._auth_nonce,
-                        qop=self._auth_qop,
-                        algorithm=self._auth_algorithm,
+                        realm=self._auth_realm or "",
+                        nonce=self._auth_nonce or "",
+                        qop=self._auth_qop or "",
+                        algorithm=self._auth_algorithm or "",
                         opaque=self._auth_opaque,
                     )
 
@@ -673,7 +569,7 @@ class LOMJsonClient:
                 else:
                     raise SVKConnectionError(
                         f"Request failed after {max_auth_retries + 1} attempts: {err}"
-                    )
+                    ) from err
 
         # This should not be reached, but just in case
         raise SVKConnectionError("Authentication failed after all retry attempts")
@@ -695,7 +591,7 @@ class LOMJsonClient:
         url_path = f"/cgi-bin/json_values.cgi?ids={ids_str}"
 
         # Make the request and parse the response
-        resp = await self._simple_digest_auth_request(url_path, method="GET")
+        resp = await self._digest_auth_request(url_path, method="GET")
         try:
             response_text = await resp.text()
 
@@ -747,8 +643,8 @@ class LOMJsonClient:
                 _LOGGER.error("Requested IDs: %s", ids)
                 raise SVKConnectionError("Empty JSON response body from GET request")
 
-            # Use flexible parsing to handle different response formats
-            result = self._parse_json_response_flexible(data, response_text)
+            # Parse the response
+            result = self._parse_json_response(data)
             return result
 
         except (aiohttp.ContentTypeError, ValueError, json.JSONDecodeError) as err:
@@ -766,7 +662,7 @@ class LOMJsonClient:
             # Check if it's an HTML error page
             html_error = self._detect_html_error_page(response_text)
             if html_error:
-                raise SVKHTMLResponseError(resp.status, html_error)
+                raise SVKHTMLResponseError(resp.status, html_error) from err
 
             raise SVKParseError(
                 "json", f"Invalid JSON response: {response_text[:100]}"
@@ -775,425 +671,21 @@ class LOMJsonClient:
         finally:
             resp.release()
 
-    async def _request_with_digest_auth(
-        self, path: str, ids: list[int]
-    ) -> list[dict[str, Any]]:
-        """Make a request with enhanced Digest authentication and empty response handling."""
-        import time
-
-        start_time = time.time()
-
-        _LOGGER.debug(
-            "PERFORMANCE: _request_with_digest_auth called for %d IDs", len(ids)
-        )
-
-        if not self._session:
-            _LOGGER.debug("Starting new session for digest auth")
-            await self.start()
-
-        _LOGGER.info(
-            "PERFORMANCE: Making enhanced digest auth request for %d IDs", len(ids)
-        )
-        _LOGGER.debug("Requesting %d IDs: %s", len(ids), ids[:10])  # Log first 10 IDs
-
-        try:
-            # Add overall timeout protection to prevent infinite retry loops
-            _LOGGER.debug(
-                "PERFORMANCE: Starting enhanced digest auth with 30 second timeout"
-            )
-            auth_start = time.time()
-
-            # Try GET with query parameters first
-            try:
-                _LOGGER.debug("PERFORMANCE: Trying GET with query parameters")
-                result = await self._request_with_get_params(ids)
-                auth_duration = time.time() - auth_start
-                total_duration = time.time() - start_time
-                _LOGGER.info(
-                    "PERFORMANCE: Enhanced digest auth completed in %.2fs (auth=%.2fs, total=%.2fs) for %d IDs",
-                    total_duration,
-                    auth_duration,
-                    total_duration,
-                    len(ids),
-                )
-                return result
-            except SVKConnectionError as conn_err:
-                # Fall back to POST with JSON payload
-                _LOGGER.debug(
-                    "PERFORMANCE: GET failed with '%s', falling back to POST with JSON payload",
-                    conn_err,
-                )
-
-                # Implement enhanced retry logic for empty responses with exponential backoff
-                max_retries = 3  # Increased from 2 to 3
-                base_delay = 0.5  # Base delay for exponential backoff
-
-                for attempt in range(max_retries + 1):
-                    try:
-                        _LOGGER.debug(
-                            "POST attempt %d/%d for %d IDs",
-                            attempt + 1,
-                            max_retries + 1,
-                            len(ids),
-                        )
-                        payload = {"ids": ids}
-
-                        # Add exponential backoff delay between retries
-                        if attempt > 0:
-                            delay = base_delay * (2 ** (attempt - 1)) + random.uniform(
-                                0.1, 0.3
-                            )
-                            _LOGGER.debug(
-                                "Waiting %.2f seconds before retry attempt %d",
-                                delay,
-                                attempt + 1,
-                            )
-                            await asyncio.sleep(delay)
-
-                        resp = await self._simple_digest_auth_request(
-                            "/cgi-bin/json_values.cgi", method="POST", json=payload
-                        )
-
-                        # Enhanced empty response detection
-                        response_text = await resp.text()
-
-                        # Detailed empty response analysis
-                        is_empty_response = False
-                        empty_reason = ""
-
-                        if not response_text:
-                            is_empty_response = True
-                            empty_reason = "Completely empty response (no content)"
-                        elif not response_text.strip():
-                            is_empty_response = True
-                            empty_reason = "Response contains only whitespace"
-                        elif (
-                            len(response_text) < 10
-                        ):  # Very short responses are likely errors
-                            is_empty_response = True
-                            empty_reason = f"Suspiciously short response ({len(response_text)} chars)"
-
-                        if is_empty_response:
-                            _LOGGER.error(
-                                "EMPTY RESPONSE DETECTED - Attempt %d/%d",
-                                attempt + 1,
-                                max_retries + 1,
-                            )
-                            _LOGGER.error("Empty response reason: %s", empty_reason)
-                            _LOGGER.error(
-                                "Response status: %d, Content-Type: %s, Content-Length: %s",
-                                resp.status,
-                                resp.headers.get("Content-Type", "unknown"),
-                                resp.headers.get("Content-Length", "unknown"),
-                            )
-                            _LOGGER.error(
-                                "Raw response (repr): %s", repr(response_text)
-                            )
-                            _LOGGER.error(
-                                "Requested IDs: %s", ids[:20]
-                            )  # Log first 20 IDs
-
-                            # Check response headers for additional clues
-                            _LOGGER.error("Response headers: %s", dict(resp.headers))
-
-                            # If this is the last attempt, raise an enhanced error
-                            if attempt == max_retries:
-                                {
-                                    "reason": empty_reason,
-                                    "status": resp.status,
-                                    "content_type": resp.headers.get(
-                                        "Content-Type", "unknown"
-                                    ),
-                                    "content_length": resp.headers.get(
-                                        "Content-Length", "unknown"
-                                    ),
-                                    "raw_response": repr(response_text),
-                                    "requested_ids": ids[:20],
-                                    "response_headers": dict(resp.headers),
-                                }
-                                raise SVKConnectionError(
-                                    f"Empty response body after {max_retries + 1} attempts: {empty_reason}"
-                                ) from None
-                            else:
-                                # Continue to next attempt
-                                resp.release()
-                                continue
-
-                        # If we get here, the POST request was successful
-                        break
-
-                    except SVKConnectionError as retry_err:
-                        _LOGGER.warning(
-                            "POST attempt %d failed: %s", attempt + 1, retry_err
-                        )
-                        if attempt == max_retries:
-                            _LOGGER.error(
-                                "All POST attempts failed, raising last error"
-                            )
-                            raise retry_err
-                        continue
-
-                # Parse JSON response with enhanced error handling
-                try:
-                    _LOGGER.debug(
-                        "Raw response (first 200 chars): %s", response_text[:200]
-                    )
-
-                    # Parse JSON from the text
-                    import json
-
-                    try:
-                        data = json.loads(response_text)
-                        _LOGGER.debug(
-                            "Received JSON data with %d items",
-                            len(data) if isinstance(data, list) else "unknown",
-                        )
-                        _LOGGER.debug("Raw JSON response type: %s", type(data))
-
-                        # Enhanced empty JSON response detection
-                        if not data:
-                            _LOGGER.error("EMPTY JSON RESPONSE DETECTED")
-                            _LOGGER.error(
-                                "Response status: %d, Content-Type: %s, Content-Length: %s",
-                                resp.status,
-                                resp.headers.get("Content-Type", "unknown"),
-                                resp.headers.get("Content-Length", "unknown"),
-                            )
-                            _LOGGER.error("Raw response text: %s", repr(response_text))
-                            _LOGGER.error(
-                                "Requested IDs: %s", ids[:20]
-                            )  # Log first 20 IDs
-                            _LOGGER.error("Response headers: %s", dict(resp.headers))
-                            raise SVKConnectionError(
-                                "Empty JSON response body"
-                            ) from None
-
-                    except json.JSONDecodeError as json_err:
-                        _LOGGER.error("JSON DECODE ERROR DETECTED")
-                        _LOGGER.error("JSON decode error: %s", json_err)
-                        _LOGGER.error(
-                            "Response status: %d, Content-Type: %s, Content-Length: %s",
-                            resp.status,
-                            resp.headers.get("Content-Type", "unknown"),
-                            resp.headers.get("Content-Length", "unknown"),
-                        )
-                        _LOGGER.error(
-                            "Raw response text (first 200 chars): %s",
-                            repr(response_text[:200]),
-                        )
-                        _LOGGER.error("Requested IDs: %s", ids[:20])  # Log first 20 IDs
-                        _LOGGER.error("Response headers: %s", dict(resp.headers))
-                        raise SVKParseError(
-                            "json", f"JSON decode error: {json_err}"
-                        ) from json_err
-
-                    # Use flexible parsing to handle different response formats
-                    try:
-                        result = self._parse_json_response_flexible(data, response_text)
-                        _LOGGER.debug(
-                            "Successfully parsed response, returning %d items",
-                            len(result),
-                        )
-                        auth_duration = time.time() - auth_start
-                        total_duration = time.time() - start_time
-                        _LOGGER.info(
-                            "PERFORMANCE: Enhanced digest auth completed in %.2fs (auth=%.2fs, total=%.2fs) for %d IDs",
-                            total_duration,
-                            auth_duration,
-                            total_duration,
-                            len(ids),
-                        )
-                        return result
-                    except SVKInvalidDataFormatError as format_err:
-                        _LOGGER.error("DATA FORMAT ERROR DETECTED")
-                        _LOGGER.error("Data format error: %s", format_err.message)
-                        _LOGGER.error(
-                            "Full response that caused format error: %s",
-                            response_text[:1000],
-                        )
-                        _LOGGER.error("Requested IDs: %s", ids[:20])  # Log first 20 IDs
-                        _LOGGER.error("Response headers: %s", dict(resp.headers))
-                        raise
-
-                except (
-                    aiohttp.ContentTypeError,
-                    ValueError,
-                    json.JSONDecodeError,
-                ) as err:
-                    # We already have the response_text from above
-                    if not response_text.strip():
-                        _LOGGER.error("BLANK RESPONSE BODY DETECTED")
-                        _LOGGER.error("Response is completely blank after stripping")
-                        _LOGGER.error("Requested IDs: %s", ids[:20])  # Log first 20 IDs
-                        _LOGGER.error("Response headers: %s", dict(resp.headers))
-                        raise SVKConnectionError("Blank response body") from err
-
-                    # Log the full response for debugging
-                    _LOGGER.error("INVALID JSON RESPONSE DETECTED")
-                    _LOGGER.error(
-                        "Invalid JSON response received. Status: %d, Content-Type: %s",
-                        resp.status,
-                        resp.headers.get("Content-Type", "unknown"),
-                    )
-                    _LOGGER.error("Response (first 500 chars): %s", response_text[:500])
-                    _LOGGER.error("Requested IDs: %s", ids[:20])  # Log first 20 IDs
-                    _LOGGER.error("Response headers: %s", dict(resp.headers))
-
-                    # Check if it's an HTML error page
-                    html_error = self._detect_html_error_page(response_text)
-                    if html_error:
-                        _LOGGER.error("HTML ERROR PAGE DETECTED: %s", html_error)
-                        raise SVKHTMLResponseError(resp.status, html_error)
-
-                    raise SVKParseError(
-                        "json", f"Invalid JSON response: {response_text[:100]}"
-                    ) from err
-
-                finally:
-                    resp.release()
-
-        except asyncio.TimeoutError:
-            total_duration = time.time() - start_time
-            _LOGGER.error(
-                "CRITICAL: Enhanced digest auth request to %s timed out after 30 seconds (total=%.2fs) - this is blocking Home Assistant",
-                path,
-                total_duration,
-            )
-            raise SVKTimeoutError(f"Request timeout after 30 seconds for {path}")
-
-    async def _request_individual_ids(
-        self, path: str, ids: list[int]
-    ) -> list[dict[str, Any]]:
-        """Make individual requests for each ID as a fallback mechanism."""
-        import time
-
-        start_time = time.time()
-
-        _LOGGER.info(
-            "PERFORMANCE: Using individual requests fallback for %d IDs", len(ids)
-        )
-        results = []
-        failed_ids = []
-        request_times = []
-
-        for i, entity_id in enumerate(ids):
-            # Skip if this ID is known to be unsupported
-            if entity_id in self._unsupported_ids:
-                _LOGGER.debug("Skipping known unsupported ID %d", entity_id)
-                continue
-
-            # Skip if this ID is in the excluded list
-            # Note: _excluded_ids functionality has been removed
-            if hasattr(self, "_excluded_ids") and entity_id in self._excluded_ids:
-                _LOGGER.debug("Skipping excluded ID %d", entity_id)
-                continue
-
-            try:
-                _LOGGER.debug(
-                    "PERFORMANCE: Making individual request %d/%d for ID %d",
-                    i + 1,
-                    len(ids),
-                    entity_id,
-                )
-                request_start = time.time()
-                result = await self._request_with_retry(path, [entity_id])
-                request_duration = time.time() - request_start
-                request_times.append(request_duration)
-
-                if result:
-                    results.extend(result)
-                    _LOGGER.debug(
-                        "PERFORMANCE: Successfully retrieved ID %d in %.2fs",
-                        entity_id,
-                        request_duration,
-                    )
-                else:
-                    _LOGGER.warning(
-                        "PERFORMANCE: No data returned for ID %d in %.2fs",
-                        entity_id,
-                        request_duration,
-                    )
-                    failed_ids.append(entity_id)
-            except Exception as err:
-                request_duration = time.time() - request_start
-                request_times.append(request_duration)
-                _LOGGER.warning(
-                    "PERFORMANCE: Failed to retrieve ID %d individually after %.2fs: %s",
-                    entity_id,
-                    request_duration,
-                    err,
-                )
-                failed_ids.append(entity_id)
-
-                # If we consistently fail for this ID, mark it as unsupported
-                if entity_id in self._failed_ids:
-                    _LOGGER.info(
-                        "ID %d has failed multiple times, marking as unsupported",
-                        entity_id,
-                    )
-                    self._unsupported_ids.add(entity_id)
-                else:
-                    self._failed_ids.add(entity_id)
-
-        total_duration = time.time() - start_time
-
-        # Log performance summary
-        if request_times:
-            avg_request_time = sum(request_times) / len(request_times)
-            max_request_time = max(request_times)
-            min_request_time = min(request_times)
-            _LOGGER.info(
-                "PERFORMANCE: Individual request timing summary - avg=%.2fs, min=%.2fs, max=%.2fs (%d requests)",
-                avg_request_time,
-                min_request_time,
-                max_request_time,
-                len(request_times),
-            )
-
-        _LOGGER.info(
-            "PERFORMANCE: Individual requests completed in %.2fs total: %d successful, %d failed",
-            total_duration,
-            len(results),
-            len(failed_ids),
-        )
-
-        if failed_ids:
-            _LOGGER.debug("Failed IDs: %s", failed_ids[:20])  # Log first 20 failed IDs
-
-        # Performance warning if individual requests are taking too long
-        if total_duration > 15:  # 15 seconds for individual requests is concerning
-            _LOGGER.warning(
-                "PERFORMANCE WARNING: Individual requests took %.2fs - this is very inefficient",
-                total_duration,
-            )
-            _LOGGER.warning(
-                "PERFORMANCE WARNING: Consider increasing chunk size or checking network connectivity"
-            )
-
-        return results
-
-    async def _request_with_retry(
-        self, path: str, ids: list[int]
-    ) -> list[dict[str, Any]]:
-        """Make a request with retry logic for timeouts and blank bodies using Digest authentication."""
-        # Always use Digest authentication - credentials are required
-        return await self._request_with_digest_auth(path, ids)
-
-    async def read_values(self, ids: list[int]) -> list[dict[str, Any]]:
+    async def read_values(self, ids: list[int] | None = None) -> list[dict[str, Any]]:
         """
-        Read values from the JSON API with enhanced chunking and fallback mechanisms.
+        Read values from the JSON API using Digest authentication.
 
         Args:
-            ids: Iterable of register IDs to read
+            ids: Optional list of register IDs to read. If None, uses default IDs.
 
         Returns:
             List of dictionaries with 'id', 'name', and 'value' fields
         """
-        import time
+        # Use default IDs if none provided
+        if ids is None:
+            ids = self._default_ids
 
-        start_time = time.time()
-
-        _LOGGER.info("PERFORMANCE: read_values called with %d IDs", len(ids))
+        _LOGGER.info("Reading values for %d IDs", len(ids))
         _LOGGER.debug("Requesting IDs: %s", ids[:20])  # Log first 20 IDs
 
         if not ids:
@@ -1215,153 +707,16 @@ class LOMJsonClient:
             _LOGGER.warning("No valid IDs remaining after filtering")
             return []
 
-        _LOGGER.info(
-            "PERFORMANCE: Processing %d IDs after filtering", len(filtered_ids)
-        )
-
-        # Chunking is always enabled, so we skip the non-chunking path
-
-        # If the number of IDs is small, make a single request
-        if len(filtered_ids) <= self._chunk_size:
-            _LOGGER.info(
-                "PERFORMANCE: Making single request for %d IDs (below chunk size threshold)",
-                len(filtered_ids),
-            )
-            single_start = time.time()
-            try:
-                result = await self._request_with_retry(
-                    "/cgi-bin/json_values.cgi", filtered_ids
-                )
-                single_duration = time.time() - single_start
-                items_returned = len(result) if result else 0
-                _LOGGER.info(
-                    "PERFORMANCE: Single request completed in %.2fs, returned %d items",
-                    single_duration,
-                    items_returned,
-                )
-
-                # Check if we got significantly fewer items than expected
-                if (
-                    items_returned < len(filtered_ids) * 0.5
-                ):  # Less than 50% success rate
-                    _LOGGER.warning(
-                        "Low success rate (%d/%d), falling back to individual requests",
-                        items_returned,
-                        len(filtered_ids),
-                    )
-                    return await self._request_individual_ids(
-                        "/cgi-bin/json_values.cgi", filtered_ids
-                    )
-
-                return result or []
-            except Exception as err:
-                _LOGGER.error("SINGLE REQUEST FAILED - Enhanced error analysis")
-                _LOGGER.error("Single request failed with error: %s", err)
-                _LOGGER.error("Error type: %s", type(err).__name__)
-
-                # Enhanced error analysis for empty response scenarios
-                if isinstance(err, SVKConnectionError) and "Empty response" in str(err):
-                    _LOGGER.error("EMPTY RESPONSE FAILURE ANALYSIS:")
-                    _LOGGER.error("This is likely caused by:")
-                    _LOGGER.error("1. Authentication timing issues (nonce expiration)")
-                    _LOGGER.error("2. Device overload/rate limiting")
-                    _LOGGER.error("3. Network connection drops during request/response")
-                    _LOGGER.error(
-                        "4. Device returning empty responses due to internal errors"
-                    )
-
-                    # Check if we have authentication issues
-                    if not self._is_authentication_valid():
-                        _LOGGER.error(
-                            "Authentication state is invalid - this suggests nonce expiration"
-                        )
-                    elif self._connection_state != "connected":
-                        _LOGGER.error(
-                            "Connection state is not connected - this suggests network issues"
-                        )
-                    else:
-                        _LOGGER.error(
-                            "Authentication and connection appear valid - this suggests device overload"
-                        )
-
-                # Fallback to individual requests with enhanced logging
-                _LOGGER.info(
-                    "Falling back to individual requests due to single request failure"
-                )
-                _LOGGER.info(
-                    "Individual requests will help identify if issue is with bulk requests or specific IDs"
-                )
-
-                try:
-                    individual_results = await self._request_individual_ids(
-                        "/cgi-bin/json_values.cgi", filtered_ids
-                    )
-                    _LOGGER.info(
-                        "Individual requests completed successfully - issue was likely with bulk request"
-                    )
-                    return individual_results
-                except Exception as individual_err:
-                    _LOGGER.error("Individual requests also failed: %s", individual_err)
-                    _LOGGER.error(
-                        "This suggests a more fundamental connection or authentication issue"
-                    )
-                    raise err  # Raise original error
-
-        # For larger ID lists, split into chunks with enhanced logging
-        total_chunks = (len(filtered_ids) + self._chunk_size - 1) // self._chunk_size
-        _LOGGER.info(
-            "PERFORMANCE: Splitting %d IDs into %d chunks of %d",
-            len(filtered_ids),
-            total_chunks,
-            self._chunk_size,
-        )
+        # Process IDs in chunks
         results = []
-        failed_chunks = []
-        successful_chunks = 0
-        chunk_times = []
+        total_chunks = (len(filtered_ids) + self._chunk_size - 1) // self._chunk_size
 
-        # Process chunks in parallel to reduce total time
-        import asyncio
-
-        asyncio.Semaphore(
-            3
-        )  # Limit to 3 concurrent requests to avoid overwhelming the device
-
-        async def process_chunk(chunk, chunk_num):
-            chunk_start = time.time()
-            try:
-                chunk_results = await self._request_with_retry(
-                    "/cgi-bin/json_values.cgi", chunk
-                )
-                chunk_duration = time.time() - chunk_start
-                items_returned = len(chunk_results) if chunk_results else 0
-                _LOGGER.info(
-                    "PERFORMANCE: Chunk %d/%d completed in %.2fs, returned %d items",
-                    chunk_num,
-                    total_chunks,
-                    chunk_duration,
-                    items_returned,
-                )
-                return chunk_results, chunk_duration
-            except Exception as err:
-                chunk_duration = time.time() - chunk_start
-                _LOGGER.error(
-                    "PERFORMANCE: Chunk %d/%d failed after %.2fs: %s",
-                    chunk_num,
-                    total_chunks,
-                    chunk_duration,
-                    err,
-                )
-                return None, chunk_duration
-
-        # Create tasks for all chunks
-        chunk_tasks = []
         for i in range(0, len(filtered_ids), self._chunk_size):
             chunk = filtered_ids[i : i + self._chunk_size]
             chunk_num = i // self._chunk_size + 1
 
-            _LOGGER.info(
-                "PERFORMANCE: Processing chunk %d/%d (IDs %d-%d): %s",
+            _LOGGER.debug(
+                "Processing chunk %d/%d (IDs %d-%d): %s",
                 chunk_num,
                 total_chunks,
                 i,
@@ -1369,125 +724,31 @@ class LOMJsonClient:
                 chunk,
             )
 
-            # Create task for this chunk
-            task = asyncio.create_task(process_chunk(chunk, chunk_num))
-            chunk_tasks.append(task)
-
-        # Wait for all chunks to complete (with timeout)
-        try:
-            _LOGGER.info(
-                "PERFORMANCE: Waiting for %d chunks to complete with 60 second timeout",
-                len(chunk_tasks),
-            )
-            chunk_results_list = await asyncio.wait_for(
-                asyncio.gather(*chunk_tasks, return_exceptions=True),
-                timeout=60.0,  # 60 second timeout for all chunks
-            )
-        except asyncio.TimeoutError:
-            _LOGGER.error(
-                "PERFORMANCE: Parallel chunk processing timed out after 60 seconds"
-            )
-            # Cancel any remaining tasks
-            for task in chunk_tasks:
-                if not task.done():
-                    task.cancel()
-
-        # Process results
-        for i, task_result in enumerate(chunk_results_list):
-            if isinstance(task_result, Exception):
-                _LOGGER.error(
-                    "PERFORMANCE: Chunk %d/%d failed with exception: %s",
-                    i + 1,
-                    total_chunks,
-                    task_result,
-                )
-                failed_chunks.append(i)
-            else:
-                chunk_results, chunk_duration = task_result
-                if chunk_results:
-                    chunk_times.append(chunk_duration)
-                    successful_chunks += 1
-                    # Extend the results list with the new items
-                    if isinstance(chunk_results, list):
-                        results.extend(chunk_results)
-                    else:
-                        _LOGGER.warning(
-                            "Unexpected response format for chunk %d/%d: expected list, got %s",
-                            i + 1,
-                            total_chunks,
-                            type(chunk_results),
-                        )
-                        failed_chunks.append(i)
-
-        # Log chunk performance summary
-        if chunk_times:
-            avg_chunk_time = sum(chunk_times) / len(chunk_times)
-            max_chunk_time = max(chunk_times)
-            min_chunk_time = min(chunk_times)
-            _LOGGER.info(
-                "PERFORMANCE: Parallel chunk timing summary - avg=%.2fs, min=%.2fs, max=%.2fs (%d chunks)",
-                avg_chunk_time,
-                min_chunk_time,
-                max_chunk_time,
-                len(chunk_times),
-            )
-
-        _LOGGER.info(
-            "PERFORMANCE: Parallel chunk processing completed: %d successful, %d failed chunks",
-            successful_chunks,
-            len(failed_chunks),
-        )
-
-        # If we have failed chunks, try individual requests for those IDs
-        if failed_chunks:
-            failed_ids = []
-            for i, chunk_index in enumerate(failed_chunks):
-                if chunk_index < len(filtered_ids):
-                    chunk = filtered_ids[chunk_index : chunk_index + self._chunk_size]
-                    failed_ids.extend(chunk)
-
-            _LOGGER.info(
-                "PERFORMANCE: Attempting individual requests for %d IDs from failed chunks",
-                len(failed_ids),
-            )
-            individual_start = time.time()
-
             try:
-                individual_results = await self._request_individual_ids(
-                    "/cgi-bin/json_values.cgi", failed_ids
-                )
-                individual_duration = time.time() - individual_start
-                results.extend(individual_results)
-                _LOGGER.info(
-                    "PERFORMANCE: Individual requests completed in %.2fs, recovered %d additional items",
-                    individual_duration,
-                    len(individual_results),
-                )
+                chunk_results = await self._request_with_get_params(chunk)
+                if chunk_results:
+                    results.extend(chunk_results)
+                    _LOGGER.debug(
+                        "Chunk %d/%d completed successfully, returned %d items",
+                        chunk_num,
+                        total_chunks,
+                        len(chunk_results),
+                    )
+                else:
+                    _LOGGER.warning(
+                        "Chunk %d/%d returned no results", chunk_num, total_chunks
+                    )
             except Exception as err:
-                individual_duration = time.time() - individual_start
                 _LOGGER.error(
-                    "PERFORMANCE: Individual requests failed after %.2fs: %s",
-                    individual_duration,
-                    err,
+                    "Chunk %d/%d failed: %s", chunk_num, total_chunks, err
                 )
+                # Continue with other chunks instead of failing completely
 
-        total_duration = time.time() - start_time
         _LOGGER.info(
-            "PERFORMANCE: read_values completed in %.2fs total, returned %d items from %d requested IDs",
-            total_duration,
+            "Read values completed: %d items returned from %d requested IDs",
             len(results),
             len(filtered_ids),
         )
-
-        # Performance warning if taking too long
-        if total_duration > 20:  # 20 seconds is getting close to 30s timeout
-            _LOGGER.warning(
-                "PERFORMANCE WARNING: read_values took %.2fs - this may cause timeouts",
-                total_duration,
-            )
-            _LOGGER.warning(
-                "PERFORMANCE WARNING: Consider reducing chunk size further or checking network connectivity"
-            )
 
         return results
 
@@ -1506,19 +767,14 @@ class LOMJsonClient:
             await self.start()
 
         assert self._session is not None
-        url = self._base.with_path("/cgi-bin/json_values.cgi")
 
         # Prepare JSON payload
         payload = {"id": id, "value": value}
 
-        # Digest authentication is always required - no fallback to unauthenticated
-
         try:
-            # Use simplified authentication for write operations
-            _LOGGER.debug("Making POST request to %s with simplified auth", url)
+            _LOGGER.debug("Making POST request to write value %s to register %s", value, id)
 
-            # Use the simplified digest auth method
-            resp = await self._simple_digest_auth_request(
+            resp = await self._digest_auth_request(
                 "/cgi-bin/json_values.cgi", method="POST", json=payload
             )
 
@@ -1527,7 +783,7 @@ class LOMJsonClient:
                 # Parse JSON response
                 try:
                     data = await resp.json()
-                    return data.get("success", False)
+                    return bool(data.get("success", False))
                 except (aiohttp.ContentTypeError, ValueError):
                     return False
 
@@ -1539,7 +795,7 @@ class LOMJsonClient:
                 )
 
             text = await resp.text(errors="ignore")
-            raise SVKConnectionError(f"HTTP {resp.status} {url}: {text[:160]}")
+            raise SVKConnectionError(f"HTTP {resp.status}: {text[:160]}")
 
         except (asyncio.TimeoutError, aiohttp.ClientError) as err:
             _LOGGER.error("Failed to write value %s to register %s: %s", value, id, err)
@@ -1565,36 +821,27 @@ class LOMJsonClient:
             if not self._session:
                 await self.start()
 
-            # Try GET request first
+            # Try GET request
             try:
                 result = await self._request_with_get_params(test_ids)
                 if result and len(result) > 0:
-                    _LOGGER.info("Connection test successful via GET method")
+                    _LOGGER.info("Connection test successful")
                     return True
-            except Exception as get_err:
-                _LOGGER.debug("GET method failed in connection test: %s", get_err)
-
-            # Try POST request as fallback
-            try:
-                payload = {"ids": test_ids}
-                resp = await self._simple_digest_auth_request(
-                    "/cgi-bin/json_values.cgi", method="POST", json=payload
-                )
-
-                response_text = await resp.text()
-                if response_text and response_text.strip():
-                    _LOGGER.info("Connection test successful via POST method")
-                    resp.release()
-                    return True
-                else:
-                    _LOGGER.error("Empty response in POST connection test")
-                    resp.release()
-                    return False
-            except Exception as post_err:
-                _LOGGER.error("POST method failed in connection test: %s", post_err)
+            except Exception as err:
+                _LOGGER.error("Connection test failed: %s", err)
 
             return False
 
         except Exception as err:
             _LOGGER.error("Connection test failed: %s", err)
             return False
+
+    def set_default_ids(self, ids: list[int]) -> None:
+        """
+        Set the default ID list for requests.
+
+        Args:
+            ids: List of register IDs to use as default
+        """
+        self._default_ids = ids
+        _LOGGER.info("Updated default ID list with %d IDs", len(ids))

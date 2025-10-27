@@ -254,7 +254,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
 
             raise UpdateFailed(
                 f"Data update timeout after {timeout:.1f} seconds - heat pump may be unreachable"
-            )
+            ) from None
 
     async def _async_update_data_internal(self):
         """Internal method for data update with retry logic."""

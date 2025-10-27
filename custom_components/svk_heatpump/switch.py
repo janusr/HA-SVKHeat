@@ -21,6 +21,24 @@ from .coordinator import SVKHeatpumpDataCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 
+class SVKHeatpumpBaseEntity(CoordinatorEntity):
+    """Base entity for SVK Heatpump integration."""
+
+    def __init__(
+        self,
+        coordinator: SVKHeatpumpDataCoordinator,
+        config_entry_id: str,
+    ) -> None:
+        """Initialize base entity."""
+        super().__init__(coordinator)
+        self._config_entry_id = config_entry_id
+
+    @property
+    def device_info(self):
+        """Return device information from coordinator."""
+        return self.coordinator.device_info
+
+
 class SVKSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
     """Representation of a SVK Heatpump switch entity."""
 
@@ -193,24 +211,6 @@ class SVKSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
             raise ValueError(f"Failed to turn off {self._entity_key}")
 
         _LOGGER.info("Successfully turned off %s", self._entity_key)
-
-
-class SVKHeatpumpBaseEntity(CoordinatorEntity):
-    """Base entity for SVK Heatpump integration."""
-
-    def __init__(
-        self,
-        coordinator: SVKHeatpumpDataCoordinator,
-        config_entry_id: str,
-    ) -> None:
-        """Initialize base entity."""
-        super().__init__(coordinator)
-        self._config_entry_id = config_entry_id
-
-    @property
-    def device_info(self):
-        """Return device information from coordinator."""
-        return self.coordinator.device_info
 
 
 class SVKHeatpumpSwitch(SVKHeatpumpBaseEntity, SwitchEntity):

@@ -25,6 +25,24 @@ def _get_constants():
 _LOGGER = logging.getLogger(__name__)
 
 
+class SVKHeatpumpBaseEntity(CoordinatorEntity):
+    """Base entity for SVK Heatpump integration."""
+
+    def __init__(
+        self,
+        coordinator: SVKHeatpumpDataCoordinator,
+        config_entry_id: str,
+    ) -> None:
+        """Initialize the base entity."""
+        super().__init__(coordinator)
+        self._config_entry_id = config_entry_id
+
+    @property
+    def device_info(self):
+        """Return device information from coordinator."""
+        return self.coordinator.device_info
+
+
 class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
     """Representation of a SVK Heatpump select entity."""
 
@@ -204,24 +222,6 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
             raise ValueError(f"Failed to set {self._entity_key} to {option}")
 
         _LOGGER.info("Successfully set %s to %s", self._entity_key, internal_value)
-
-
-class SVKHeatpumpBaseEntity(CoordinatorEntity):
-    """Base entity for SVK Heatpump integration."""
-
-    def __init__(
-        self,
-        coordinator: SVKHeatpumpDataCoordinator,
-        config_entry_id: str,
-    ) -> None:
-        """Initialize the base entity."""
-        super().__init__(coordinator)
-        self._config_entry_id = config_entry_id
-
-    @property
-    def device_info(self):
-        """Return device information from coordinator."""
-        return self.coordinator.device_info
 
 
 class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
