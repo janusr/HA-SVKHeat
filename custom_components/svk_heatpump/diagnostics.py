@@ -8,6 +8,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
+from . import const
 
 TO_REDACT = {
     "password",
@@ -102,7 +103,6 @@ async def async_get_config_entry_diagnostics(
         )
 
         # Enhanced parsing diagnostics from const.py parse_items function
-        from . import const
 
         if hasattr(const.parse_items, "_last_parsing_stats"):
             diagnostics_data["enhanced_parsing_statistics"] = (
@@ -346,7 +346,6 @@ def create_diagnostics_report(
         report["parsing_details"] = coordinator.data.get("parsing_details", {})
 
         # Enhanced parsing diagnostics from const.py parse_items function
-        from . import const
 
         if hasattr(const.parse_items, "_last_parsing_stats"):
             report["enhanced_parsing_statistics"] = (

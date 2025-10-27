@@ -3,11 +3,30 @@
 import logging
 from typing import Any
 
-from homeassistant.components.switch import (
-    SwitchDeviceClass,
-    SwitchEntity,
-    SwitchEntityDescription,
-)
+try:
+    from homeassistant.components.switch import (
+        SwitchDeviceClass,
+        SwitchEntity,
+        SwitchEntityDescription,
+    )
+except ImportError:
+    # Fallback for older Home Assistant versions
+    from homeassistant.components.switch import (
+        SwitchDeviceClass,
+        SwitchEntity,
+    )
+    # For older versions, create a fallback EntityDescription
+    from dataclasses import dataclass
+    
+    @dataclass
+    class SwitchEntityDescription:
+        """Fallback SwitchEntityDescription for older HA versions."""
+        key: str
+        name: str | None = None
+        device_class: str | None = None
+        icon: str | None = None
+        entity_category: str | None = None
+        enabled_default: bool = True
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import CoordinatorEntity

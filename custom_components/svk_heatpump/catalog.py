@@ -1868,7 +1868,7 @@ SWITCH_ENTITIES = [
 
 
 # Helper functions
-def get_all_entities() -> dict[str, Any]:
+def get_all_entities() -> dict[str, dict[str, Any]]:
     """Return all entity definitions."""
     return ENTITIES
 

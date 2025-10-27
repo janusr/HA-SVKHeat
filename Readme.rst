@@ -663,7 +663,7 @@ Contributing
 2. Create a feature branch: ``git checkout -b feature-name``
 3. Make your changes
 4. Add tests if applicable
-5. Ensure code passes flake8: ``flake8 custom_components/svk_heatpump``
+5. Ensure code follows PEP 8 style guidelines
 6. Commit your changes: ``git commit -m "Add feature"``
 7. Push to your fork: ``git push origin feature-name``
 8. Create a Pull Request

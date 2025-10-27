@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import traceback
 from datetime import datetime, timedelta, timezone
 
 from homeassistant.core import HomeAssistant
@@ -24,7 +25,7 @@ from .const import (
 )
 
 
-def _get_constants():
+def _get_constants() -> tuple[dict[int, tuple[str, str, str, str, str]], list[int]]:
     """Lazy import of constants to prevent blocking during async setup."""
     from .const import DEFAULT_ENABLED_ENTITIES, ID_MAP
 
@@ -73,7 +74,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         client,  # LOMJsonClient
         scan_interval: int = DEFAULT_SCAN_INTERVAL,
         config_entry=None,
-    ):
+    ) -> None:
         """Initialize."""
         self.client = client
         self.config_entry = config_entry
@@ -113,13 +114,13 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                 }
 
             # Store last-good values
-            self.last_good_values = {}
+            self.last_good_values: dict[str, Any] = {}
 
             # Store raw JSON data for diagnostics
             self.last_raw_json = None
             self.last_json_timestamp = None
-            self.parsing_errors = []
-            self.parsing_warnings = []
+            self.parsing_errors: list[str] = []
+            self.parsing_warnings: list[str] = []
 
             # Track if this is the first refresh for progressive loading
             self.is_first_refresh = True
@@ -147,7 +148,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             model="LMC320",
         )
 
-    async def _async_update_data(self):
+    async def _async_update_data(self) -> dict[str, Any]:
         """Update data via library."""
         try:
             start_time = datetime.now()
@@ -256,7 +257,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                 f"Data update timeout after {timeout:.1f} seconds - heat pump may be unreachable"
             ) from None
 
-    async def _async_update_data_internal(self):
+    async def _async_update_data_internal(self) -> dict[str, Any]:
         """Internal method for data update with retry logic."""
         try:
             # Start the client session if not already started
@@ -309,7 +310,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         except Exception as err:
             raise UpdateFailed(f"Unexpected error: {err}") from err
 
-    async def _update_data_json(self):
+    async def _update_data_json(self) -> dict[str, Any]:
         """Update data using JSON API."""
         try:
             # Clear previous parsing errors and warnings
@@ -818,7 +819,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             # This ensures Home Assistant's retry mechanisms are triggered
             raise UpdateFailed(f"JSON API update failed: {err}") from err
 
-    def _map_heatpump_state(self, value):
+    def _map_heatpump_state(self, value: Any) -> str:
         """Map heatpump state enum value."""
         # Handle numeric enum values
         if isinstance(value, int | float):
@@ -849,7 +850,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
 
         return "unknown"
 
-    def _map_season_mode(self, value):
+    def _map_season_mode(self, value: Any) -> str:
         """Map season mode enum value."""
         # Handle numeric enum values
         if isinstance(value, int | float):
@@ -867,7 +868,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
 
         return "unknown"
 
-    async def async_set_parameter(self, parameter: str, value) -> bool:
+    async def async_set_parameter(self, parameter: str, value: Any) -> bool:
         """Set a parameter value."""
         try:
             # For JSON API, we need to find the entity ID for this parameter
@@ -895,7 +896,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             _LOGGER.error("Failed to set %s to %s: %s", parameter, value, err)
             return False
 
-    def get_enabled_entities(self, config_entry):
+    def get_enabled_entities(self, config_entry) -> list[str]:
         """Get list of enabled entities based on configuration."""
         enabled_entities = []
 
@@ -934,7 +935,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         _, DEFAULT_ENABLED_ENTITIES = _get_constants()
         return entity_id in DEFAULT_ENABLED_ENTITIES
 
-    def get_entity_value(self, entity_key: str):
+    def get_entity_value(self, entity_key: str) -> Any:
         """Get the current value for an entity."""
         if not self.data:
             return None
@@ -1086,7 +1087,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         )
         return True
 
-    def get_all_entities_data(self) -> dict:
+    def get_all_entities_data(self) -> dict[str, dict[str, Any]]:
         """Get data for all available entities, including disabled ones.
 
         Returns:
@@ -1115,7 +1116,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
 
         return all_entities
 
-    def get_entity_info(self, entity_key: str):
+    def get_entity_info(self, entity_key: str) -> dict[str, Any] | None:
         """Get entity information (unit, device_class, state_class, original_name) for JSON API."""
         # Find the entity info for this entity key
         for entity_id, info in self.id_to_entity_map.items():
@@ -1130,7 +1131,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
 
         return None
 
-    def get_alarm_summary(self) -> dict:
+    def get_alarm_summary(self) -> dict[str, Any]:
         """Get a summary of active alarms."""
         if not self.data:
             return {"active": False, "count": 0, "alarms": []}
@@ -1144,7 +1145,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             "alarms": alarm_list,
         }
 
-    def get_system_status(self) -> dict:
+    def get_system_status(self) -> dict[str, Any]:
         """Get overall system status."""
         if not self.data:
             return {"status": "unknown", "state": "unknown"}
@@ -1170,7 +1171,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             "alarm_active": alarm_active,
         }
 
-    def _sanitize_value(self, entity_key: str, value, entity_info: dict):
+    def _sanitize_value(self, entity_key: str, value: Any, entity_info: dict[str, Any]) -> Any:
         """Sanitize values based on entity type.
 
         Args:
@@ -1209,7 +1210,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         # Default: return value as-is
         return value
 
-    def get_json_diagnostics(self) -> dict:
+    def get_json_diagnostics(self) -> dict[str, Any]:
         """Get comprehensive JSON diagnostics data."""
         if not self.is_json_client:
             return {"error": "Not using JSON API"}
@@ -1244,7 +1245,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
 
         return diagnostics
 
-    def _get_entity_availability_summary(self) -> dict:
+    def _get_entity_availability_summary(self) -> dict[str, Any]:
         """Get summary of entity availability."""
         if not self.data:
             return {"total": 0, "available": 0, "unavailable": 0}
@@ -1343,7 +1344,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
 
         return "\n".join(table_lines)
 
-    def get_unavailable_entities(self) -> list:
+    def get_unavailable_entities(self) -> list[dict[str, Any]]:
         """Get list of unavailable entities with reasons."""
         if not self.data:
             return []
@@ -1367,7 +1368,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
 
         return unavailable
 
-    def get_disabled_entities(self) -> list:
+    def get_disabled_entities(self) -> list[dict[str, Any]]:
         """Get list of disabled entities that are available but not enabled."""
         if not self.data:
             return []

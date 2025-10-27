@@ -1,5 +1,7 @@
 """Base entity class for SVK Heatpump integration."""
 
+from typing import Any
+
 from homeassistant.helpers.entity import Entity
 
 from .const import (
@@ -23,7 +25,7 @@ class SVKBaseEntity(Entity):
         self._attr_unique_id = f"{DOMAIN}_{group_key}_{unique_suffix}"
 
     @property
-    def device_info(self):
+    def device_info(self) -> dict[str, Any]:
         """Return device information for this entity."""
         device_info = {
             "identifiers": {(DOMAIN, self._group_key)},

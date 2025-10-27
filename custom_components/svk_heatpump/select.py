@@ -3,8 +3,24 @@
 import logging
 from typing import Any
 
-from homeassistant.components.select import SelectEntity, SelectEntityDescription
-from homeassistant.const import EntityCategory
+try:
+    from homeassistant.components.select import SelectEntity, SelectEntityDescription
+except ImportError:
+    # Fallback for older Home Assistant versions
+    from homeassistant.components.select import SelectEntity
+    # For older versions, create a fallback EntityDescription
+    from dataclasses import dataclass
+    
+    @dataclass
+    class SelectEntityDescription:
+        """Fallback SelectEntityDescription for older HA versions."""
+        key: str
+        name: str | None = None
+        options: list | None = None
+        icon: str | None = None
+        entity_category: str | None = None
+        enabled_default: bool = True
+    from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -15,7 +31,7 @@ from .const import DOMAIN
 from .coordinator import SVKHeatpumpDataCoordinator
 
 
-def _get_constants():
+def _get_constants() -> tuple[dict[int, tuple[str, str, str, str, str]], dict[str, str], list[int]]:
     """Lazy import of constants to prevent blocking during async setup."""
     from .const import DEFAULT_ENABLED_ENTITIES, ID_MAP, SEASON_MODES_REVERSE
 
@@ -253,7 +269,11 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
 
         # Get entity info from ID_MAP (5-element structure)
         ID_MAP, _, _ = _get_constants()
-        entity_info = ID_MAP.get(entity_id, ("", "", None, None, ""))
+        if entity_id not in ID_MAP:
+            _LOGGER.error("Entity ID %s not found in ID_MAP", entity_id)
+            entity_info = ("", "", None, None, "")
+        else:
+            entity_info = ID_MAP[entity_id]
         (
             self._entity_key,
             self._unit,
@@ -296,14 +316,14 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
 
         # Set entity category based on entity definition
         entity_category = None
-        from .const import SELECT_ENTITIES
 
-        if self._entity_key in SELECT_ENTITIES and SELECT_ENTITIES[
-            self._entity_key
-        ].get("entity_category"):
+        # Get entity info from ENTITIES dictionary instead of SELECT_ENTITIES list
+        if self._entity_key in ENTITIES and ENTITIES.get(
+            self._entity_key, {}
+        ).get("entity_category"):
             entity_category = getattr(
                 EntityCategory,
-                SELECT_ENTITIES[self._entity_key]["entity_category"].upper(),
+                ENTITIES[self._entity_key]["entity_category"].upper(),
             )
 
         self.entity_description = SelectEntityDescription(
@@ -322,7 +342,7 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
         return f"{self._config_entry_id}_{self._entity_id}"
 
     @property
-    def current_option(self) -> str:
+    def current_option(self) -> str | None:
         """Return the current selected option."""
         value = self.coordinator.get_entity_value(self._entity_key)
         if value is not None:
@@ -444,7 +464,6 @@ async def async_setup_entry(
                 # Get entity info from catalog
                 entity_info = ENTITIES.get(entity_key, {})
                 name = entity_info.get("name", entity_key.replace("_", " ").title())
-                entity_info.get("category", "")
                 access_type = entity_info.get("access_type", "")
 
                 # Only include writable entities

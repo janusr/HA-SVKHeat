@@ -1,19 +1,39 @@
 """Binary sensor platform for SVK Heatpump integration."""
 
 import logging
-from typing import Any
+from typing import Any, Dict
 
-from homeassistant.components.binary_sensor import (
-    BinarySensorDeviceClass,
-    BinarySensorEntity,
-    BinarySensorEntityDescription,
-)
+try:
+    from homeassistant.components.binary_sensor import (
+        BinarySensorDeviceClass,
+        BinarySensorEntity,
+        BinarySensorEntityDescription,
+    )
+except ImportError:
+    # Fallback for older Home Assistant versions
+    from homeassistant.components.binary_sensor import (
+        BinarySensorDeviceClass,
+        BinarySensorEntity,
+    )
+    # For older versions, create a fallback EntityDescription
+    from dataclasses import dataclass
+    
+    @dataclass
+    class BinarySensorEntityDescription:
+        """Fallback BinarySensorEntityDescription for older HA versions."""
+        key: str
+        name: str | None = None
+        device_class: str | None = None
+        entity_category: str | None = None
+        icon: str | None = None
+        enabled_default: bool = True
+
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 # Import specific items from modules
-from .const import DOMAIN
+from .const import DOMAIN, BINARY_SENSORS
 from .coordinator import SVKHeatpumpDataCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -89,7 +109,6 @@ class SVKHeatpumpBinarySensor(SVKHeatpumpBaseEntity, BinarySensorEntity):
             device_class = BinarySensorDeviceClass.RUNNING
 
         # Set entity category based on entity definition
-        from .const import BINARY_SENSORS
 
         if self._entity_key in BINARY_SENSORS and BINARY_SENSORS[self._entity_key].get(
             "entity_category"
@@ -127,7 +146,7 @@ class SVKHeatpumpBinarySensor(SVKHeatpumpBaseEntity, BinarySensorEntity):
                 return value
             elif isinstance(value, str):
                 return value.lower() in ["yes", "true", "on", "active", "1"]
-            elif isinstance(value, int | float):
+            elif isinstance(value, (int, float)):
                 # For digital outputs (IDs 222-225), is_on = (value == 1)
                 if self._entity_id in [222, 223, 224, 225]:
                     return value == 1
@@ -154,7 +173,7 @@ class SVKHeatpumpAlarmBinarySensor(SVKHeatpumpBinarySensor):
     """Binary sensor for alarm status with additional attributes."""
 
     @property
-    def extra_state_attributes(self) -> dict[str, Any]:
+    def extra_state_attributes(self) -> Dict[str, Any]:
         """Return additional attributes for alarm status."""
         attributes = {}
 

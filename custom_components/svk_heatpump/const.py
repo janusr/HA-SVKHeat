@@ -1,6 +1,7 @@
 """Constants for SVK Heatpump integration."""
 
 import logging
+from typing import Any
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -1091,7 +1092,7 @@ ID_MAP = {
 
 
 # JSON API Helper Functions
-def parse_id_list(id_list_str):
+def parse_id_list(id_list_str: str) -> list[int]:
     """Parse a semicolon or comma-separated ID list string into a list of integers.
 
     Args:
@@ -1118,7 +1119,7 @@ def parse_id_list(id_list_str):
         raise ValueError(f"Invalid ID list format: {id_list_str}") from err
 
 
-def get_entity_info(entity_id):
+def get_entity_info(entity_id: int):
     """Get entity information from ID_MAP.
 
     Args:
@@ -1142,7 +1143,7 @@ def is_binary_output(entity_id):
     return entity_id in BINARY_OUTPUT_IDS
 
 
-def get_original_name(entity_id):
+def get_original_name(entity_id: int):
     """Get the original name for an entity ID for diagnostics.
 
     Args:
@@ -1157,7 +1158,7 @@ def get_original_name(entity_id):
     return None
 
 
-def get_binary_output_name(entity_id):
+def get_binary_output_name(entity_id: int):
     """Get the display name for a binary output ID.
 
     Args:
@@ -1169,7 +1170,7 @@ def get_binary_output_name(entity_id):
     return BINARY_OUTPUT_IDS.get(entity_id)
 
 
-def validate_id_list(id_list_str):
+def validate_id_list(id_list_str: str) -> bool:
     """Validate that all IDs in the list are valid integers and exist in ID_MAP.
 
     Args:
@@ -1188,7 +1189,7 @@ def validate_id_list(id_list_str):
         return False
 
 
-def get_entity_group_info(entity_id):
+def get_entity_group_info(entity_id: int):
     """Get the HTML group information for an entity.
 
     Args:
@@ -1253,7 +1254,7 @@ def get_entities_by_group(category, group):
     return result
 
 
-def get_all_groups():
+def get_all_groups() -> dict[str, Any]:
     """Get all available categories and groups.
 
     Returns:
@@ -1262,7 +1263,7 @@ def get_all_groups():
     return HTML_GROUPS
 
 
-def get_group_description(category, group):
+def get_group_description(category: str, group: str) -> str | None:
     """Get the description for a specific group.
 
     Args:
@@ -1277,7 +1278,7 @@ def get_group_description(category, group):
     return None
 
 
-def parse_items(items_list):
+def parse_items(items_list: list) -> dict[int, tuple[str, Any]]:
     """Parse a list of JSON items with id, name, and value fields.
 
     Enhanced with per-entity error tracking to identify parsing patterns.
@@ -1292,7 +1293,7 @@ def parse_items(items_list):
         This function is more resilient to missing fields and will not raise exceptions
         for invalid items. It will log warnings for problematic items but continue processing.
     """
-    result = {}
+    result: dict[int, tuple[str, Any]] = {}
 
     # Per-entity error tracking
     parsing_errors = []
@@ -1475,7 +1476,7 @@ def parse_items(items_list):
             "PARSING ERRORS SUMMARY: %d parsing errors occurred", len(parsing_errors)
         )
         # Group errors by reason for pattern analysis
-        error_reasons = {}
+        error_reasons: dict[str, int] = {}
         for error in parsing_errors:
             reason = error.get("reason", "unknown")
             error_reasons[reason] = error_reasons.get(reason, 0) + 1
@@ -1497,7 +1498,7 @@ def parse_items(items_list):
             len(parsing_warnings),
         )
         # Group warnings by reason for pattern analysis
-        warning_reasons = {}
+        warning_reasons: dict[str, int] = {}
         for warning in parsing_warnings:
             reason = warning.get("reason", "unknown")
             warning_reasons[reason] = warning_reasons.get(reason, 0) + 1

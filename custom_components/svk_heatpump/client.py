@@ -2,6 +2,7 @@
 
 import asyncio
 import hashlib
+import json
 import logging
 import random
 import re
@@ -102,8 +103,31 @@ class LOMJsonClient:
 
         # Default ID list - configurable
         self._default_ids = [
-            299, 255, 256, 257, 258, 259, 262, 263, 422, 388, 298, 376, 505, 302,
-            435, 301, 382, 405, 222, 223, 224, 225, 234, 438, 437
+            299,
+            255,
+            256,
+            257,
+            258,
+            259,
+            262,
+            263,
+            422,
+            388,
+            298,
+            376,
+            505,
+            302,
+            435,
+            301,
+            382,
+            405,
+            222,
+            223,
+            224,
+            225,
+            234,
+            438,
+            437,
         ]
 
         # Track failed IDs for better error handling
@@ -131,7 +155,12 @@ class LOMJsonClient:
             _LOGGER.debug("Processing list format with %d items", len(data))
             valid_items = 0
             for item in data:
-                if isinstance(item, dict) and "id" in item and "name" in item and "value" in item:
+                if (
+                    isinstance(item, dict)
+                    and "id" in item
+                    and "name" in item
+                    and "value" in item
+                ):
                     valid_items += 1
 
             if valid_items > 0:
@@ -399,7 +428,7 @@ class LOMJsonClient:
 
         return True
 
-    def _invalidate_authentication(self):
+    def _invalidate_authentication(self) -> None:
         """Invalidate current authentication state."""
         self._auth_nonce = None
         self._auth_realm = None
@@ -419,8 +448,8 @@ class LOMJsonClient:
             await self.start()
 
         # Parse the path to separate actual path from query parameters
-        if '?' in path:
-            actual_path, query_string = path.split('?', 1)
+        if "?" in path:
+            actual_path, query_string = path.split("?", 1)
             url = self._base.with_path(actual_path).with_query(query_string)
         else:
             actual_path = path
@@ -434,11 +463,13 @@ class LOMJsonClient:
                 if self._is_authentication_valid():
                     # Use existing authentication
                     _LOGGER.debug(
-                        f"Using existing authentication for {url} (attempt {auth_attempt + 1})"
+                        "Using existing authentication for %s (attempt %d)",
+                        url, auth_attempt + 1
                     )
 
                     # Compute digest response with stored parameters
-                    uri = actual_path
+                    # Use the full path including query parameters for Digest auth
+                    uri = path
                     digest_header = self._compute_digest_response(
                         method=method,
                         uri=uri,
@@ -478,7 +509,8 @@ class LOMJsonClient:
                 else:
                     # Need to authenticate from scratch
                     _LOGGER.debug(
-                        f"Authenticating from scratch for {url} (attempt {auth_attempt + 1})"
+                        "Authenticating from scratch for %s (attempt %d)",
+                        url, auth_attempt + 1
                     )
 
                     # Step 1: Make unauthenticated request to get WWW-Authenticate header
@@ -509,7 +541,8 @@ class LOMJsonClient:
                             )
 
                         # Step 3: Compute Digest response
-                        uri = actual_path
+                        # Use the full path including query parameters for Digest auth
+                        uri = path
                         digest_header = self._compute_digest_response(
                             method=method,
                             uri=uri,
@@ -523,7 +556,7 @@ class LOMJsonClient:
                         )
 
                         # Step 4: Retry with authentication
-                        _LOGGER.debug(f"Retrying with Digest authentication for {url}")
+                        _LOGGER.debug("Retrying with Digest authentication for %s", url)
                         headers = kwargs.get("headers", {})
                         headers["Authorization"] = digest_header
                         kwargs["headers"] = headers
@@ -558,12 +591,12 @@ class LOMJsonClient:
                         )
 
             except (aiohttp.ClientError, asyncio.TimeoutError) as err:
-                _LOGGER.warning(f"Request attempt {auth_attempt + 1} failed: {err}")
+                _LOGGER.warning("Request attempt %d failed: %s", auth_attempt + 1, err)
 
                 if auth_attempt < max_auth_retries:
                     # Exponential backoff with jitter
                     delay = base_delay * (2**auth_attempt) + random.uniform(0.1, 0.5)
-                    _LOGGER.debug(f"Retrying in {delay:.2f} seconds...")
+                    _LOGGER.debug("Retrying in %.2f seconds...", delay)
                     await asyncio.sleep(delay)
 
                     # Invalidate authentication on connection errors
@@ -741,9 +774,7 @@ class LOMJsonClient:
                         "Chunk %d/%d returned no results", chunk_num, total_chunks
                     )
             except Exception as err:
-                _LOGGER.error(
-                    "Chunk %d/%d failed: %s", chunk_num, total_chunks, err
-                )
+                _LOGGER.error("Chunk %d/%d failed: %s", chunk_num, total_chunks, err)
                 # Continue with other chunks instead of failing completely
 
         _LOGGER.info(
@@ -773,8 +804,11 @@ class LOMJsonClient:
         # Prepare JSON payload
         payload = {"id": id, "value": value}
 
+        resp = None
         try:
-            _LOGGER.debug("Making POST request to write value %s to register %s", value, id)
+            _LOGGER.debug(
+                "Making POST request to write value %s to register %s", value, id
+            )
 
             resp = await self._digest_auth_request(
                 "/cgi-bin/json_values.cgi", method="POST", json=payload
@@ -802,9 +836,9 @@ class LOMJsonClient:
         except (asyncio.TimeoutError, aiohttp.ClientError) as err:
             _LOGGER.error("Failed to write value %s to register %s: %s", value, id, err)
             return False
-
         finally:
-            resp.release()
+            if resp:
+                resp.release()
 
     async def test_connection(self) -> bool:
         """

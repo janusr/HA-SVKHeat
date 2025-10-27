@@ -3,12 +3,36 @@
 import logging
 from typing import Any
 
-from homeassistant.components.number import (
-    NumberDeviceClass,
-    NumberEntity,
-    NumberEntityDescription,
-    NumberMode,
-)
+try:
+    from homeassistant.components.number import (
+        NumberDeviceClass,
+        NumberEntity,
+        NumberEntityDescription,
+        NumberMode,
+    )
+except ImportError:
+    # Fallback for older Home Assistant versions
+    from homeassistant.components.number import (
+        NumberDeviceClass,
+        NumberEntity,
+        NumberMode,
+    )
+    # For older versions, create a fallback EntityDescription
+    from dataclasses import dataclass
+    
+    @dataclass
+    class NumberEntityDescription:
+        """Fallback NumberEntityDescription for older HA versions."""
+        key: str
+        name: str | None = None
+        device_class: str | None = None
+        native_unit_of_measurement: str | None = None
+        native_min_value: float | None = None
+        native_max_value: float | None = None
+        native_step: float | None = None
+        entity_category: str | None = None
+        icon: str | None = None
+        enabled_default: bool = True
 from homeassistant.const import EntityCategory, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -20,7 +44,7 @@ from .const import DOMAIN
 from .coordinator import SVKHeatpumpDataCoordinator
 
 
-def _get_constants():
+def _get_constants() -> tuple[dict[int, tuple[str, str, str, str, str]], list[int]]:
     """Lazy import of constants to prevent blocking during async setup."""
     from .const import DEFAULT_ENABLED_ENTITIES, ID_MAP
 
@@ -236,7 +260,6 @@ class SVKHeatpumpNumber(SVKHeatpumpBaseEntity, NumberEntity):
 
         # Set entity category based on entity definition
         entity_category = None
-        from .const import NUMBER_ENTITIES
 
         if self._entity_key in NUMBER_ENTITIES and NUMBER_ENTITIES[
             self._entity_key
@@ -416,7 +439,6 @@ async def async_setup_entry(
                 # Get entity info from catalog
                 entity_info = ENTITIES.get(entity_key, {})
                 name = entity_info.get("name", entity_key.replace("_", " ").title())
-                entity_info.get("category", "")
                 access_type = entity_info.get("access_type", "")
 
                 # Only include writable entities

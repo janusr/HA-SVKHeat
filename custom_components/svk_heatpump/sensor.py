@@ -4,12 +4,34 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorEntity,
-    SensorEntityDescription,
-    SensorStateClass,
-)
+try:
+    from homeassistant.components.sensor import (
+        SensorDeviceClass,
+        SensorEntity,
+        SensorEntityDescription,
+        SensorStateClass,
+    )
+except ImportError:
+    # Fallback for older Home Assistant versions
+    from homeassistant.components.sensor import (
+        SensorDeviceClass,
+        SensorEntity,
+        SensorStateClass,
+    )
+    # For older versions, create a fallback EntityDescription
+    from dataclasses import dataclass
+    
+    @dataclass
+    class SensorEntityDescription:
+        """Fallback SensorEntityDescription for older HA versions."""
+        key: str
+        name: str | None = None
+        device_class: str | None = None
+        native_unit_of_measurement: str | None = None
+        state_class: str | None = None
+        entity_category: str | None = None
+        icon: str | None = None
+        enabled_default: bool = True
 from homeassistant.const import (
     EntityCategory,
 )
@@ -19,13 +41,13 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .catalog import ENTITIES, SENSOR_ENTITIES
 
 # Import specific items from modules
-from .const import DOMAIN
+from .const import DOMAIN, COUNTER_SENSORS, SYSTEM_COUNTER_SENSORS, SYSTEM_SENSORS
 from .coordinator import SVKHeatpumpDataCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def _get_constants():
+def _get_constants() -> tuple[dict[int, tuple[str, str, str, str, str]], list[int]]:
     """Lazy import of constants to prevent blocking during async setup."""
     from .const import DEFAULT_ENABLED_ENTITIES, ID_MAP
 
@@ -313,8 +335,6 @@ class SVKHeatpumpSensor(SVKHeatpumpBaseEntity, SensorEntity):
 
         # Set entity category based on entity definition dictionaries
         entity_category = None
-        # Get entity category from entity definition dictionaries
-        from .const import COUNTER_SENSORS, SYSTEM_COUNTER_SENSORS, SYSTEM_SENSORS
 
         if self._entity_key in COUNTER_SENSORS:
             entity_category = EntityCategory.DIAGNOSTIC
@@ -575,7 +595,7 @@ async def async_setup_entry(
 
         _attr_entity_registry_enabled_default = True
 
-        def __init__(self, coordinator, config_entry_id):
+        def __init__(self, coordinator: SVKHeatpumpDataCoordinator, config_entry_id: str) -> None:
             # Initialize SVKHeatpumpBaseEntity (which inherits from CoordinatorEntity)
             super().__init__(coordinator, config_entry_id)
             self._attr_name = "Alarm Count"

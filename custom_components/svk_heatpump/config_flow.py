@@ -40,7 +40,7 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the config flow."""
         self._host: str | None = None
         self._username: str | None = None
@@ -510,7 +510,7 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
     """Handle options flow for SVK Heatpump."""
 
-    def __init__(self, config_entry: config_entries.ConfigEntry):
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize options flow."""
         self.config_entry = config_entry
 
