@@ -22,6 +22,7 @@ except ImportError:
         enabled_default: bool = True
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .catalog import ENTITIES, SELECT_ENTITIES
@@ -67,6 +68,7 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
         coordinator: SVKHeatpumpDataCoordinator,
         entity_key: str,
         config_entry_id: str,
+        hass: HomeAssistant,
         enabled_by_default: bool = True,
     ) -> None:
         """Initialize select entity."""
@@ -86,6 +88,7 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
         self._entity_key = entity_key
         self._attr_entity_registry_enabled_default = enabled_by_default
         self._group_key = group_key  # For unique_id property
+        self._hass = hass  # Store hass for translation
 
         _LOGGER.debug(
             "Creating select entity: %s (group: %s, enabled_by_default: %s)",
@@ -120,12 +123,19 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
             elif entity_key == "solar_solarpanel_sensorselect":
                 options = ["Internal", "External"]
             elif entity_key == "user_user_language":
-                options = ["English", "Danish", "German", "Swedish"]
+                # Use translation keys that will be resolved by Home Assistant
+                # These keys correspond to the translations in en.json and da.json
+                options = ["0", "1", "2", "3", "4", "5", "6", "7", "8"]
                 mappings = {
-                    "English": "0",
-                    "Danish": "1",
-                    "German": "2",
-                    "Swedish": "3"
+                    "0": "0",
+                    "1": "1",
+                    "2": "2",
+                    "3": "3",
+                    "4": "4",
+                    "5": "5",
+                    "6": "6",
+                    "7": "7",
+                    "8": "8"
                 }
             else:
                 # Default options for unknown enum
@@ -159,6 +169,9 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
             icon=icon,
             entity_category=entity_category,
         )
+        
+        # Store translation key for language options
+        self._translation_key = f"select.{entity_key}"
 
         # Store mappings for reverse lookup
         self._mappings = mappings
@@ -180,6 +193,41 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
             # If no mapping found, return the raw value as string
             return str(value)
         return None
+    
+    @property
+    def options(self) -> list[str]:
+        """Return a list of available options."""
+        # For user_user_language, we need to translate the options
+        if self._entity_key == "user_user_language":
+            return self._get_translated_language_options()
+        # Ensure we always return a list of strings
+        return self.entity_description.options or []
+    
+    def _get_translated_language_options(self) -> list[str]:
+        """Get translated language options based on current HA language."""
+        # Get the current language from Home Assistant
+        language = self._hass.config.language
+        
+        # Map of numeric values to translation keys
+        translation_keys = ["0", "1", "2", "3", "4", "5", "6", "7", "8"]
+        
+        # Get the translated values using Home Assistant's translation system
+        try:
+            translations = self._hass.components.frontend.get_translations(
+                language, "entity", {DOMAIN}
+            )
+            
+            language_options = []
+            for key in translation_keys:
+                # Try to get the translation for this language option
+                translation_path = f"component.{DOMAIN}.entity.select.{self._entity_key}.state.{key}"
+                translated = translations.get(translation_path, key)
+                language_options.append(translated)
+            
+            return language_options
+        except Exception:
+            # Fallback to numeric keys if translation fails
+            return translation_keys
 
     @property
     def available(self) -> bool:
@@ -478,6 +526,7 @@ async def async_setup_entry(
                     coordinator,
                     entity_key,
                     config_entry.entry_id,
+                    hass,  # Pass hass for translation support
                     enabled_by_default=enabled_by_default,
                 )
 

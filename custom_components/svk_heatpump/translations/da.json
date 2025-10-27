@@ -221,6 +221,20 @@
           "alarm": "Alarm",
           "unknown": "Ukendt"
         }
+      },
+      "user_user_language": {
+        "name": "Brugersprog",
+        "state": {
+          "0": "Engelsk",
+          "1": "Tysk",
+          "2": "Fransk",
+          "3": "Finsk",
+          "4": "Spansk",
+          "5": "Dansk",
+          "6": "Hollandsk",
+          "7": "Portugisisk",
+          "8": "Italiensk"
+        }
       }
    },
    "number": {

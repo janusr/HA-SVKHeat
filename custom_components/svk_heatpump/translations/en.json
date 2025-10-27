@@ -224,6 +224,20 @@
           "alarm": "Alarm",
           "unknown": "Unknown"
         }
+      },
+      "user_user_language": {
+        "name": "User Language",
+        "state": {
+          "0": "English",
+          "1": "German",
+          "2": "French",
+          "3": "Finnish",
+          "4": "Spanish",
+          "5": "Danish",
+          "6": "Dutch",
+          "7": "Portuguese",
+          "8": "Italian"
+        }
       }
    },
    "number": {
