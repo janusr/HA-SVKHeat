@@ -10,6 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
 from .client import LOMJsonClient, SVKAuthenticationError, SVKConnectionError
+from . import config_flow
 from .const import (
     DOMAIN,
 )
