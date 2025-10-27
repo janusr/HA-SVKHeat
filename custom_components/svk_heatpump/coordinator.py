@@ -976,6 +976,12 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             )
             return False
 
+        _LOGGER.debug(
+            "AVAILABILITY: Checking availability for %s (ID: %s)",
+            entity_key,
+            entity_id,
+        )
+
         # Check if we have any data at all
         if not self.data:
             _LOGGER.debug(
@@ -1011,18 +1017,44 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             return False
 
         # Check if this entity was included in the last successful fetch
+        # FIX: Handle both string and integer IDs in ids_fetched list
         ids_fetched = self.data.get("ids_fetched", [])
-        if entity_id not in ids_fetched:
+        entity_in_fetch = False
+        
+        # Check for both integer and string representations of the entity ID
+        if entity_id in ids_fetched:
+            entity_in_fetch = True
+        elif str(entity_id) in ids_fetched:
+            entity_in_fetch = True
+        else:
+            # Also check if any ID in the list can be converted to int and matches
+            for fetched_id in ids_fetched:
+                try:
+                    if int(fetched_id) == entity_id:
+                        entity_in_fetch = True
+                        break
+                except (ValueError, TypeError):
+                    continue
+        
+        if not entity_in_fetch:
             _LOGGER.warning(
                 "AVAILABILITY: Entity %s (ID: %s) not available - not included in last data fetch",
                 entity_key,
                 entity_id,
             )
             _LOGGER.warning(
-                "AVAILABILITY: DEBUG - IDs fetched: %s, Entity ID: %s, Entity in DEFAULT_IDS: %s",
-                ids_fetched[:20],
+                "AVAILABILITY: DEBUG - Entity ID %s (as int: %s, as str: '%s') not found in ids_fetched",
                 entity_id,
-                entity_id in self.id_list,
+                entity_id,
+                str(entity_id),
+            )
+            _LOGGER.warning(
+                "AVAILABILITY: DEBUG - First 20 IDs fetched: %s",
+                ids_fetched[:20],
+            )
+            _LOGGER.warning(
+                "AVAILABILITY: DEBUG - Entity ID types in fetch: %s",
+                [type(id).__name__ for id in ids_fetched[:10]],
             )
             return False
 
@@ -1040,6 +1072,19 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                 entity_id,
                 list(self.data.keys())[:20] if self.data else "No data",
             )
+            
+            # Additional debug: Check if entity key exists in data with None value
+            if entity_key in self.data:
+                _LOGGER.warning(
+                    "AVAILABILITY: DEBUG - Entity %s exists in data but value is None: %s",
+                    entity_key,
+                    self.data[entity_key],
+                )
+            else:
+                _LOGGER.warning(
+                    "AVAILABILITY: DEBUG - Entity %s does not exist in data at all",
+                    entity_key,
+                )
             return False
 
         # Additional check for temperature sentinel values
@@ -1058,9 +1103,21 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         parsing_details = self.data.get("parsing_details", {})
         parsing_failures = parsing_details.get("parsing_failures", [])
         for failure in parsing_failures:
-            if failure.get("entity") == entity_key or failure.get("id") == entity_id:
+            # Check both entity_key and entity_id (handling string/int conversion)
+            failure_entity = failure.get("entity")
+            failure_id = failure.get("id")
+            
+            if failure_entity == entity_key:
                 _LOGGER.warning(
                     "AVAILABILITY: Entity %s (ID: %s) not available - parsing error: %s",
+                    entity_key,
+                    entity_id,
+                    failure.get("reason", "Unknown error"),
+                )
+                return False
+            elif failure_id == entity_id or str(failure_id) == str(entity_id):
+                _LOGGER.warning(
+                    "AVAILABILITY: Entity %s (ID: %s) not available - parsing error (by ID): %s",
                     entity_key,
                     entity_id,
                     failure.get("reason", "Unknown error"),
@@ -1070,9 +1127,20 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         # Check for sentinel temperature values
         sentinel_temps = parsing_details.get("sentinel_temps", [])
         for sentinel in sentinel_temps:
-            if sentinel.get("entity") == entity_key or sentinel.get("id") == entity_id:
+            # Check both entity_key and entity_id (handling string/int conversion)
+            sentinel_entity = sentinel.get("entity")
+            sentinel_id = sentinel.get("id")
+            
+            if sentinel_entity == entity_key:
                 _LOGGER.warning(
                     "AVAILABILITY: Entity %s (ID: %s) not available - sentinel temperature detected",
+                    entity_key,
+                    entity_id,
+                )
+                return False
+            elif sentinel_id == entity_id or str(sentinel_id) == str(entity_id):
+                _LOGGER.warning(
+                    "AVAILABILITY: Entity %s (ID: %s) not available - sentinel temperature detected (by ID)",
                     entity_key,
                     entity_id,
                 )
