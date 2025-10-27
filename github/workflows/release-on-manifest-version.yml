@@ -1,0 +1,57 @@
+# .github/workflows/release-on-manifest-version.yml
+name: Release on manifest version bump
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'custom_components/svk_heatpump/manifest.json'
+
+permissions:
+  contents: write
+
+jobs:
+  release_if_version_changed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version from manifest.json
+        id: manifest
+        run: |
+          ver=$(jq -r '.version' custom_components/svk_heatpump/manifest.json)
+          if [ -z "$ver" ] || [ "$ver" = "null" ]; then
+            echo "Manifest version missing"; exit 1
+          fi
+          echo "version=$ver" >> $GITHUB_OUTPUT
+
+      - name: Get latest tag (strip leading v)
+        id: latest
+        run: |
+          git fetch --tags
+          latest=$(git tag --list 'v*' --sort=-v:refname | head -n 1)
+          echo "version=${latest#v}" >> $GITHUB_OUTPUT
+
+      - name: Skip if same version
+        id: should
+        run: |
+          if [ "${{ steps.manifest.outputs.version }}" = "${{ steps.latest.outputs.version }}" ]; then
+            echo "release=false" >> $GITHUB_OUTPUT
+          else
+            echo "release=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create tag
+        if: steps.should.outputs.release == 'true'
+        run: |
+          git tag "v${{ steps.manifest.outputs.version }}" -m "Release v${{ steps.manifest.outputs.version }}"
+          git push origin "v${{ steps.manifest.outputs.version }}"
+
+      - name: Create GitHub Release
+        if: steps.should.outputs.release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.manifest.outputs.version }}
+          generate_release_notes: true

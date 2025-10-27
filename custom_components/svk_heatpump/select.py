@@ -20,7 +20,7 @@ except ImportError:
         icon: str | None = None
         entity_category: str | None = None
         enabled_default: bool = True
-    from homeassistant.const import EntityCategory
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 

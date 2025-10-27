@@ -250,7 +250,7 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
                         "DIAGNOSTIC: Coordinator data exists, last_update: %s",
                         self.coordinator.data.get("last_update", "None"),
                     )
-                    _LOGGER.warning(
+                    _LOGGER.debug(
                         "DIAGNOSTIC: Parsing stats: %s",
                         self.coordinator.data.get("parsing_stats", "None"),
                     )
