@@ -1,4 +1,5 @@
 """Base entity class for SVK Heatpump integration."""
+
 from homeassistant.helpers.entity import Entity
 
 from .const import (
