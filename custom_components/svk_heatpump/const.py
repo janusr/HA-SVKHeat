@@ -613,6 +613,7 @@ DEFAULT_ENABLED_ENTITIES = [
     193,  # room_setpoint
     383,  # hot_water_setpoint
     278,  # season_mode
+    137,  # user_language
     # Settings/Heatpump: Critical heat pump settings
     299,  # capacity_actual
     447,  # compressor_runtime

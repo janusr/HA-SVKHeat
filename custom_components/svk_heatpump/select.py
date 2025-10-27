@@ -121,6 +121,12 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
                 options = ["Internal", "External"]
             elif entity_key == "user_user_language":
                 options = ["English", "Danish", "German", "Swedish"]
+                mappings = {
+                    "English": "0",
+                    "Danish": "1",
+                    "German": "2",
+                    "Swedish": "3"
+                }
             else:
                 # Default options for unknown enum
                 options = ["Option 1", "Option 2", "Option 3"]
