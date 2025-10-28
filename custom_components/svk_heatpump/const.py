@@ -565,7 +565,7 @@ try:
         # Entity mappings and lists
         ID_MAP,
         BINARY_OUTPUT_IDS,
-        DEFAULT_IDS,
+        get_default_ids,
         DEFAULT_ENABLED_ENTITIES,
         
         # Entity helper functions
@@ -605,8 +605,17 @@ except ImportError:
     NUMBER_ENTITIES_LEGACY = {}
     ID_MAP = {}
     BINARY_OUTPUT_IDS = {}
-    DEFAULT_IDS = ""
     DEFAULT_ENABLED_ENTITIES = []
+    
+    def get_default_ids():
+        """Generate default IDs from ID_MAP.
+        
+        Returns:
+            str: Semicolon-separated string of entity IDs from ID_MAP
+        """
+        from .catalog import ID_MAP
+        all_ids = sorted(ID_MAP.keys())
+        return ";".join(str(id) for id in all_ids)
     SENSOR_ENTITIES = []
     BINARY_SENSOR_ENTITIES = []
     NUMBER_ENTITIES = []

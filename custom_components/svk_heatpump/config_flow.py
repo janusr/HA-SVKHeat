@@ -18,7 +18,7 @@ from .client import (
     SVKParseError,
     SVKTimeoutError,
 )
-from .catalog import DEFAULT_IDS
+from .catalog import get_default_ids
 from .const import (
     CONF_ENABLE_WRITES,
     CONF_ID_LIST,
@@ -535,7 +535,7 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
 
         # Check if this is a legacy configuration with custom ID list
         has_custom_id_list = (
-            CONF_ID_LIST in options and options.get(CONF_ID_LIST) != DEFAULT_IDS
+            CONF_ID_LIST in options and options.get(CONF_ID_LIST) != get_default_ids()
         )
 
         # Get the warning description for enable_writes
@@ -558,7 +558,7 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
         if has_custom_id_list:
             schema_fields[
                 vol.Optional(
-                    CONF_ID_LIST, default=options.get(CONF_ID_LIST, DEFAULT_IDS)
+                    CONF_ID_LIST, default=options.get(CONF_ID_LIST, get_default_ids())
                 )
             ] = str
 
@@ -586,8 +586,8 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
 
                     # If empty, use default
                     if not id_list_str:
-                        id_list_str = DEFAULT_IDS
-                        user_input[CONF_ID_LIST] = DEFAULT_IDS
+                        id_list_str = get_default_ids()
+                        user_input[CONF_ID_LIST] = get_default_ids()
 
                     # Validate ID list format if provided
                     if id_list_str and not validate_id_list(id_list_str):
@@ -611,7 +611,7 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
                             data_schema=self._get_options_schema(),
                             errors=errors,
                             description_placeholders={
-                                "default_ids": DEFAULT_IDS,
+                                "default_ids": get_default_ids(),
                                 "id_list_example": "299;255;256",
                             },
                         )
@@ -625,13 +625,13 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
         config_entry = self.hass.config_entries.async_get_entry(self._entry_id)
         has_custom_id_list = (
             CONF_ID_LIST in config_entry.options
-            and config_entry.options.get(CONF_ID_LIST) != DEFAULT_IDS
+            and config_entry.options.get(CONF_ID_LIST) != get_default_ids()
         )
 
         # Set appropriate description placeholders
         if has_custom_id_list:
             description_placeholders = {
-                "default_ids": DEFAULT_IDS,
+                "default_ids": get_default_ids(),
                 "id_list_example": "299;255;256",
                 "id_list_description": "The ID List field is shown because you have a legacy configuration with custom IDs. For new installations, entity management is handled through the UI.",
             }

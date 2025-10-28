@@ -16,7 +16,6 @@ from .client import (
 )
 from .const import (
     CONF_ID_LIST,
-    DEFAULT_IDS,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     HEATPUMP_STATES,
@@ -83,9 +82,10 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
 
         # Initialize ID list for JSON API
         if self.is_json_client:
-            # Always use DEFAULT_IDS for fetching all available entities
+            # Always use get_default_ids() for fetching all available entities
             # This ensures we have access to all entities for dynamic enabling/disabling
-            self.id_list = parse_id_list(DEFAULT_IDS)
+            from .catalog import get_default_ids
+            self.id_list = parse_id_list(get_default_ids())
 
             # Store the user-configured ID list for backward compatibility
             self.user_configured_ids = None

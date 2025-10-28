@@ -1586,87 +1586,6 @@ ENTITIES = {
         "data_type": "number",
         "access_type": "read",
     },
-    "system_firmwareupgrade_lom320": {
-        "name": "LOM320",
-        "platform": "sensor",
-        "category": "Configuration",
-        "group": "System",
-        "page": "firmwareupgrade",
-        "data_type": "string",
-        "access_type": "read",
-    },
-    "system_firmwareupgrade_userinterface": {
-        "name": "UserInterface",
-        "platform": "sensor",
-        "category": "Configuration",
-        "group": "System",
-        "page": "firmwareupgrade",
-        "data_type": "string",
-        "access_type": "read",
-    },
-    "system_firmwareupgrade_lmc300": {
-        "name": "LMC300",
-        "platform": "sensor",
-        "category": "Configuration",
-        "group": "System",
-        "page": "firmwareupgrade",
-        "data_type": "string",
-        "access_type": "read",
-    },
-    "system_firmwareupgrade_project_name": {
-        "name": "Project name",
-        "platform": "sensor",
-        "category": "Configuration",
-        "group": "System",
-        "page": "firmwareupgrade",
-        "data_type": "string",
-        "access_type": "read",
-    },
-    "system_firmwareupgrade_lup200": {
-        "name": "LUP200",
-        "platform": "sensor",
-        "category": "Configuration",
-        "group": "System",
-        "page": "firmwareupgrade",
-        "data_type": "string",
-        "access_type": "read",
-    },
-    "system_firmwareupgrade_datafile": {
-        "name": "Datafile",
-        "platform": "sensor",
-        "category": "Configuration",
-        "group": "System",
-        "page": "firmwareupgrade",
-        "data_type": "string",
-        "access_type": "write",
-    },
-    "system_groups_name": {
-        "name": "Name",
-        "platform": "sensor",
-        "category": "Configuration",
-        "group": "System",
-        "page": "groups",
-        "data_type": "string",
-        "access_type": "read",
-    },
-    "system_groups_admin": {
-        "name": "admin",
-        "platform": "sensor",
-        "category": "Configuration",
-        "group": "System",
-        "page": "groups",
-        "data_type": "string",
-        "access_type": "read",
-    },
-    "system_groups_ha_user": {
-        "name": "ha-user",
-        "platform": "sensor",
-        "category": "Configuration",
-        "group": "System",
-        "page": "groups",
-        "data_type": "string",
-        "access_type": "read",
-    },
     "system_systemview": {
         "name": "System View",
         "platform": "sensor",
@@ -1720,15 +1639,6 @@ SENSOR_ENTITIES = [
     "user_time_day",
     "user_time_hour",
     "user_time_minute",
-    "system_firmwareupgrade_lom320",
-    "system_firmwareupgrade_userinterface",
-    "system_firmwareupgrade_lmc300",
-    "system_firmwareupgrade_project_name",
-    "system_firmwareupgrade_lup200",
-    "system_firmwareupgrade_datafile",
-    "system_groups_name",
-    "system_groups_admin",
-    "system_groups_ha_user",
     "system_systemview",
 ]
 
@@ -2720,15 +2630,6 @@ ID_MAP = {
     420: ("heating_heating_setpointact", "°C", "temperature", "measurement", "Heating.SetPointAct"),
     434: ("heating_heatspctrl_toffset", None, None, None, "HeatSPCtrl.ToffSet"),
     383: ("hotwater_hotwater_setpoint", "°C", "temperature", "measurement", "HotWater.SetPoint"),
-    1641: ("system_firmwareupgrade_datafile", None, None, None, "Datafile"),
-    1608: ("system_firmwareupgrade_lmc300", None, None, None, "LMC300"),
-    1607: ("system_firmwareupgrade_lom320", None, None, None, "LOM320"),
-    1625: ("system_firmwareupgrade_lup200", None, None, None, "LUP200"),
-    1617: ("system_firmwareupgrade_project_name", None, None, None, "Project name"),
-    1600: ("system_firmwareupgrade_userinterface", None, None, None, "UserInterface"),
-    1660: ("system_groups_admin", None, None, None, "admin"),
-    1661: ("system_groups_ha_user", None, None, None, "ha-user"),
-    1642: ("system_groups_name", None, None, None, "Name"),
     1670: ("system_systemview", "°C", "temperature", "measurement", "System View"),
     # Additional missing entity mappings from catalog.py
     # Using available IDs from DEFAULT_IDS that aren't already mapped
@@ -2743,8 +2644,16 @@ ID_MAP = {
     536: ("user_hotwater_setpoint", "°C", "temperature", "measurement", "HotWater.SetPoint"),
 }
 
-# Moved from const.py - DEFAULT_IDS
-DEFAULT_IDS = "37;52;53;108;109;110;112;113;137;184;185;186;187;188;189;190;191;192;193;196;197;219;220;221;222;223;224;225;227;228;232;235;236;237;238;239;240;241;242;243;244;245;250;253;254;255;256;257;259;260;261;262;263;264;265;266;267;268;269;277;278;280;281;282;283;284;285;286;291;296;297;299;300;301;302;303;351;352;353;354;356;361;362;364;367;368;369;370;371;372;374;376;380;382;383;384;385;386;387;390;403;404;405;406;407;408;409;410;411;413;419;420;421;423;427;428;429;430;433;435;436;447;453;500;501;503;504;509;510;511;512;513;514;515;516;517;518;520;521;522;523;524;525;526;529;555"
+# Function to generate default IDs from ID_MAP
+def get_default_ids() -> str:
+    """Generate default IDs from ID_MAP.
+    
+    Returns:
+        str: Semicolon-separated string of entity IDs from ID_MAP
+    """
+    # Get all IDs from ID_MAP, sort them for consistency
+    all_ids = sorted(ID_MAP.keys())
+    return ";".join(str(id) for id in all_ids)
 
 # Moved from const.py - DEFAULT_ENABLED_ENTITIES
 DEFAULT_ENABLED_ENTITIES = [
