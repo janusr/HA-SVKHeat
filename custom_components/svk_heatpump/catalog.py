@@ -13,6 +13,7 @@ ENTITIES = {
         "group": "Defrost",
         "page": "settings_defrost",
         "data_type": "enum",
+        "id": 509,
         "access_type": "readwrite",
     },
     "defrost_defrost_tfrosting": {
@@ -33,6 +34,7 @@ ENTITIES = {
         "page": "settings_defrost",
         "data_type": "temperature",
         "unit": "°C",
+        "id": 516,
         "access_type": "read",
     },
     "defrost_defrost_relfrostcmp": {
@@ -45,6 +47,9 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 100,
         "step": 1,
+        "id": 517,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "defrost_defrost_defrtimein": {
@@ -58,6 +63,9 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 60,
         "step": 1,
+        "id": 520,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "defrost_defrost_mininterval": {
@@ -71,6 +79,9 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 240,
         "step": 1,
+        "id": 522,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "defrost_defrost_stoptemp": {
@@ -84,6 +95,9 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 20,
         "step": 1,
+        "id": 524,
+        "state_class": "measurement",
+        "device_class": "temperature",
         "access_type": "readwrite",
     },
     "defrost_defrost_maxtime": {
@@ -97,6 +111,9 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 10,
         "step": 1,
+        "id": 521,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "defrost_defrost_defrostcap": {
@@ -110,6 +127,9 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 100,
         "step": 1,
+        "id": 529,
+        "device_class": None,
+        "state_class": "measurement",
         "access_type": "readwrite",
     },
     "defrost_defrost_ticemelt": {
@@ -123,6 +143,7 @@ ENTITIES = {
         "min_value": -5,
         "max_value": 5,
         "step": 1,
+        "id": 514,
         "access_type": "readwrite",
     },
     "defrost_defrost_tmeltfast": {
@@ -136,7 +157,19 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 15,
         "step": 1,
+        "id": 515,
         "access_type": "readwrite",
+    },
+    "defrost_defrost_tfrosting": {
+        "name": "Defrost.TFrosting",
+        "platform": "sensor",
+        "category": "Settings",
+        "group": "Defrost",
+        "page": "settings_defrost",
+        "data_type": "temperature",
+        "unit": "°C",
+        "id": 513,
+        "access_type": "read",
     },
     "defrost_defrost_fftambmin": {
         "name": "Defrost.FFTambMin",
@@ -149,6 +182,7 @@ ENTITIES = {
         "min_value": -20,
         "max_value": 0,
         "step": 1,
+        "id": 510,
         "access_type": "readwrite",
     },
     "defrost_defrost_fftambmax": {
@@ -162,6 +196,7 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 20,
         "step": 1,
+        "id": 511,
         "access_type": "readwrite",
     },
     "defrost_defrost_fftevapstop": {
@@ -175,6 +210,7 @@ ENTITIES = {
         "min_value": -5,
         "max_value": 10,
         "step": 1,
+        "id": 512,
         "access_type": "readwrite",
     },
     "defrost_defrost_tairdfrtemp": {
@@ -188,6 +224,7 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 50,
         "step": 1,
+        "id": 518,
         "access_type": "readwrite",
     },
     "defrost_defrost_dripdowndel1": {
@@ -201,6 +238,9 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 60,
         "step": 1,
+        "id": 523,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "display_heatpump_state": {
@@ -210,6 +250,9 @@ ENTITIES = {
         "group": "Display",
         "page": "display",
         "data_type": "boolean",
+        "id": 297,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "display_input_theatsupply": {
@@ -220,6 +263,7 @@ ENTITIES = {
         "page": "display",
         "data_type": "temperature",
         "unit": "°C",
+        "id": 253,
         "access_type": "read",
     },
     "display_input_theatreturn": {
@@ -230,6 +274,7 @@ ENTITIES = {
         "page": "display",
         "data_type": "temperature",
         "unit": "°C",
+        "id": 254,
         "access_type": "read",
     },
     "display_input_twatertank": {
@@ -240,6 +285,9 @@ ENTITIES = {
         "page": "display",
         "data_type": "temperature",
         "unit": "°C",
+        "id": 255,
+        "state_class": "measurement",
+        "device_class": "temperature",
         "access_type": "read",
     },
     "display_input_tamb": {
@@ -250,6 +298,9 @@ ENTITIES = {
         "page": "display",
         "data_type": "temperature",
         "unit": "°C",
+        "id": 256,
+        "state_class": "measurement",
+        "device_class": "temperature",
         "access_type": "read",
     },
     "display_input_troom": {
@@ -260,6 +311,9 @@ ENTITIES = {
         "page": "display",
         "data_type": "temperature",
         "unit": "°C",
+        "id": 257,
+        "state_class": "measurement",
+        "device_class": "temperature",
         "access_type": "read",
     },
     "display_input_theattank": {
@@ -270,6 +324,9 @@ ENTITIES = {
         "page": "display",
         "data_type": "temperature",
         "unit": "°C",
+        "id": 259,
+        "state_class": "measurement",
+        "device_class": "temperature",
         "access_type": "read",
     },
     "display_input_tcoldsupply": {
@@ -280,6 +337,9 @@ ENTITIES = {
         "page": "display",
         "data_type": "temperature",
         "unit": "°C",
+        "id": 260,
+        "state_class": "measurement",
+        "device_class": "temperature",
         "access_type": "read",
     },
     "display_input_tcoldreturn": {
@@ -290,6 +350,9 @@ ENTITIES = {
         "page": "display",
         "data_type": "temperature",
         "unit": "°C",
+        "id": 261,
+        "state_class": "measurement",
+        "device_class": "temperature",
         "access_type": "read",
     },
     "display_input_tevap": {
@@ -300,6 +363,9 @@ ENTITIES = {
         "page": "display",
         "data_type": "temperature",
         "unit": "°C",
+        "id": 262,
+        "state_class": "measurement",
+        "device_class": "temperature",
         "access_type": "read",
     },
     "display_heating_setpointact": {
@@ -310,6 +376,9 @@ ENTITIES = {
         "page": "display",
         "data_type": "temperature",
         "unit": "°C",
+        "id": 530,
+        "state_class": "measurement",
+        "device_class": "temperature",
         "access_type": "read",
     },
     "display_hotwater_setpointact": {
@@ -320,6 +389,7 @@ ENTITIES = {
         "page": "display",
         "data_type": "temperature",
         "unit": "°C",
+        "id": 386,
         "access_type": "read",
     },
     "display_solarpanel_state": {
@@ -329,6 +399,9 @@ ENTITIES = {
         "group": "Display",
         "page": "display",
         "data_type": "boolean",
+        "id": 364,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "display_input_tsolarpanel": {
@@ -339,6 +412,9 @@ ENTITIES = {
         "page": "display",
         "data_type": "temperature",
         "unit": "°C",
+        "id": 264,
+        "state_class": "measurement",
+        "device_class": "temperature",
         "access_type": "read",
     },
     "display_input_tsolarwater": {
@@ -349,6 +425,9 @@ ENTITIES = {
         "page": "display",
         "data_type": "temperature",
         "unit": "°C",
+        "id": 263,
+        "state_class": "measurement",
+        "device_class": "temperature",
         "access_type": "read",
     },
     "display_heatpump_seasonstate": {
@@ -358,6 +437,9 @@ ENTITIES = {
         "group": "Display",
         "page": "display",
         "data_type": "boolean",
+        "id": 296,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "display_coldpump_state": {
@@ -367,6 +449,9 @@ ENTITIES = {
         "group": "Display",
         "page": "display",
         "data_type": "boolean",
+        "id": 374,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "display_legionella_state": {
@@ -376,6 +461,9 @@ ENTITIES = {
         "group": "Display",
         "page": "display",
         "data_type": "boolean",
+        "id": 503,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "display_heatpump_capacityreq": {
@@ -386,6 +474,9 @@ ENTITIES = {
         "page": "display",
         "data_type": "percentage",
         "unit": "%",
+        "id": 300,
+        "device_class": None,
+        "state_class": "measurement",
         "access_type": "read",
     },
     "display_compressor_output": {
@@ -395,6 +486,9 @@ ENTITIES = {
         "group": "Display",
         "page": "display",
         "data_type": "boolean",
+        "id": 433,
+        "device_class": None,
+        "state_class": "measurement",
         "access_type": "read",
     },
     "display_heatpump_capacityact": {
@@ -405,6 +499,9 @@ ENTITIES = {
         "page": "display",
         "data_type": "percentage",
         "unit": "%",
+        "id": 299,
+        "device_class": None,
+        "state_class": "measurement",
         "access_type": "read",
     },
     "display_hotwater_source": {
@@ -414,6 +511,9 @@ ENTITIES = {
         "group": "Display",
         "page": "display",
         "data_type": "number",
+        "id": 532,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "display_heating_source": {
@@ -423,6 +523,9 @@ ENTITIES = {
         "group": "Display",
         "page": "display",
         "data_type": "number",
+        "id": 531,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "display_output_heater": {
@@ -432,6 +535,9 @@ ENTITIES = {
         "group": "Display",
         "page": "display",
         "data_type": "boolean",
+        "id": 219,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "display_output_hottapwater": {
@@ -441,6 +547,9 @@ ENTITIES = {
         "group": "Display",
         "page": "display",
         "data_type": "boolean",
+        "id": 220,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "display_output_coldpump": {
@@ -450,6 +559,9 @@ ENTITIES = {
         "group": "Display",
         "page": "display",
         "data_type": "boolean",
+        "id": 221,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "display_output_coldpumplow": {
@@ -459,6 +571,9 @@ ENTITIES = {
         "group": "Display",
         "page": "display",
         "data_type": "boolean",
+        "id": 222,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "display_output_hotsidepump": {
@@ -468,6 +583,9 @@ ENTITIES = {
         "group": "Display",
         "page": "display",
         "data_type": "boolean",
+        "id": 223,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "display_output_defrostvalve": {
@@ -477,6 +595,9 @@ ENTITIES = {
         "group": "Display",
         "page": "display",
         "data_type": "boolean",
+        "id": 224,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "display_output_solarpump": {
@@ -486,6 +607,9 @@ ENTITIES = {
         "group": "Display",
         "page": "display",
         "data_type": "boolean",
+        "id": 225,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "display_output_auxpump": {
@@ -495,6 +619,9 @@ ENTITIES = {
         "group": "Display",
         "page": "display",
         "data_type": "boolean",
+        "id": 227,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "display_output_alarm": {
@@ -504,6 +631,94 @@ ENTITIES = {
         "group": "Display",
         "page": "display",
         "data_type": "boolean",
+        "id": 228,
+        "device_class": None,
+        "state_class": None,
+        "access_type": "read",
+    },
+    "display_output_coldpumpvolt": {
+        "name": "Output.ColdPumpVolt",
+        "platform": "sensor",
+        "category": "Operation",
+        "group": "Display",
+        "page": "display",
+        "data_type": "voltage",
+        "unit": "V",
+        "id": 232,
+        "access_type": "read",
+    },
+    "display_manual_coldpumpvolt": {
+        "name": "Manual.ColdPumpVolt",
+        "platform": "number",
+        "category": "Operation",
+        "group": "Display",
+        "page": "display",
+        "data_type": "voltage",
+        "unit": "V",
+        "min_value": 0,
+        "max_value": 10,
+        "step": 0.1,
+        "id": 250,
+        "access_type": "readwrite",
+    },
+    "display_input_hpswitch": {
+        "name": "Input.HPSwitch",
+        "platform": "binary_sensor",
+        "category": "Operation",
+        "group": "Display",
+        "page": "display",
+        "data_type": "boolean",
+        "id": 265,
+        "device_class": None,
+        "state_class": None,
+        "access_type": "read",
+    },
+    "display_input_lpswitch": {
+        "name": "Input.LPSwitch",
+        "platform": "binary_sensor",
+        "category": "Operation",
+        "group": "Display",
+        "page": "display",
+        "data_type": "boolean",
+        "id": 266,
+        "device_class": None,
+        "state_class": None,
+        "access_type": "read",
+    },
+    "display_input_bpswitch": {
+        "name": "Input.BPSwitch",
+        "platform": "binary_sensor",
+        "category": "Operation",
+        "group": "Display",
+        "page": "display",
+        "data_type": "boolean",
+        "id": 267,
+        "device_class": None,
+        "state_class": None,
+        "access_type": "read",
+    },
+    "display_input_dfstart": {
+        "name": "Input.DFStart",
+        "platform": "binary_sensor",
+        "category": "Operation",
+        "group": "Display",
+        "page": "display",
+        "data_type": "boolean",
+        "id": 268,
+        "device_class": None,
+        "state_class": None,
+        "access_type": "read",
+    },
+    "display_input_fcswitch": {
+        "name": "Input.FCSwitch",
+        "platform": "binary_sensor",
+        "category": "Operation",
+        "group": "Display",
+        "page": "display",
+        "data_type": "boolean",
+        "id": 269,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "heating_heating_source": {
@@ -513,6 +728,9 @@ ENTITIES = {
         "group": "Heating",
         "page": "settings_heating",
         "data_type": "enum",
+        "id": 403,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "heating_heating_setpointmin": {
@@ -526,6 +744,7 @@ ENTITIES = {
         "min_value": 10,
         "max_value": 40,
         "step": 1,
+        "id": 410,
         "access_type": "readwrite",
     },
     "heating_heating_setpointmax": {
@@ -539,6 +758,7 @@ ENTITIES = {
         "min_value": 20,
         "max_value": 60,
         "step": 1,
+        "id": 411,
         "access_type": "readwrite",
     },
     "heating_heating_setpmincool": {
@@ -552,6 +772,7 @@ ENTITIES = {
         "min_value": 5,
         "max_value": 25,
         "step": 1,
+        "id": 409,
         "access_type": "readwrite",
     },
     "heating_heating_setpointact": {
@@ -562,6 +783,9 @@ ENTITIES = {
         "page": "settings_heating",
         "data_type": "temperature",
         "unit": "°C",
+        "id": 420,
+        "state_class": "measurement",
+        "device_class": "temperature",
         "access_type": "read",
     },
     "heating_heating_neutralzone": {
@@ -575,6 +799,7 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 5,
         "step": 0.1,
+        "id": 419,
         "access_type": "readwrite",
     },
     "heating_heating_stopcap1": {
@@ -588,6 +813,9 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 100,
         "step": 1,
+        "id": 405,
+        "device_class": None,
+        "state_class": "measurement",
         "access_type": "readwrite",
     },
     "heating_heating_stopcap2": {
@@ -601,6 +829,9 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 100,
         "step": 1,
+        "id": 406,
+        "device_class": None,
+        "state_class": "measurement",
         "access_type": "readwrite",
     },
     "heating_heating_startdifcap": {
@@ -614,6 +845,7 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 50,
         "step": 1,
+        "id": 407,
         "access_type": "readwrite",
     },
     "heating_compressor_minvoltage": {
@@ -627,6 +859,9 @@ ENTITIES = {
         "min_value": 180,
         "max_value": 250,
         "step": 1,
+        "id": 430,
+        "device_class": None,
+        "state_class": "measurement",
         "access_type": "readwrite",
     },
     "heating_compressor_maxvoltage": {
@@ -640,6 +875,9 @@ ENTITIES = {
         "min_value": 200,
         "max_value": 280,
         "step": 1,
+        "id": 429,
+        "device_class": None,
+        "state_class": "measurement",
         "access_type": "readwrite",
     },
     "heating_compressor_ustart": {
@@ -653,6 +891,9 @@ ENTITIES = {
         "min_value": 180,
         "max_value": 250,
         "step": 1,
+        "id": 428,
+        "device_class": None,
+        "state_class": "measurement",
         "access_type": "readwrite",
     },
     "heating_compressor_gain": {
@@ -665,6 +906,9 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 100,
         "step": 1,
+        "id": 435,
+        "device_class": None,
+        "state_class": "measurement",
         "access_type": "readwrite",
     },
     "heating_compressor_tn": {
@@ -678,6 +922,9 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 1000,
         "step": 1,
+        "id": 436,
+        "device_class": None,
+        "state_class": "measurement",
         "access_type": "readwrite",
     },
     "heating_heating_tevapmin": {
@@ -691,6 +938,7 @@ ENTITIES = {
         "min_value": -20,
         "max_value": 0,
         "step": 1,
+        "id": 413,
         "access_type": "readwrite",
     },
     "heating_heating_minheattime": {
@@ -704,6 +952,9 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 60,
         "step": 1,
+        "id": 421,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "heating_heatspctrl_type": {
@@ -713,6 +964,9 @@ ENTITIES = {
         "group": "Heating",
         "page": "settings_heating",
         "data_type": "enum",
+        "id": 184,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "heating_heatspctrl_curve": {
@@ -725,6 +979,9 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 10,
         "step": 1,
+        "id": 192,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "heating_heatspctrl_curpnt1": {
@@ -738,6 +995,7 @@ ENTITIES = {
         "min_value": -20,
         "max_value": 40,
         "step": 1,
+        "id": 185,
         "access_type": "readwrite",
     },
     "heating_heatspctrl_curpnt2": {
@@ -751,6 +1009,7 @@ ENTITIES = {
         "min_value": -20,
         "max_value": 40,
         "step": 1,
+        "id": 186,
         "access_type": "readwrite",
     },
     "heating_heatspctrl_curpnt3": {
@@ -764,6 +1023,7 @@ ENTITIES = {
         "min_value": -20,
         "max_value": 40,
         "step": 1,
+        "id": 187,
         "access_type": "readwrite",
     },
     "heating_heatspctrl_curpnt4": {
@@ -777,6 +1037,7 @@ ENTITIES = {
         "min_value": -20,
         "max_value": 40,
         "step": 1,
+        "id": 188,
         "access_type": "readwrite",
     },
     "heating_heatspctrl_curpnt5": {
@@ -790,6 +1051,7 @@ ENTITIES = {
         "min_value": -20,
         "max_value": 40,
         "step": 1,
+        "id": 189,
         "access_type": "readwrite",
     },
     "heating_heatspctrl_curpnt6": {
@@ -803,6 +1065,7 @@ ENTITIES = {
         "min_value": -20,
         "max_value": 40,
         "step": 1,
+        "id": 190,
         "access_type": "readwrite",
     },
     "heating_heatspctrl_curpnt7": {
@@ -816,6 +1079,7 @@ ENTITIES = {
         "min_value": -20,
         "max_value": 40,
         "step": 1,
+        "id": 191,
         "access_type": "readwrite",
     },
     "heating_heatspctrl_ambcmpmax": {
@@ -829,6 +1093,7 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 40,
         "step": 1,
+        "id": 197,
         "access_type": "readwrite",
     },
     "heating_heatspctrl_toffset": {
@@ -838,6 +1103,9 @@ ENTITIES = {
         "group": "Heating",
         "page": "settings_heating",
         "data_type": "boolean",
+        "id": 434,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "heatpump_parameters_hpstops": {
@@ -851,6 +1119,9 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 300,
         "step": 1,
+        "id": 284,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "heatpump_parameters_totalstops": {
@@ -864,6 +1135,9 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 600,
         "step": 1,
+        "id": 285,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "heatpump_parameters_hpstopt": {
@@ -877,6 +1151,7 @@ ENTITIES = {
         "min_value": -20,
         "max_value": 50,
         "step": 1,
+        "id": 281,
         "access_type": "readwrite",
     },
     "heatpump_parameters_totalstopt": {
@@ -890,6 +1165,7 @@ ENTITIES = {
         "min_value": -20,
         "max_value": 50,
         "step": 1,
+        "id": 283,
         "access_type": "readwrite",
     },
     "heatpump_parameters_hpambstopt": {
@@ -903,6 +1179,7 @@ ENTITIES = {
         "min_value": -20,
         "max_value": 50,
         "step": 1,
+        "id": 282,
         "access_type": "readwrite",
     },
     "heatpump_heating_ctrlmode": {
@@ -912,6 +1189,9 @@ ENTITIES = {
         "group": "Heatpump",
         "page": "settings_heatpump",
         "data_type": "enum",
+        "id": 404,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "heatpump_cprcontrol_cprmode": {
@@ -921,6 +1201,9 @@ ENTITIES = {
         "group": "Heatpump",
         "page": "settings_heatpump",
         "data_type": "enum",
+        "id": 453,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "heatpump_compressor_mincprstop": {
@@ -934,6 +1217,9 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 300,
         "step": 1,
+        "id": 427,
+        "device_class": None,
+        "state_class": "measurement",
         "access_type": "readwrite",
     },
     "heatpump_heating_elecdelay": {
@@ -947,6 +1233,9 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 60,
         "step": 1,
+        "id": 408,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "heatpump_parameters_pumpexinter": {
@@ -960,6 +1249,9 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 300,
         "step": 1,
+        "id": 286,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "heatpump_parameters_startuptime": {
@@ -973,6 +1265,9 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 60,
         "step": 1,
+        "id": 280,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "heatpump_coldpump_stopdelay": {
@@ -986,6 +1281,9 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 300,
         "step": 1,
+        "id": 368,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "heatpump_coldpump_mode": {
@@ -995,6 +1293,9 @@ ENTITIES = {
         "group": "Heatpump",
         "page": "settings_heatpump",
         "data_type": "enum",
+        "id": 367,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "heatpump_coldpump_hspeedcap": {
@@ -1008,6 +1309,7 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 100,
         "step": 1,
+        "id": 369,
         "access_type": "readwrite",
     },
     "heatpump_coldpump_hspeednz": {
@@ -1021,6 +1323,7 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 100,
         "step": 1,
+        "id": 370,
         "access_type": "readwrite",
     },
     "heatpump_coldpump_hspeedvolt": {
@@ -1034,6 +1337,7 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 10,
         "step": 0.1,
+        "id": 371,
         "access_type": "readwrite",
     },
     "heatpump_coldpump_lspeedvolt": {
@@ -1047,6 +1351,7 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 10,
         "step": 0.1,
+        "id": 372,
         "access_type": "readwrite",
     },
     "hotwater_hotwater_source": {
@@ -1056,6 +1361,9 @@ ENTITIES = {
         "group": "Hot water",
         "page": "settings_hotwater",
         "data_type": "enum",
+        "id": 380,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "hotwater_hotwater_setpoint": {
@@ -1069,6 +1377,9 @@ ENTITIES = {
         "min_value": 40,
         "max_value": 65,
         "step": 1,
+        "id": 383,
+        "state_class": "measurement",
+        "device_class": "temperature",
         "access_type": "readwrite",
     },
     "hotwater_hotwater_neutralzone": {
@@ -1078,6 +1389,7 @@ ENTITIES = {
         "group": "Hot water",
         "page": "settings_hotwater",
         "data_type": "boolean",
+        "id": 384,
         "access_type": "readwrite",
     },
     "hotwater_hotwater_capacity": {
@@ -1091,6 +1403,9 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 100,
         "step": 1,
+        "id": 385,
+        "device_class": None,
+        "state_class": "measurement",
         "access_type": "readwrite",
     },
     "hotwater_hotwater_teleclimit": {
@@ -1104,6 +1419,7 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 100,
         "step": 1,
+        "id": 382,
         "access_type": "readwrite",
     },
     "hotwater_legionella_waittime": {
@@ -1117,6 +1433,9 @@ ENTITIES = {
         "min_value": 1,
         "max_value": 30,
         "step": 1,
+        "id": 500,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "hotwater_legionella_treattemp": {
@@ -1130,6 +1449,7 @@ ENTITIES = {
         "min_value": 60,
         "max_value": 75,
         "step": 1,
+        "id": 501,
         "access_type": "readwrite",
     },
     "hotwater_legionella_timeout1": {
@@ -1143,6 +1463,9 @@ ENTITIES = {
         "min_value": 1,
         "max_value": 24,
         "step": 1,
+        "id": 504,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "service_info_appversion": {
@@ -1152,6 +1475,9 @@ ENTITIES = {
         "group": "Service",
         "page": "settings_service",
         "data_type": "string",
+        "id": 37,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "service_misc_lup200swver": {
@@ -1161,6 +1487,9 @@ ENTITIES = {
         "group": "Service",
         "page": "settings_service",
         "data_type": "string",
+        "id": 555,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "service_com_ipadr": {
@@ -1170,6 +1499,9 @@ ENTITIES = {
         "group": "Service",
         "page": "settings_service",
         "data_type": "string",
+        "id": 53,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "service_com_macadr": {
@@ -1179,6 +1511,9 @@ ENTITIES = {
         "group": "Service",
         "page": "settings_service",
         "data_type": "string",
+        "id": 52,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "service_parameters_displaymode": {
@@ -1188,6 +1523,9 @@ ENTITIES = {
         "group": "Service",
         "page": "settings_service",
         "data_type": "enum",
+        "id": 291,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "service_parameters_mainswitch": {
@@ -1197,6 +1535,9 @@ ENTITIES = {
         "group": "Service",
         "page": "settings_service",
         "data_type": "boolean",
+        "id": 277,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "service_manual_compressor1": {
@@ -1206,6 +1547,9 @@ ENTITIES = {
         "group": "Service",
         "page": "settings_service",
         "data_type": "boolean",
+        "id": 235,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "service_manual_re6": {
@@ -1215,6 +1559,9 @@ ENTITIES = {
         "group": "Service",
         "page": "settings_service",
         "data_type": "boolean",
+        "id": 243,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "service_manual_heater": {
@@ -1224,6 +1571,9 @@ ENTITIES = {
         "group": "Service",
         "page": "settings_service",
         "data_type": "boolean",
+        "id": 236,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "service_manual_hottapwater": {
@@ -1233,6 +1583,9 @@ ENTITIES = {
         "group": "Service",
         "page": "settings_service",
         "data_type": "boolean",
+        "id": 237,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "service_manual_coldpump": {
@@ -1242,6 +1595,9 @@ ENTITIES = {
         "group": "Service",
         "page": "settings_service",
         "data_type": "boolean",
+        "id": 238,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "service_manual_coldpumplow": {
@@ -1251,6 +1607,9 @@ ENTITIES = {
         "group": "Service",
         "page": "settings_service",
         "data_type": "boolean",
+        "id": 239,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "service_manual_hotsidepump": {
@@ -1260,6 +1619,9 @@ ENTITIES = {
         "group": "Service",
         "page": "settings_service",
         "data_type": "boolean",
+        "id": 240,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "service_manual_defrostvalve": {
@@ -1269,6 +1631,9 @@ ENTITIES = {
         "group": "Service",
         "page": "settings_service",
         "data_type": "boolean",
+        "id": 241,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "service_manual_solarpump": {
@@ -1278,6 +1643,9 @@ ENTITIES = {
         "group": "Service",
         "page": "settings_service",
         "data_type": "boolean",
+        "id": 242,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "service_manual_auxpump": {
@@ -1287,6 +1655,9 @@ ENTITIES = {
         "group": "Service",
         "page": "settings_service",
         "data_type": "boolean",
+        "id": 244,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "service_manual_alarm": {
@@ -1296,6 +1667,9 @@ ENTITIES = {
         "group": "Service",
         "page": "settings_service",
         "data_type": "boolean",
+        "id": 245,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "service_heatpump_runtime": {
@@ -1306,6 +1680,9 @@ ENTITIES = {
         "page": "settings_service",
         "data_type": "time",
         "unit": "h",
+        "id": 301,
+        "device_class": None,
+        "state_class": "total_increasing",
         "access_type": "read",
     },
     "service_compressor_compruntime": {
@@ -1316,6 +1693,7 @@ ENTITIES = {
         "page": "settings_service",
         "data_type": "time",
         "unit": "h",
+        "id": 447,
         "access_type": "read",
     },
     "service_heating_elecruntime": {
@@ -1326,6 +1704,7 @@ ENTITIES = {
         "page": "settings_service",
         "data_type": "time",
         "unit": "h",
+        "id": 423,
         "access_type": "read",
     },
     "service_hotwater_runtime": {
@@ -1336,6 +1715,9 @@ ENTITIES = {
         "page": "settings_service",
         "data_type": "time",
         "unit": "h",
+        "id": 387,
+        "device_class": None,
+        "state_class": "total_increasing",
         "access_type": "read",
     },
     "service_coldpump_cpruntime": {
@@ -1346,6 +1728,9 @@ ENTITIES = {
         "page": "settings_service",
         "data_type": "time",
         "unit": "h",
+        "id": 376,
+        "device_class": None,
+        "state_class": "total_increasing",
         "access_type": "read",
     },
     "service_heatpump_hspruntime": {
@@ -1356,6 +1741,9 @@ ENTITIES = {
         "page": "settings_service",
         "data_type": "time",
         "unit": "h",
+        "id": 303,
+        "device_class": None,
+        "state_class": "total_increasing",
         "access_type": "read",
     },
     "service_solarpanel_runtime": {
@@ -1366,6 +1754,9 @@ ENTITIES = {
         "page": "settings_service",
         "data_type": "time",
         "unit": "h",
+        "id": 362,
+        "device_class": None,
+        "state_class": "total_increasing",
         "access_type": "read",
     },
     "service_heatpump_apruntime": {
@@ -1376,6 +1767,9 @@ ENTITIES = {
         "page": "settings_service",
         "data_type": "time",
         "unit": "h",
+        "id": 302,
+        "device_class": None,
+        "state_class": "total_increasing",
         "access_type": "read",
     },
     "service_defrost_defrhgcount": {
@@ -1385,6 +1779,7 @@ ENTITIES = {
         "group": "Service",
         "page": "settings_service",
         "data_type": "number",
+        "id": 525,
         "access_type": "read",
     },
     "service_defrost_defraircnt": {
@@ -1394,6 +1789,9 @@ ENTITIES = {
         "group": "Service",
         "page": "settings_service",
         "data_type": "number",
+        "id": 526,
+        "device_class": None,
+        "state_class": "total_increasing",
         "access_type": "read",
     },
     "service_concrete_mode": {
@@ -1403,6 +1801,9 @@ ENTITIES = {
         "group": "Service",
         "page": "settings_service",
         "data_type": "boolean",
+        "id": 390,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "solar_solarpanel_state": {
@@ -1412,6 +1813,9 @@ ENTITIES = {
         "group": "Solar panel",
         "page": "settings_solar",
         "data_type": "boolean",
+        "id": 535,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "solar_solarpanel_sensorselect": {
@@ -1421,6 +1825,9 @@ ENTITIES = {
         "group": "Solar panel",
         "page": "settings_solar",
         "data_type": "enum",
+        "id": 351,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "solar_solarpanel_tstartdiff": {
@@ -1434,6 +1841,7 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 20,
         "step": 1,
+        "id": 352,
         "access_type": "readwrite",
     },
     "solar_solarpanel_tstopdiff": {
@@ -1447,6 +1855,7 @@ ENTITIES = {
         "min_value": 0,
         "max_value": 20,
         "step": 1,
+        "id": 353,
         "access_type": "readwrite",
     },
     "solar_solarpanel_tempmax": {
@@ -1460,6 +1869,9 @@ ENTITIES = {
         "min_value": 40,
         "max_value": 80,
         "step": 1,
+        "id": 354,
+        "state_class": "measurement",
+        "device_class": "temperature",
         "access_type": "readwrite",
     },
     "solar_solarpanel_watermt": {
@@ -1473,6 +1885,7 @@ ENTITIES = {
         "min_value": 20,
         "max_value": 80,
         "step": 1,
+        "id": 356,
         "access_type": "readwrite",
     },
     "solar_solarpanel_starttemp": {
@@ -1486,6 +1899,7 @@ ENTITIES = {
         "min_value": 10,
         "max_value": 50,
         "step": 1,
+        "id": 361,
         "access_type": "readwrite",
     },
     "user_user_language": {
@@ -1495,6 +1909,9 @@ ENTITIES = {
         "group": "User",
         "page": "user",
         "data_type": "enum",
+        "id": 137,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "user_heatspctrl_troomset": {
@@ -1508,6 +1925,9 @@ ENTITIES = {
         "min_value": 10,
         "max_value": 30,
         "step": 0.5,
+        "id": 193,
+        "state_class": "measurement",
+        "device_class": "temperature",
         "access_type": "readwrite",
     },
     "user_hotwater_setpoint": {
@@ -1521,6 +1941,9 @@ ENTITIES = {
         "min_value": 40,
         "max_value": 65,
         "step": 1,
+        "id": 536,
+        "state_class": "measurement",
+        "device_class": "temperature",
         "access_type": "readwrite",
     },
     "user_heatspctrl_toffset": {
@@ -1530,6 +1953,9 @@ ENTITIES = {
         "group": "User",
         "page": "user",
         "data_type": "boolean",
+        "id": 196,
+        "state_class": "measurement",
+        "device_class": "temperature",
         "access_type": "readwrite",
     },
     "user_parameters_seasonmode": {
@@ -1539,6 +1965,9 @@ ENTITIES = {
         "group": "User",
         "page": "user",
         "data_type": "boolean",
+        "id": 278,
+        "device_class": None,
+        "state_class": None,
         "access_type": "readwrite",
     },
     "user_time_year": {
@@ -1548,6 +1977,9 @@ ENTITIES = {
         "group": "User",
         "page": "user",
         "data_type": "number",
+        "id": 113,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "user_time_month": {
@@ -1557,6 +1989,9 @@ ENTITIES = {
         "group": "User",
         "page": "user",
         "data_type": "number",
+        "id": 112,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "user_time_day": {
@@ -1566,6 +2001,9 @@ ENTITIES = {
         "group": "User",
         "page": "user",
         "data_type": "number",
+        "id": 110,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "user_time_hour": {
@@ -1575,6 +2013,9 @@ ENTITIES = {
         "group": "User",
         "page": "user",
         "data_type": "number",
+        "id": 109,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "user_time_minute": {
@@ -1584,6 +2025,9 @@ ENTITIES = {
         "group": "User",
         "page": "user",
         "data_type": "number",
+        "id": 108,
+        "device_class": None,
+        "state_class": None,
         "access_type": "read",
     },
     "system_systemview": {
@@ -1594,6 +2038,9 @@ ENTITIES = {
         "page": "systemview",
         "data_type": "temperature",
         "unit": "°C",
+        "id": 1670,
+        "state_class": "measurement",
+        "device_class": "temperature",
         "access_type": "read",
     },
 }
@@ -2214,6 +2661,33 @@ def get_default_ids() -> str:
     
     return ";".join(str(id) for id in sorted(all_ids))
 
+
+
+
+
+
+
+def get_id_map() -> dict[int, tuple[str, str, Any, Any, str]]:
+    """Generate ID mapping from ENTITIES dictionary.
+    
+    Returns:
+        Dictionary mapping entity IDs to (entity_key, unit, device_class, state_class, original_name)
+    """
+    id_map = {}
+    for entity_key, entity_data in ENTITIES.items():
+        if "id" in entity_data and entity_data["id"] is not None:
+            entity_id = entity_data["id"]
+            id_map[entity_id] = (
+                entity_key,
+                entity_data.get("unit", ""),
+                entity_data.get("device_class"),
+                entity_data.get("state_class"),
+                entity_data.get("name", ""),
+            )
+    return id_map
+
+
+
 # Moved from const.py - DEFAULT_ENABLED_ENTITIES
 DEFAULT_ENABLED_ENTITIES = [
     # Operation/Display: Essential temperature sensors and heat pump state
@@ -2270,6 +2744,7 @@ BINARY_OUTPUT_IDS = {
     268: "DF Start",
     269: "FC Switch",
 }
+
 
 # Helper functions moved from const.py
 def get_entity_info(entity_id: int):

@@ -23,6 +23,7 @@ from .const import (
     parse_id_list,
     parse_items,
 )
+from .catalog import get_id_map
 
 
 def _get_constants() -> tuple[dict[str, dict[str, Any]], list[int]]:
@@ -96,20 +97,18 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                 except ValueError as err:
                     _LOGGER.warning("Invalid ID list in config, ignoring: %s", err)
 
-            # Create reverse mapping for efficient lookups using ENTITIES structure
-            self.id_to_entity_map = {}
+            # Create reverse mapping for efficient lookups using get_id_map function
             ENTITIES, DEFAULT_ENABLED_ENTITIES = _get_constants()
-            for entity_key, entity_data in ENTITIES.items():
-                # Only add entities that have an ID
-                if "id" in entity_data and entity_data["id"] is not None:
-                    entity_id = entity_data["id"]
-                    self.id_to_entity_map[entity_id] = {
-                        "key": entity_key,
-                        "unit": entity_data.get("unit", ""),
-                        "device_class": entity_data.get("device_class"),
-                        "state_class": entity_data.get("state_class"),
-                        "original_name": entity_data.get("original_name", ""),
-                    }
+            id_map = get_id_map()
+            self.id_to_entity_map = {}
+            for entity_id, (entity_key, unit, device_class, state_class, original_name) in id_map.items():
+                self.id_to_entity_map[entity_id] = {
+                    "key": entity_key,
+                    "unit": unit,
+                    "device_class": device_class,
+                    "state_class": state_class,
+                    "original_name": original_name,
+                }
 
             # Store last-good values
             self.last_good_values: dict[str, Any] = {}
