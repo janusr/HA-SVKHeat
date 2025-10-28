@@ -39,7 +39,6 @@ CONF_USERNAME = "username"
 CONF_PASSWORD = "password"
 CONF_SCAN_INTERVAL = "scan_interval"
 CONF_ENABLE_WRITES = "enable_writes"
-CONF_ID_LIST = "id_list"
 
 # HTML Interface Grouping Structure
 # Based on the HTML interface navigation structure
@@ -185,31 +184,6 @@ def parse_id_list(id_list_str: str) -> list[int]:
         raise ValueError(f"Invalid ID list format: {id_list_str}") from err
 
 
-def validate_id_list(id_list_str: str) -> bool:
-    """Validate that all IDs in the list are valid integers and exist in ENTITIES.
-
-    Args:
-        id_list_str (str): Semicolon-separated ID list string
-
-    Returns:
-        bool: True if all IDs are valid, False otherwise
-    """
-    if not id_list_str:
-        return True
-
-    try:
-        ids = parse_id_list(id_list_str)
-        # Import ENTITIES from catalog to validate
-        from .catalog import ENTITIES
-        # Extract all valid IDs from ENTITIES (those that have an ID)
-        valid_entity_ids = [
-            entity_data["id"]
-            for entity_data in ENTITIES.values()
-            if "id" in entity_data and entity_data["id"] is not None
-        ]
-        return all(entity_id in valid_entity_ids for entity_id in ids)
-    except ValueError:
-        return False
 
 
 def get_all_groups() -> dict[str, Any]:

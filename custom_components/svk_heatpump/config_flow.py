@@ -21,12 +21,10 @@ from .client import (
 from .catalog import get_default_ids, ENTITIES
 from .const import (
     CONF_ENABLE_WRITES,
-    CONF_ID_LIST,
     CONF_SCAN_INTERVAL,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_TIMEOUT,
     DOMAIN,
-    validate_id_list,
 )
 
 # Configuration constants for authentication
@@ -533,10 +531,8 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
         config_entry = self.hass.config_entries.async_get_entry(self._entry_id)
         options = config_entry.options
 
-        # Check if this is a legacy configuration with custom ID list
-        has_custom_id_list = (
-            CONF_ID_LIST in options and options.get(CONF_ID_LIST) != get_default_ids()
-        )
+        # No legacy ID list support - always use default entities
+        has_custom_id_list = False
 
         # Get the warning description for enable_writes
         # We'll use a hardcoded warning here since we can't easily access translations in schema
@@ -554,13 +550,7 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
             ): bool,
         }
 
-        # Only include ID list field for legacy configurations
-        if has_custom_id_list:
-            schema_fields[
-                vol.Optional(
-                    CONF_ID_LIST, default=options.get(CONF_ID_LIST, get_default_ids())
-                )
-            ] = str
+        # No ID list field - entity management handled through UI
 
         return vol.Schema(schema_fields)
 
@@ -579,19 +569,7 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
                 if not isinstance(scan_interval, int) or not 10 <= scan_interval <= 120:
                     errors[CONF_SCAN_INTERVAL] = "invalid_scan_interval"
 
-                # Handle ID list only for legacy configurations
-                config_entry = self.hass.config_entries.async_get_entry(self._entry_id)
-                if CONF_ID_LIST in config_entry.options:
-                    id_list_str = user_input.get(CONF_ID_LIST, "").strip()
-
-                    # If empty, use default
-                    if not id_list_str:
-                        id_list_str = get_default_ids()
-                        user_input[CONF_ID_LIST] = get_default_ids()
-
-                    # Validate ID list format if provided
-                    if id_list_str and not validate_id_list(id_list_str):
-                        errors[CONF_ID_LIST] = "invalid_id_list"
+                # No ID list validation needed - entity management handled through UI
 
                 if not errors:
                     # Save options
@@ -621,22 +599,8 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
                 _LOGGER.exception("Unexpected error in options flow: %s", ex)
                 errors["base"] = "unknown"
 
-        # Determine if this is a legacy configuration
-        config_entry = self.hass.config_entries.async_get_entry(self._entry_id)
-        has_custom_id_list = (
-            CONF_ID_LIST in config_entry.options
-            and config_entry.options.get(CONF_ID_LIST) != get_default_ids()
-        )
-
-        # Set appropriate description placeholders
-        if has_custom_id_list:
-            description_placeholders = {
-                "default_ids": get_default_ids(),
-                "id_list_example": "299;255;256",
-                "id_list_description": "The ID List field is shown because you have a legacy configuration with custom IDs. For new installations, entity management is handled through the UI.",
-            }
-        else:
-            description_placeholders = {"id_list_description": ""}
+        # Set description placeholders
+        description_placeholders = {}
 
         return self.async_show_form(
             step_id="init",

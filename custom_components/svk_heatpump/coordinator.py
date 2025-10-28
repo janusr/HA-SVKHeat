@@ -15,7 +15,6 @@ from .client import (
     SVKConnectionError,
 )
 from .const import (
-    CONF_ID_LIST,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     HEATPUMP_STATES,
@@ -34,36 +33,6 @@ def _get_constants() -> tuple[dict[str, dict[str, Any]], list[int]]:
 
 
 _LOGGER = logging.getLogger(__name__)
-
-# Essential IDs that should be loaded first during startup
-# These are the core entities needed for basic functionality
-ESSENTIAL_IDS = [
-    # Core temperature sensors
-    253,  # heating_supply_temp
-    254,  # heating_return_temp
-    255,  # water_tank_temp
-    256,  # ambient_temp
-    257,  # room_temp
-    # Heat pump state and status
-    297,  # heatpump_state
-    296,  # heatpump_season_state
-    299,  # capacity_actual
-    300,  # capacity_requested
-    # Essential setpoints
-    193,  # room_setpoint
-    383,  # hot_water_setpoint
-    386,  # hot_water_setpoint_actual
-    420,  # heating_setpoint_actual
-    # Operating mode
-    278,  # season_mode
-    # Important binary outputs
-    220,  # hot_tap_water_output
-    228,  # alarm_output
-    # Solar panel state (if available)
-    364,  # solar_panel_state
-    # Hot water source
-    380,  # hot_water_source
-]
 
 
 class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
@@ -88,14 +57,8 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             from .catalog import get_default_ids
             self.id_list = parse_id_list(get_default_ids())
 
-            # Store the user-configured ID list for backward compatibility
+            # No user-configured ID list support - always use default entities
             self.user_configured_ids = None
-            if config_entry and CONF_ID_LIST in config_entry.options:
-                id_list_str = config_entry.options[CONF_ID_LIST]
-                try:
-                    self.user_configured_ids = parse_id_list(id_list_str)
-                except ValueError as err:
-                    _LOGGER.warning("Invalid ID list in config, ignoring: %s", err)
 
             # Create reverse mapping for efficient lookups using get_id_map function
             ENTITIES, DEFAULT_ENABLED_ENTITIES = _get_constants()
@@ -162,9 +125,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
 
             # Add detailed timing diagnostics
             if self.is_json_client:
-                id_count = (
-                    len(ESSENTIAL_IDS) if self.is_first_refresh else len(self.id_list)
-                )
+                id_count = len(self.id_list)
                 _LOGGER.info(
                     "PERFORMANCE: Requesting %d IDs via JSON API (%s refresh)",
                     id_count,
@@ -247,7 +208,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                     )
                 _LOGGER.error(
                     "TIMEOUT: Total IDs requested: %d",
-                    len(ESSENTIAL_IDS) if self.is_first_refresh else len(self.id_list),
+                    len(self.id_list),
                 )
 
             raise UpdateFailed(
@@ -897,20 +858,12 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         """Get list of enabled entities based on configuration."""
         enabled_entities = []
 
-        # Check if user has configured a custom ID list (backward compatibility)
-        if self.user_configured_ids:
-            # Use the user's configured ID list
-            for entity_id in self.user_configured_ids:
-                if entity_id in self.id_to_entity_map:
-                    entity_key = self.id_to_entity_map[entity_id]["key"]
-                    enabled_entities.append(entity_key)
-        else:
-            # Use DEFAULT_ENABLED_ENTITIES as the default enabled entities
-            _, DEFAULT_ENABLED_ENTITIES = _get_constants()
-            for entity_id in DEFAULT_ENABLED_ENTITIES:
-                if entity_id in self.id_to_entity_map:
-                    entity_key = self.id_to_entity_map[entity_id]["key"]
-                    enabled_entities.append(entity_key)
+        # Use DEFAULT_ENABLED_ENTITIES as the default enabled entities
+        _, DEFAULT_ENABLED_ENTITIES = _get_constants()
+        for entity_id in DEFAULT_ENABLED_ENTITIES:
+            if entity_id in self.id_to_entity_map:
+                entity_key = self.id_to_entity_map[entity_id]["key"]
+                enabled_entities.append(entity_key)
 
         return enabled_entities
 
@@ -924,11 +877,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         Returns:
             True if the entity should be enabled, False otherwise
         """
-        # If user has configured a custom ID list, use that for backward compatibility
-        if self.user_configured_ids:
-            return entity_id in self.user_configured_ids
-
-        # Otherwise, check if the entity is in DEFAULT_ENABLED_ENTITIES
+        # Check if the entity is in DEFAULT_ENABLED_ENTITIES
         _, DEFAULT_ENABLED_ENTITIES = _get_constants()
         return entity_id in DEFAULT_ENABLED_ENTITIES
 

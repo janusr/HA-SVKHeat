@@ -74,6 +74,7 @@ class SVKHeatpumpBinarySensor(SVKHeatpumpBaseEntity, BinarySensorEntity):
         entity_key: str,
         config_entry_id: str,
         enabled_by_default: bool = True,
+        entity_id: int | None = None,
     ) -> None:
         """Initialize the binary sensor."""
         super().__init__(coordinator, config_entry_id)
@@ -89,18 +90,17 @@ class SVKHeatpumpBinarySensor(SVKHeatpumpBaseEntity, BinarySensorEntity):
 
         # Get entity info from ENTITIES structure
         ENTITIES, _ = _get_constants()
-        # Find entity by ID in ENTITIES
+        # Find entity by key in ENTITIES
         entity_info = None
-        for entity_key, entity_data in ENTITIES.items():
-            if "id" in entity_data and entity_data["id"] == entity_id:
-                entity_info = {
-                    "entity_key": entity_key,
-                    "unit": entity_data.get("unit", ""),
-                    "device_class": entity_data.get("device_class"),
-                    "state_class": entity_data.get("state_class"),
-                    "original_name": entity_data.get("original_name", ""),
-                }
-                break
+        if self._entity_key in ENTITIES:
+            entity_data = ENTITIES[self._entity_key]
+            entity_info = {
+                "entity_key": self._entity_key,
+                "unit": entity_data.get("unit", ""),
+                "device_class": entity_data.get("device_class"),
+                "state_class": entity_data.get("state_class"),
+                "original_name": entity_data.get("name", ""),
+            }
         
         if entity_info:
             self._entity_key = entity_info["entity_key"]
@@ -220,16 +220,21 @@ async def async_setup_entry(
         ENTITIES, DEFAULT_ENABLED_ENTITIES = _get_constants()
 
         # Create all possible entities from ENTITIES
-        for entity_id, entity_data in ENTITIES.items():
+        for entity_key, entity_data in ENTITIES.items():
             # Only process entities that have an ID
             if "id" not in entity_data or entity_data["id"] is None:
                 continue
                 
-            entity_key = entity_data
+            entity_id = entity_data["id"]
             _unit = entity_data.get("unit", "")
             _device_class = entity_data.get("device_class")
             _state_class = entity_data.get("state_class")
             _original_name = entity_data.get("original_name", "")
+            
+            # Only process binary sensor entities
+            if entity_data.get("platform") != "binary_sensor":
+                continue
+                
             # Include alarm_active entity
             if entity_key == "alarm_active":
                 # Check if this entity should be enabled by default
@@ -239,7 +244,6 @@ async def async_setup_entry(
                 binary_sensor = SVKHeatpumpAlarmBinarySensor(
                     coordinator,
                     entity_key,
-                    entity_id,
                     config_entry.entry_id,
                     enabled_by_default=enabled_by_default,
                 )
@@ -254,7 +258,6 @@ async def async_setup_entry(
                 binary_sensor = SVKHeatpumpBinarySensor(
                     coordinator,
                     entity_key,
-                    entity_id,
                     config_entry.entry_id,
                     enabled_by_default=enabled_by_default,
                 )
