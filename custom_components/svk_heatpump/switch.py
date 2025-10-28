@@ -417,9 +417,10 @@ async def async_setup_entry(
                     _LOGGER.debug("Skipping read-only entity %s", entity_key)
                     continue
 
-                # Determine if this entity should be enabled by default
-                # For now, enable all switch entities from catalog
-                enabled_by_default = True
+                # Get entity ID to check against DEFAULT_ENABLED_ENTITIES
+                entity_info = ENTITIES.get(entity_key, {})
+                entity_id = entity_info.get("id")
+                enabled_by_default = coordinator.is_entity_enabled(entity_id) if entity_id else False
 
                 # Create switch using new SVKSwitch class
                 switch = SVKSwitch(
@@ -459,7 +460,7 @@ async def async_setup_entry(
                     entity_key,
                     entity_id,
                     config_entry.entry_id,
-                    enabled_by_default=True,
+                    enabled_by_default=coordinator.is_entity_enabled(entity_id) if entity_id else False,
                 )
                 switch_entities.append(switch)
                 _LOGGER.info(

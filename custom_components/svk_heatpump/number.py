@@ -469,9 +469,10 @@ async def async_setup_entry(
                     _LOGGER.debug("Skipping read-only entity %s", entity_key)
                     continue
 
-                # Determine if this entity should be enabled by default
-                # For now, enable all number entities from catalog
-                enabled_by_default = True
+                # Get entity ID to check against DEFAULT_ENABLED_ENTITIES
+                entity_info = ENTITIES.get(entity_key, {})
+                entity_id = entity_info.get("id")
+                enabled_by_default = coordinator.is_entity_enabled(entity_id) if entity_id else False
 
                 # Create number using new SVKNumber class
                 number = SVKNumber(
@@ -499,15 +500,14 @@ async def async_setup_entry(
         )
 
         # Get constants using lazy import
-        ENTITIES, DEFAULT_ENABLED_ENTITIES = _get_constants()
+        entities_local, DEFAULT_ENABLED_ENTITIES = _get_constants()
 
         # Create all possible entities from ENTITIES
-        for entity_id, entity_data in ENTITIES.items():
+        for entity_key, entity_data in entities_local.items():
             # Only process entities that have an ID
             if "id" not in entity_data or entity_data["id"] is None:
                 continue
                 
-            entity_key = entity_key
             _unit = entity_data.get("unit", "")
             _device_class = entity_data.get("device_class")
             _state_class = entity_data.get("state_class")
@@ -519,7 +519,7 @@ async def async_setup_entry(
                 "room_setpoint",
             ]:
                 # Check if this entity should be enabled by default
-                enabled_by_default = entity_data["id"] in DEFAULT_ENABLED_ENTITIES
+                enabled_by_default = coordinator.is_entity_enabled(entity_data["id"])
 
                 # Create specialized classes for specific entities
                 if entity_key == "hot_water_setpoint":
@@ -549,7 +549,7 @@ async def async_setup_entry(
                 _LOGGER.debug(
                     "Added number entity: %s (ID: %s, enabled_by_default: %s)",
                     entity_key,
-                    entity_id,
+                    entity_data["id"],
                     enabled_by_default,
                 )
 

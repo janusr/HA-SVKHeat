@@ -32,12 +32,12 @@ from .const import DOMAIN
 from .coordinator import SVKHeatpumpDataCoordinator
 
 
-def _get_constants() -> tuple[dict[str, str], list[int]]:
+def _get_constants() -> tuple[dict[str, dict[str, Any]], dict[str, str], list[int]]:
     """Lazy import of constants to prevent blocking during async setup."""
-    from .catalog import DEFAULT_ENABLED_ENTITIES
+    from .catalog import DEFAULT_ENABLED_ENTITIES, ENTITIES
     from .const import SEASON_MODES_REVERSE
 
-    return SEASON_MODES_REVERSE, DEFAULT_ENABLED_ENTITIES
+    return ENTITIES, SEASON_MODES_REVERSE, DEFAULT_ENABLED_ENTITIES
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -518,6 +518,8 @@ async def async_setup_entry(
         for entity_key in SELECT_ENTITIES:
             try:
                 # Get entity info from catalog
+                # Get ENTITIES from the catalog module
+                from .catalog import ENTITIES
                 entity_info = ENTITIES.get(entity_key, {})
                 access_type = entity_info.get("access_type", "")
 
@@ -526,9 +528,10 @@ async def async_setup_entry(
                     _LOGGER.debug("Skipping read-only entity %s", entity_key)
                     continue
 
-                # Determine if this entity should be enabled by default
-                # For now, enable all select entities from catalog
-                enabled_by_default = True
+                # Get entity ID to check against DEFAULT_ENABLED_ENTITIES
+                entity_info = ENTITIES.get(entity_key, {})
+                entity_id = entity_info.get("id")
+                enabled_by_default = coordinator.is_entity_enabled(entity_id) if entity_id else False
 
                 # Create select using new SVKSelect class
                 select = SVKSelect(
@@ -552,15 +555,14 @@ async def async_setup_entry(
     else:
         # Fall back to HTML scraping entities for backward compatibility
         # Get constants using lazy import
-        ENTITIES, DEFAULT_ENABLED_ENTITIES = _get_constants()
+        ENTITIES, _, DEFAULT_ENABLED_ENTITIES = _get_constants()
 
         # Create all possible entities from ENTITIES
-        for entity_id, entity_data in ENTITIES.items():
+        for entity_key, entity_data in ENTITIES.items():
             # Only process entities that have an ID
             if "id" not in entity_data or entity_data["id"] is None:
                 continue
                 
-            entity_key = entity_key
             _unit = entity_data.get("unit", "")
             _device_class = entity_data.get("device_class")
             _state_class = entity_data.get("state_class")
@@ -568,7 +570,7 @@ async def async_setup_entry(
             # Only include select entities
             if entity_key in ["season_mode", "heatpump_state"]:
                 # Check if this entity should be enabled by default
-                enabled_by_default = entity_data["id"] in DEFAULT_ENABLED_ENTITIES
+                enabled_by_default = coordinator.is_entity_enabled(entity_data["id"]) if entity_data["id"] else False
 
                 # Determine if writable
                 writable = (
@@ -587,7 +589,7 @@ async def async_setup_entry(
                 select_entity = sensor_class(
                     coordinator,
                     entity_key,
-                    entity_id,
+                    entity_data["id"],
                     config_entry.entry_id,
                     writable,
                     enabled_by_default=enabled_by_default,
@@ -597,7 +599,7 @@ async def async_setup_entry(
                 _LOGGER.debug(
                     "Added select entity: %s (ID: %s, enabled_by_default: %s)",
                     entity_key,
-                    entity_id,
+                    entity_data["id"],
                     enabled_by_default,
                 )
 

@@ -440,9 +440,10 @@ async def async_setup_entry(
                 entity_info = ENTITIES.get(entity_key, {})
                 entity_info.get("category", "")
 
-                # Determine if this entity should be enabled by default
-                # For now, enable all sensor entities from the catalog
-                enabled_by_default = True
+                # Get entity ID to check against DEFAULT_ENABLED_ENTITIES
+                entity_info = ENTITIES.get(entity_key, {})
+                entity_id = entity_info.get("id")
+                enabled_by_default = coordinator.is_entity_enabled(entity_id) if entity_id else False
 
                 # Create the sensor using the new SVKSensor class
                 sensor = SVKSensor(

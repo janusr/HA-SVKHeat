@@ -238,7 +238,7 @@ async def async_setup_entry(
             # Include alarm_active entity
             if entity_key == "alarm_active":
                 # Check if this entity should be enabled by default
-                enabled_by_default = entity_id in DEFAULT_ENABLED_ENTITIES
+                enabled_by_default = coordinator.is_entity_enabled(entity_id) if entity_id else False
 
                 # Use the alarm binary sensor class for additional attributes
                 binary_sensor = SVKHeatpumpAlarmBinarySensor(
@@ -253,7 +253,7 @@ async def async_setup_entry(
             # Include digital outputs (IDs 222-225)
             elif entity_id in [222, 223, 224, 225]:
                 # Check if this entity should be enabled by default
-                enabled_by_default = entity_id in DEFAULT_ENABLED_ENTITIES
+                enabled_by_default = coordinator.is_entity_enabled(entity_id) if entity_id else False
 
                 binary_sensor = SVKHeatpumpBinarySensor(
                     coordinator,
