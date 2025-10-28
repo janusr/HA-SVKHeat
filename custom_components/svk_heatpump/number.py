@@ -44,11 +44,11 @@ from .const import DOMAIN
 from .coordinator import SVKHeatpumpDataCoordinator
 
 
-def _get_constants() -> tuple[dict[int, tuple[str, str, str, str, str]], list[int]]:
+def _get_constants() -> tuple[dict[str, dict[str, Any]], list[int]]:
     """Lazy import of constants to prevent blocking during async setup."""
-    from .catalog import DEFAULT_ENABLED_ENTITIES, ID_MAP
+    from .catalog import DEFAULT_ENABLED_ENTITIES, ENTITIES
 
-    return ID_MAP, DEFAULT_ENABLED_ENTITIES
+    return ENTITIES, DEFAULT_ENABLED_ENTITIES
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -241,16 +241,34 @@ class SVKHeatpumpNumber(SVKHeatpumpBaseEntity, NumberEntity):
             enabled_by_default,
         )
 
-        # Get entity info from ID_MAP (5-element structure)
-        ID_MAP, _ = _get_constants()
-        entity_info = ID_MAP.get(entity_id, ("", "", None, None, ""))
-        (
-            self._entity_key,
-            self._unit,
-            self._device_class,
-            self._state_class,
-            self._original_name,
-        ) = entity_info
+        # Get entity info from ENTITIES structure
+        ENTITIES, _ = _get_constants()
+        # Find entity by ID in ENTITIES
+        entity_info = None
+        for entity_key, entity_data in ENTITIES.items():
+            if "id" in entity_data and entity_data["id"] == entity_id:
+                entity_info = {
+                    "entity_key": entity_key,
+                    "unit": entity_data.get("unit", ""),
+                    "device_class": entity_data.get("device_class"),
+                    "state_class": entity_data.get("state_class"),
+                    "original_name": entity_data.get("original_name", ""),
+                }
+                break
+        
+        if entity_info:
+            self._entity_key = entity_info["entity_key"]
+            self._unit = entity_info["unit"]
+            self._device_class = entity_info["device_class"]
+            self._state_class = entity_info["state_class"]
+            self._original_name = entity_info["original_name"]
+        else:
+            # Fallback to empty values if not found
+            self._entity_key = ""
+            self._unit = ""
+            self._device_class = None
+            self._state_class = None
+            self._original_name = ""
 
         # Create entity description
         device_class = None
@@ -481,16 +499,19 @@ async def async_setup_entry(
         )
 
         # Get constants using lazy import
-        ID_MAP, DEFAULT_ENABLED_ENTITIES = _get_constants()
+        ENTITIES, DEFAULT_ENABLED_ENTITIES = _get_constants()
 
-        # Create all possible entities from ID_MAP
-        for entity_id, (
-            entity_key,
-            _unit,
-            _device_class,
-            _state_class,
-            _original_name,
-        ) in ID_MAP.items():
+        # Create all possible entities from ENTITIES
+        for entity_id, entity_data in ENTITIES.items():
+            # Only process entities that have an ID
+            if "id" not in entity_data or entity_data["id"] is None:
+                continue
+                
+            entity_key = entity_key
+            _unit = entity_data.get("unit", "")
+            _device_class = entity_data.get("device_class")
+            _state_class = entity_data.get("state_class")
+            _original_name = entity_data.get("original_name", "")
             # Only include writable setpoint entities
             if entity_key in [
                 "heating_setpoint",
@@ -498,7 +519,7 @@ async def async_setup_entry(
                 "room_setpoint",
             ]:
                 # Check if this entity should be enabled by default
-                enabled_by_default = entity_id in DEFAULT_ENABLED_ENTITIES
+                enabled_by_default = entity_data["id"] in DEFAULT_ENABLED_ENTITIES
 
                 # Create specialized classes for specific entities
                 if entity_key == "hot_water_setpoint":

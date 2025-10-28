@@ -246,9 +246,8 @@ class SVKHeatpumpSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
         self._attr_entity_registry_enabled_default = enabled_by_default
 
         _LOGGER.debug(
-            "Creating switch entity: %s (ID: %s, enabled_by_default: %s)",
+            "Creating switch entity: %s (enabled_by_default: %s)",
             entity_key,
-            entity_id,
             enabled_by_default,
         )
 
@@ -284,7 +283,7 @@ class SVKHeatpumpSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
     @property
     def unique_id(self) -> str:
         """Return unique ID for switch."""
-        return f"{self._config_entry_id}_{self._entity_id}"
+        return f"{DOMAIN}_{self._entity_key}_{self._entity_id}"
 
     @property
     def is_on(self) -> bool | None:

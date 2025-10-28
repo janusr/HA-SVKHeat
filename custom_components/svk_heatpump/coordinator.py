@@ -25,11 +25,11 @@ from .const import (
 )
 
 
-def _get_constants() -> tuple[dict[int, tuple[str, str, str, str, str]], list[int]]:
+def _get_constants() -> tuple[dict[str, dict[str, Any]], list[int]]:
     """Lazy import of constants to prevent blocking during async setup."""
-    from .catalog import DEFAULT_ENABLED_ENTITIES, ID_MAP
+    from .catalog import DEFAULT_ENABLED_ENTITIES, ENTITIES
 
-    return ID_MAP, DEFAULT_ENABLED_ENTITIES
+    return ENTITIES, DEFAULT_ENABLED_ENTITIES
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -96,23 +96,20 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                 except ValueError as err:
                     _LOGGER.warning("Invalid ID list in config, ignoring: %s", err)
 
-            # Create reverse mapping for efficient lookups
+            # Create reverse mapping for efficient lookups using ENTITIES structure
             self.id_to_entity_map = {}
-            ID_MAP, _ = _get_constants()
-            for entity_id, (
-                entity_key,
-                unit,
-                device_class,
-                state_class,
-                original_name,
-            ) in ID_MAP.items():
-                self.id_to_entity_map[entity_id] = {
-                    "key": entity_key,
-                    "unit": unit,
-                    "device_class": device_class,
-                    "state_class": state_class,
-                    "original_name": original_name,
-                }
+            ENTITIES, DEFAULT_ENABLED_ENTITIES = _get_constants()
+            for entity_key, entity_data in ENTITIES.items():
+                # Only add entities that have an ID
+                if "id" in entity_data and entity_data["id"] is not None:
+                    entity_id = entity_data["id"]
+                    self.id_to_entity_map[entity_id] = {
+                        "key": entity_key,
+                        "unit": entity_data.get("unit", ""),
+                        "device_class": entity_data.get("device_class"),
+                        "state_class": entity_data.get("state_class"),
+                        "original_name": entity_data.get("original_name", ""),
+                    }
 
             # Store last-good values
             self.last_good_values: dict[str, Any] = {}

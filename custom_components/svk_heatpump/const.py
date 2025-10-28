@@ -186,7 +186,7 @@ def parse_id_list(id_list_str: str) -> list[int]:
 
 
 def validate_id_list(id_list_str: str) -> bool:
-    """Validate that all IDs in the list are valid integers and exist in ID_MAP.
+    """Validate that all IDs in the list are valid integers and exist in ENTITIES.
 
     Args:
         id_list_str (str): Semicolon-separated ID list string
@@ -199,9 +199,15 @@ def validate_id_list(id_list_str: str) -> bool:
 
     try:
         ids = parse_id_list(id_list_str)
-        # Import ID_MAP from catalog to validate
-        from .catalog import ID_MAP
-        return all(entity_id in ID_MAP for entity_id in ids)
+        # Import ENTITIES from catalog to validate
+        from .catalog import ENTITIES
+        # Extract all valid IDs from ENTITIES (those that have an ID)
+        valid_entity_ids = [
+            entity_data["id"]
+            for entity_data in ENTITIES.values()
+            if "id" in entity_data and entity_data["id"] is not None
+        ]
+        return all(entity_id in valid_entity_ids for entity_id in ids)
     except ValueError:
         return False
 
@@ -563,7 +569,6 @@ try:
         NUMBER_ENTITIES_LEGACY,
         
         # Entity mappings and lists
-        ID_MAP,
         BINARY_OUTPUT_IDS,
         get_default_ids,
         DEFAULT_ENABLED_ENTITIES,
@@ -575,7 +580,7 @@ try:
         get_binary_output_name,
         get_entity_group_info,
         get_entity_ids_by_group,
-        get_entity_by_id,
+        get_entity_by_id,  # type: ignore
         
         # Platform-specific entity lists
         SENSOR_ENTITIES,
@@ -603,26 +608,28 @@ except ImportError:
     BINARY_SENSORS = {}
     SELECT_ENTITIES_LEGACY = {}
     NUMBER_ENTITIES_LEGACY = {}
-    ID_MAP = {}
     BINARY_OUTPUT_IDS = {}
     DEFAULT_ENABLED_ENTITIES = []
     
     def get_default_ids():
-        """Generate default IDs from ID_MAP.
+        """Generate default IDs from ENTITIES.
         
         Returns:
-            str: Semicolon-separated string of entity IDs from ID_MAP
+            str: Semicolon-separated string of entity IDs from ENTITIES
         """
-        from .catalog import ID_MAP
-        all_ids = sorted(ID_MAP.keys())
-        return ";".join(str(id) for id in all_ids)
+        try:
+            from .catalog import get_default_ids
+            return get_default_ids()
+        except ImportError:
+            return ""
+    
     SENSOR_ENTITIES = []
     BINARY_SENSOR_ENTITIES = []
     NUMBER_ENTITIES = []
     SELECT_ENTITIES = []
     SWITCH_ENTITIES = []
     
-    def get_entity_info(entity_id: int):
+    def get_entity_info(entity_id: int) -> tuple[str, Any, Any, Any, str] | None:
         return None
     
     def is_binary_output(entity_id) -> bool:

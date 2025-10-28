@@ -42,9 +42,9 @@ _LOGGER = logging.getLogger(__name__)
 
 def _get_constants():
     """Lazy import of constants to prevent blocking during async setup."""
-    from .catalog import DEFAULT_ENABLED_ENTITIES, ID_MAP
+    from .catalog import DEFAULT_ENABLED_ENTITIES, ENTITIES
 
-    return ID_MAP, DEFAULT_ENABLED_ENTITIES
+    return ENTITIES, DEFAULT_ENABLED_ENTITIES
 
 
 class SVKHeatpumpBaseEntity(CoordinatorEntity):
@@ -72,7 +72,6 @@ class SVKHeatpumpBinarySensor(SVKHeatpumpBaseEntity, BinarySensorEntity):
         self,
         coordinator: SVKHeatpumpDataCoordinator,
         entity_key: str,
-        entity_id: int,
         config_entry_id: str,
         enabled_by_default: bool = True,
     ) -> None:
@@ -83,22 +82,39 @@ class SVKHeatpumpBinarySensor(SVKHeatpumpBaseEntity, BinarySensorEntity):
         self._attr_entity_registry_enabled_default = enabled_by_default
 
         _LOGGER.debug(
-            "Creating binary sensor entity: %s (ID: %s, enabled_by_default: %s)",
+            "Creating binary sensor entity: %s (enabled_by_default: %s)",
             entity_key,
-            entity_id,
             enabled_by_default,
         )
 
-        # Get entity info from ID_MAP (5-element structure)
-        ID_MAP, _ = _get_constants()
-        entity_info = ID_MAP.get(entity_id, ("", "", None, None, ""))
-        (
-            self._entity_key,
-            self._unit,
-            self._device_class,
-            self._state_class,
-            self._original_name,
-        ) = entity_info
+        # Get entity info from ENTITIES structure
+        ENTITIES, _ = _get_constants()
+        # Find entity by ID in ENTITIES
+        entity_info = None
+        for entity_key, entity_data in ENTITIES.items():
+            if "id" in entity_data and entity_data["id"] == entity_id:
+                entity_info = {
+                    "entity_key": entity_key,
+                    "unit": entity_data.get("unit", ""),
+                    "device_class": entity_data.get("device_class"),
+                    "state_class": entity_data.get("state_class"),
+                    "original_name": entity_data.get("original_name", ""),
+                }
+                break
+        
+        if entity_info:
+            self._entity_key = entity_info["entity_key"]
+            self._unit = entity_info["unit"]
+            self._device_class = entity_info["device_class"]
+            self._state_class = entity_info["state_class"]
+            self._original_name = entity_info["original_name"]
+        else:
+            # Fallback to empty values if not found
+            self._entity_key = ""
+            self._unit = ""
+            self._device_class = None
+            self._state_class = None
+            self._original_name = ""
 
         # Create entity description
         device_class = None
@@ -106,7 +122,8 @@ class SVKHeatpumpBinarySensor(SVKHeatpumpBaseEntity, BinarySensorEntity):
 
         if self._entity_key == "alarm_active":
             device_class = BinarySensorDeviceClass.PROBLEM
-        elif entity_id in [222, 223, 224, 225]:  # Digital outputs
+        # Note: Digital outputs are identified by entity_key pattern in ENTITIES
+        elif "output" in entity_key.lower():  # Digital outputs
             device_class = BinarySensorDeviceClass.RUNNING
 
         # Set entity category based on entity definition
@@ -130,7 +147,7 @@ class SVKHeatpumpBinarySensor(SVKHeatpumpBaseEntity, BinarySensorEntity):
     @property
     def unique_id(self) -> str:
         """Return unique ID for binary sensor."""
-        return f"{self._config_entry_id}_{self._entity_id}"
+        return f"{DOMAIN}_{self._entity_key}_{self._entity_key}"
 
     @property
     def is_on(self) -> bool:
@@ -197,19 +214,22 @@ async def async_setup_entry(
 
     binary_sensors = []
 
-    # Create binary sensors based on ID_MAP for JSON API
+    # Create binary sensors based on ENTITIES for JSON API
     if coordinator.is_json_client:
         # Get constants using lazy import
-        ID_MAP, DEFAULT_ENABLED_ENTITIES = _get_constants()
+        ENTITIES, DEFAULT_ENABLED_ENTITIES = _get_constants()
 
-        # Create all possible entities from ID_MAP
-        for entity_id, (
-            entity_key,
-            _unit,
-            _device_class,
-            _state_class,
-            _original_name,
-        ) in ID_MAP.items():
+        # Create all possible entities from ENTITIES
+        for entity_id, entity_data in ENTITIES.items():
+            # Only process entities that have an ID
+            if "id" not in entity_data or entity_data["id"] is None:
+                continue
+                
+            entity_key = entity_data
+            _unit = entity_data.get("unit", "")
+            _device_class = entity_data.get("device_class")
+            _state_class = entity_data.get("state_class")
+            _original_name = entity_data.get("original_name", "")
             # Include alarm_active entity
             if entity_key == "alarm_active":
                 # Check if this entity should be enabled by default
@@ -241,9 +261,8 @@ async def async_setup_entry(
 
                 binary_sensors.append(binary_sensor)
                 _LOGGER.debug(
-                    "Added binary sensor entity: %s (ID: %s, enabled_by_default: %s)",
+                    "Added binary sensor entity: %s (enabled_by_default: %s)",
                     entity_key,
-                    entity_id,
                     enabled_by_default,
                 )
     else:

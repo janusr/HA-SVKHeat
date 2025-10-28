@@ -32,12 +32,12 @@ from .const import DOMAIN
 from .coordinator import SVKHeatpumpDataCoordinator
 
 
-def _get_constants() -> tuple[dict[int, tuple[str, str, str, str, str]], dict[str, str], list[int]]:
+def _get_constants() -> tuple[dict[str, str], list[int]]:
     """Lazy import of constants to prevent blocking during async setup."""
-    from .catalog import DEFAULT_ENABLED_ENTITIES, ID_MAP
+    from .catalog import DEFAULT_ENABLED_ENTITIES
     from .const import SEASON_MODES_REVERSE
 
-    return ID_MAP, SEASON_MODES_REVERSE, DEFAULT_ENABLED_ENTITIES
+    return SEASON_MODES_REVERSE, DEFAULT_ENABLED_ENTITIES
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -318,20 +318,37 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
             enabled_by_default,
         )
 
-        # Get entity info from ID_MAP (5-element structure)
-        ID_MAP, _, _ = _get_constants()
-        if entity_id not in ID_MAP:
-            _LOGGER.error("Entity ID %s not found in ID_MAP", entity_id)
-            entity_info = ("", "", None, None, "")
-        else:
-            entity_info = ID_MAP[entity_id]
-        (
-            self._entity_key,
-            self._unit,
-            self._device_class,
-            self._state_class,
-            self._original_name,
-        ) = entity_info
+        # Get entity info from ENTITIES structure
+        ENTITIES, _, _ = _get_constants()
+        # Find entity by ID in ENTITIES
+        entity_info = None
+        for entity_key, entity_data in ENTITIES.items():
+            if "id" in entity_data and entity_data["id"] == entity_id:
+                entity_info = {
+                    "entity_key": entity_key,
+                    "unit": entity_data.get("unit", ""),
+                    "device_class": entity_data.get("device_class"),
+                    "state_class": entity_data.get("state_class"),
+                    "original_name": entity_data.get("original_name", ""),
+                }
+                break
+        
+        if not entity_info:
+            _LOGGER.error("Entity ID %s not found in ENTITIES", entity_id)
+            # Fallback to empty values if not found
+            entity_info = {
+                "entity_key": "",
+                "unit": "",
+                "device_class": None,
+                "state_class": None,
+                "original_name": "",
+            }
+        
+        self._entity_key = entity_info["entity_key"]
+        self._unit = entity_info["unit"]
+        self._device_class = entity_info["device_class"]
+        self._state_class = entity_info["state_class"]
+        self._original_name = entity_info["original_name"]
 
         # Set options based on entity type
         options = []
@@ -362,13 +379,13 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
         entity_category = None
 
         # Get entity info from ENTITIES dictionary instead of SELECT_ENTITIES list
-        if self._entity_key in ENTITIES and ENTITIES.get(
-            self._entity_key, {}
-        ).get("entity_category"):
-            entity_category = getattr(
-                EntityCategory,
-                ENTITIES[self._entity_key]["entity_category"].upper(),
-            )
+        if self._entity_key in ENTITIES:
+            entity_data = ENTITIES.get(self._entity_key, {})
+            if entity_data.get("category"):
+                entity_category = getattr(
+                    EntityCategory,
+                    entity_data["category"].upper(),
+                )
 
         self.entity_description = SelectEntityDescription(
             key=self._entity_key,
@@ -535,20 +552,23 @@ async def async_setup_entry(
     else:
         # Fall back to HTML scraping entities for backward compatibility
         # Get constants using lazy import
-        ID_MAP, _, DEFAULT_ENABLED_ENTITIES = _get_constants()
+        ENTITIES, DEFAULT_ENABLED_ENTITIES = _get_constants()
 
-        # Create all possible entities from ID_MAP
-        for entity_id, (
-            entity_key,
-            _unit,
-            _device_class,
-            _state_class,
-            _original_name,
-        ) in ID_MAP.items():
+        # Create all possible entities from ENTITIES
+        for entity_id, entity_data in ENTITIES.items():
+            # Only process entities that have an ID
+            if "id" not in entity_data or entity_data["id"] is None:
+                continue
+                
+            entity_key = entity_key
+            _unit = entity_data.get("unit", "")
+            _device_class = entity_data.get("device_class")
+            _state_class = entity_data.get("state_class")
+            _original_name = entity_data.get("original_name", "")
             # Only include select entities
             if entity_key in ["season_mode", "heatpump_state"]:
                 # Check if this entity should be enabled by default
-                enabled_by_default = entity_id in DEFAULT_ENABLED_ENTITIES
+                enabled_by_default = entity_data["id"] in DEFAULT_ENABLED_ENTITIES
 
                 # Determine if writable
                 writable = (

@@ -18,7 +18,7 @@ from .client import (
     SVKParseError,
     SVKTimeoutError,
 )
-from .catalog import get_default_ids
+from .catalog import get_default_ids, ENTITIES
 from .const import (
     CONF_ENABLE_WRITES,
     CONF_ID_LIST,
@@ -309,9 +309,9 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow):
             password = user_input.get(CONF_PASSWORD, "")
 
             client = LOMJsonClient(
-                host or "",
-                username or "",
-                password or "",
+                self._host or "",
+                self._username or "",
+                self._password or "",
                 DEFAULT_TIMEOUT,
             )
 
