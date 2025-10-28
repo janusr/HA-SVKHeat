@@ -119,16 +119,10 @@ class SVKHeatpumpBinarySensor(SVKHeatpumpBaseEntity, BinarySensorEntity):
                 BINARY_SENSORS[self._entity_key]["entity_category"].upper(),
             )
 
-        # Use original_name for friendly display name if available
-        friendly_name = (
-            self._original_name.replace("_", " ").title()
-            if self._original_name
-            else self._entity_key.replace("_", " ").title()
-        )
-
+        # Use entity_key for translation
         self.entity_description = BinarySensorEntityDescription(
             key=self._entity_key,
-            name=friendly_name,
+            name=self._entity_key,  # Use entity_key for translation
             device_class=device_class,
             entity_category=entity_category,
         )

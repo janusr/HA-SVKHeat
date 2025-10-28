@@ -78,7 +78,6 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
 
         # Get entity info from catalog
         entity_info = ENTITIES.get(entity_key, {})
-        name = entity_info.get("name", entity_key.replace("_", " ").title())
         data_type = entity_info.get("data_type", "")
         category = entity_info.get("category", "")
 
@@ -165,7 +164,7 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
         # Create entity description
         self.entity_description = SelectEntityDescription(
             key=entity_key,
-            name=name,
+            name=entity_key,  # Use entity_key for translation
             options=options,
             icon=icon,
             entity_category=entity_category,
@@ -359,13 +358,6 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
                 "Manual",
             ]
 
-        # Use original_name for friendly display name if available
-        friendly_name = (
-            self._original_name.replace("_", " ").title()
-            if self._original_name
-            else self._entity_key.replace("_", " ").title()
-        )
-
         # Set entity category based on entity definition
         entity_category = None
 
@@ -380,7 +372,7 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
 
         self.entity_description = SelectEntityDescription(
             key=self._entity_key,
-            name=friendly_name,
+            name=self._entity_key,  # Use entity_key for translation
             options=options,
             entity_category=entity_category,
         )
@@ -510,7 +502,6 @@ async def async_setup_entry(
             try:
                 # Get entity info from catalog
                 entity_info = ENTITIES.get(entity_key, {})
-                name = entity_info.get("name", entity_key.replace("_", " ").title())
                 access_type = entity_info.get("access_type", "")
 
                 # Only include writable entities
@@ -533,9 +524,8 @@ async def async_setup_entry(
 
                 select_entities.append(select)
                 _LOGGER.debug(
-                    "Added select entity: %s (name: %s, enabled_by_default: %s)",
+                    "Added select entity: %s (enabled_by_default: %s)",
                     entity_key,
-                    name,
                     enabled_by_default,
                 )
             except Exception as err:

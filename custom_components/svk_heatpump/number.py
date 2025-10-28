@@ -88,7 +88,6 @@ class SVKNumber(SVKHeatpumpBaseEntity, NumberEntity):
 
         # Get entity info from catalog
         entity_info = ENTITIES.get(entity_key, {})
-        name = entity_info.get("name", entity_key.replace("_", " ").title())
         data_type = entity_info.get("data_type", "")
         unit = entity_info.get("unit", "")
         category = entity_info.get("category", "")
@@ -129,7 +128,7 @@ class SVKNumber(SVKHeatpumpBaseEntity, NumberEntity):
         # Create entity description
         self.entity_description = NumberEntityDescription(
             key=entity_key,
-            name=name,
+            name=entity_key,  # Use entity_key for translation
             native_min_value=min_value,
             native_max_value=max_value,
             native_step=step,
@@ -258,13 +257,6 @@ class SVKHeatpumpNumber(SVKHeatpumpBaseEntity, NumberEntity):
         if self._device_class == "temperature":
             device_class = NumberDeviceClass.TEMPERATURE
 
-        # Use original_name for friendly display name if available
-        friendly_name = (
-            self._original_name.replace("_", " ").title()
-            if self._original_name
-            else self._entity_key.replace("_", " ").title()
-        )
-
         # Set entity category based on entity definition
         entity_category = None
 
@@ -278,7 +270,7 @@ class SVKHeatpumpNumber(SVKHeatpumpBaseEntity, NumberEntity):
 
         self.entity_description = NumberEntityDescription(
             key=self._entity_key,
-            name=friendly_name,
+            name=self._entity_key,  # Use entity_key for translation
             native_min_value=self._min_value,
             native_max_value=self._max_value,
             native_step=self._step,
@@ -452,7 +444,6 @@ async def async_setup_entry(
             try:
                 # Get entity info from catalog
                 entity_info = ENTITIES.get(entity_key, {})
-                name = entity_info.get("name", entity_key.replace("_", " ").title())
                 access_type = entity_info.get("access_type", "")
 
                 # Only include writable entities
@@ -474,9 +465,8 @@ async def async_setup_entry(
 
                 number_entities.append(number)
                 _LOGGER.debug(
-                    "Added number entity: %s (name: %s, enabled_by_default: %s)",
+                    "Added number entity: %s (enabled_by_default: %s)",
                     entity_key,
-                    name,
                     enabled_by_default,
                 )
             except Exception as err:

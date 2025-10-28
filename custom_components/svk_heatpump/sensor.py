@@ -88,7 +88,6 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
 
         # Get entity info from catalog
         entity_info = ENTITIES.get(entity_key, {})
-        name = entity_info.get("name", entity_key.replace("_", " ").title())
         data_type = entity_info.get("data_type", "")
         unit = entity_info.get("unit", "")
         category = entity_info.get("category", "")
@@ -140,7 +139,7 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
         # Create entity description
         self.entity_description = SensorEntityDescription(
             key=entity_key,
-            name=name,
+            name=entity_key,  # Use entity_key for translation
             device_class=device_class,
             native_unit_of_measurement=unit,
             state_class=state_class,
@@ -302,16 +301,10 @@ class SVKHeatpumpSensor(SVKHeatpumpBaseEntity, SensorEntity):
         ):
             entity_category = EntityCategory.DIAGNOSTIC
 
-        # Use original_name for friendly display name if available
-        friendly_name = (
-            self._original_name.replace("_", " ").title()
-            if self._original_name
-            else self._entity_key.replace("_", " ").title()
-        )
-
+        # Use entity_key for translation
         self.entity_description = SensorEntityDescription(
             key=self._entity_key,
-            name=friendly_name,
+            name=self._entity_key,  # Use entity_key for translation
             device_class=device_class,
             native_unit_of_measurement=self._unit,
             state_class=state_class,
@@ -427,7 +420,6 @@ async def async_setup_entry(
             try:
                 # Get entity info from catalog
                 entity_info = ENTITIES.get(entity_key, {})
-                name = entity_info.get("name", entity_key.replace("_", " ").title())
                 entity_info.get("category", "")
 
                 # Determine if this entity should be enabled by default
@@ -444,9 +436,8 @@ async def async_setup_entry(
 
                 sensors.append(sensor)
                 _LOGGER.debug(
-                    "Added sensor entity: %s (name: %s, enabled_by_default: %s)",
+                    "Added sensor entity: %s (enabled_by_default: %s)",
                     entity_key,
-                    name,
                     enabled_by_default,
                 )
             except Exception as err:

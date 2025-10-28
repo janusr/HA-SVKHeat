@@ -74,7 +74,6 @@ class SVKSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
 
         # Get entity info from catalog
         entity_info = ENTITIES.get(entity_key, {})
-        name = entity_info.get("name", entity_key.replace("_", " ").title())
         data_type = entity_info.get("data_type", "")
         category = entity_info.get("category", "")
 
@@ -123,7 +122,7 @@ class SVKSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
         # Create entity description
         self.entity_description = SwitchEntityDescription(
             key=entity_key,
-            name=name,
+            name=entity_key,  # Use entity_key for translation
             device_class=device_class,
             icon=icon,
             entity_category=entity_category,
@@ -271,15 +270,12 @@ class SVKHeatpumpSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
         elif "concrete" in self._entity_key.lower():
             icon = "mdi:floor-plan"  # For concrete mode
 
-        # Use entity_key for friendly display name
-        friendly_name = self._entity_key.replace("_", " ").title()
-
         # Set entity category based on entity definition
         entity_category = EntityCategory.CONFIG
 
         self.entity_description = SwitchEntityDescription(
             key=self._entity_key,
-            name=friendly_name,
+            name=self._entity_key,  # Use entity_key for translation
             device_class=device_class,
             icon=icon,
             entity_category=entity_category,
@@ -414,7 +410,6 @@ async def async_setup_entry(
             try:
                 # Get entity info from catalog
                 entity_info = ENTITIES.get(entity_key, {})
-                name = entity_info.get("name", entity_key.replace("_", " ").title())
                 entity_info.get("category", "")
                 access_type = entity_info.get("access_type", "")
 
@@ -437,9 +432,8 @@ async def async_setup_entry(
 
                 switch_entities.append(switch)
                 _LOGGER.debug(
-                    "Added switch entity: %s (name: %s, enabled_by_default: %s)",
+                    "Added switch entity: %s (enabled_by_default: %s)",
                     entity_key,
-                    name,
                     enabled_by_default,
                 )
             except Exception as err:
