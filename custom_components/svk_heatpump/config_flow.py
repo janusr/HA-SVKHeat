@@ -18,11 +18,11 @@ from .client import (
     SVKParseError,
     SVKTimeoutError,
 )
+from .catalog import DEFAULT_IDS
 from .const import (
     CONF_ENABLE_WRITES,
     CONF_ID_LIST,
     CONF_SCAN_INTERVAL,
-    DEFAULT_IDS,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_TIMEOUT,
     DOMAIN,

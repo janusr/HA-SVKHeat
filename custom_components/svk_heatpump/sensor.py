@@ -38,10 +38,10 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .catalog import ENTITIES, SENSOR_ENTITIES
+from .catalog import ENTITIES, SENSOR_ENTITIES, COUNTER_SENSORS, SYSTEM_COUNTER_SENSORS, SYSTEM_SENSORS
 
 # Import specific items from modules
-from .const import DOMAIN, COUNTER_SENSORS, SYSTEM_COUNTER_SENSORS, SYSTEM_SENSORS
+from .const import DOMAIN
 from .coordinator import SVKHeatpumpDataCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ _LOGGER = logging.getLogger(__name__)
 
 def _get_constants() -> tuple[dict[int, tuple[str, str, str, str, str]], list[int]]:
     """Lazy import of constants to prevent blocking during async setup."""
-    from .const import DEFAULT_ENABLED_ENTITIES, ID_MAP
+    from .catalog import DEFAULT_ENABLED_ENTITIES, ID_MAP
 
     return ID_MAP, DEFAULT_ENABLED_ENTITIES
 
@@ -131,9 +131,9 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
         # Set entity category based on category
         entity_category = None
         if category == "Configuration":
-            entity_category = EntityCategory.CONFIG
+            entity_category = EntityCategory.DIAGNOSTIC
         elif category == "Settings":
-            entity_category = EntityCategory.CONFIG
+            entity_category = EntityCategory.DIAGNOSTIC
         elif "runtime" in entity_key or "gain" in entity_key or "count" in entity_key:
             entity_category = EntityCategory.DIAGNOSTIC
 

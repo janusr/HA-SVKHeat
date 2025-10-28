@@ -71,7 +71,6 @@ Basic Setup
 ~~~~~~~~~~~~~
 
 * **Host**: IP address or hostname of your heat pump (e.g., ``192.168.1.100``)
-* **Port**: HTTP port (default: ``80``)
 * **Username**: Administrator username (default: ``admin``)
 * **Password**: Administrator password
 * **Scan Interval**: Data refresh interval in seconds (default: ``30``)
@@ -82,19 +81,6 @@ Advanced Options
 * **Enable Writes**: Allow control of heat pump parameters (default: ``False``)
   * When enabled, you can adjust setpoints and operational parameters
   * Requires careful consideration as changes affect heat pump operation
-* **Authentication Method**: Auto-detect between Digest and Basic authentication
-  * Digest authentication is recommended for security
-  * Basic authentication fallback for older firmware versions
-
-Legacy Configuration
-~~~~~~~~~~~~~~~~~~~~~
-
-For users upgrading from previous versions of this integration:
-
-* **ID List**: Custom list of entity IDs (legacy feature)
-  * Only shown for existing configurations with custom entity IDs
-  * New installations use UI-based entity management (recommended)
-  * Format: Comma-separated list of numeric IDs (e.g., ``253,254,255``)
 
 Modern Entity Management
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -116,12 +102,12 @@ This approach provides:
 API Implementation
 -----------------
 
-JSON API (Primary)
+JSON API
 ~~~~~~~~~~~~~~~~~~
 
 The integration prioritizes the modern JSON API for optimal performance:
 
-* **Endpoint**: ``/cgi-bin/LomJson.cgi``
+* **Endpoint**: ``/cgi-bin/json_values.cgi``
 * **Method**: POST requests with JSON payload
 * **Authentication**: Digest authentication with automatic nonce handling
 * **Chunking**: Automatic request optimization for large entity sets
@@ -133,7 +119,7 @@ Performance Features
 ~~~~~~~~~~~~~~~~~~~
 
 * **Smart Chunking**: Automatically splits large requests into optimal chunks
-  * Default chunk size: 50 entities per request
+  * Default chunk size: 25 entities per request
   * Reduces heat pump processing load
   * Minimizes network timeout risk
 
@@ -145,20 +131,10 @@ Performance Features
   * Reduces total update time by 40-60%
   * Non-blocking implementation prevents Home Assistant freezing
 
-HTML Scraping (Fallback)
-~~~~~~~~~~~~~~~~~~~~~
-
-For older firmware versions or when JSON API is unavailable:
-
-* **Pages Scraped**: Display, User, Heating, Heat Pump, Solar, Hot Water
-* **Parser**: BeautifulSoup4 with lxml for efficient HTML parsing
-* **Error Recovery**: Graceful degradation when individual pages fail
-* **Compatibility**: Supports firmware versions 2.x and 3.x
-
 Authentication
 -------------
 
-Digest Authentication (Recommended)
+Digest Authentication
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * **Security**: Challenge-response mechanism with nonce values
@@ -166,17 +142,10 @@ Digest Authentication (Recommended)
 * **Automatic Handling**: Nonce refresh and stale authentication detection
 * **Error Messages**: Clear guidance for authentication issues
 
-Basic Authentication (Fallback)
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-* **Compatibility**: Older firmware versions without Digest support
-* **Security**: Transmits credentials in each request header
-* **Recommendation**: Upgrade firmware to enable Digest authentication
-
 Entities
 --------
 
-The integration provides 165+ entities organized into the following categories:
+The integration provides 150+ entities organized into the following categories:
 
 Temperature Sensors
 ~~~~~~~~~~~~~~~~~~

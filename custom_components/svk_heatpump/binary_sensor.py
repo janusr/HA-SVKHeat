@@ -33,7 +33,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 # Import specific items from modules
-from .const import DOMAIN, BINARY_SENSORS
+from .catalog import BINARY_SENSORS
+from .const import DOMAIN
 from .coordinator import SVKHeatpumpDataCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -41,7 +42,7 @@ _LOGGER = logging.getLogger(__name__)
 
 def _get_constants():
     """Lazy import of constants to prevent blocking during async setup."""
-    from .const import DEFAULT_ENABLED_ENTITIES, ID_MAP
+    from .catalog import DEFAULT_ENABLED_ENTITIES, ID_MAP
 
     return ID_MAP, DEFAULT_ENABLED_ENTITIES
 

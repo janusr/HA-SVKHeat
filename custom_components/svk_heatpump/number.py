@@ -46,7 +46,7 @@ from .coordinator import SVKHeatpumpDataCoordinator
 
 def _get_constants() -> tuple[dict[int, tuple[str, str, str, str, str]], list[int]]:
     """Lazy import of constants to prevent blocking during async setup."""
-    from .const import DEFAULT_ENABLED_ENTITIES, ID_MAP
+    from .catalog import DEFAULT_ENABLED_ENTITIES, ID_MAP
 
     return ID_MAP, DEFAULT_ENABLED_ENTITIES
 

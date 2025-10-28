@@ -1637,6 +1637,7 @@ ENTITIES = {
         "category": "Configuration",
         "group": "System",
         "page": "firmwareupgrade",
+        "data_type": "string",
         "access_type": "write",
     },
     "system_groups_name": {
@@ -1724,6 +1725,7 @@ SENSOR_ENTITIES = [
     "system_firmwareupgrade_lmc300",
     "system_firmwareupgrade_project_name",
     "system_firmwareupgrade_lup200",
+    "system_firmwareupgrade_datafile",
     "system_groups_name",
     "system_groups_admin",
     "system_groups_ha_user",
@@ -1848,8 +1850,1076 @@ SWITCH_ENTITIES = [
     "user_parameters_seasonmode",
 ]
 
+# Moved from const.py - Temperature sensor definitions
+TEMP_SENSORS = {
+    "heating_supply_temp": {
+        "name": "Heating Supply Temp",
+        "label": "Heating supply",
+        "page": "display",
+        "category": "Operation",
+        "group": "Display",
+        "device_class": "temperature",
+        "unit": "°C",
+        "state_class": "measurement",
+    },
+    "heating_return_temp": {
+        "name": "Heating Return Temp",
+        "label": "Heating return",
+        "page": "display",
+        "category": "Operation",
+        "group": "Display",
+        "device_class": "temperature",
+        "unit": "°C",
+        "state_class": "measurement",
+    },
+    "water_tank_temp": {
+        "name": "Water Tank Temp",
+        "label": "Water tank",
+        "page": "display",
+        "category": "Operation",
+        "group": "Display",
+        "device_class": "temperature",
+        "unit": "°C",
+        "state_class": "measurement",
+    },
+    "ambient_temp": {
+        "name": "Ambient Temp",
+        "label": "Ambient",
+        "page": "display",
+        "category": "Operation",
+        "group": "Display",
+        "device_class": "temperature",
+        "unit": "°C",
+        "state_class": "measurement",
+    },
+    "room_temp": {
+        "name": "Room Temp",
+        "label": "Room",
+        "page": "display",
+        "category": "Operation",
+        "group": "Display",
+        "device_class": "temperature",
+        "unit": "°C",
+        "state_class": "measurement",
+    },
+    "heating_tank_temp": {
+        "name": "Heating Tank Temp",
+        "label": "Heating tank",
+        "page": "display",
+        "category": "Operation",
+        "group": "Display",
+        "device_class": "temperature",
+        "unit": "°C",
+        "state_class": "measurement",
+    },
+    "cold_side_supply_temp": {
+        "name": "Cold Side Supply Temp",
+        "label": "Cold side supply",
+        "page": "display",
+        "category": "Operation",
+        "group": "Display",
+        "device_class": "temperature",
+        "unit": "°C",
+        "state_class": "measurement",
+    },
+    "cold_side_return_temp": {
+        "name": "Cold Side Return Temp",
+        "label": "Cold side return",
+        "page": "display",
+        "category": "Operation",
+        "group": "Display",
+        "device_class": "temperature",
+        "unit": "°C",
+        "state_class": "measurement",
+    },
+    "evaporator_temp": {
+        "name": "Evaporator Temp",
+        "label": "Evaporator",
+        "page": "display",
+        "category": "Operation",
+        "group": "Display",
+        "device_class": "temperature",
+        "unit": "°C",
+        "state_class": "measurement",
+    },
+    "solar_collector_temp": {
+        "name": "Solar Collector Temp",
+        "label": "Solar collector",
+        "page": "solar",
+        "category": "Settings",
+        "group": "Solar panel",
+        "device_class": "temperature",
+        "unit": "°C",
+        "state_class": "measurement",
+    },
+    "solar_water_temp": {
+        "name": "Solar Water Temp",
+        "label": "Solar water",
+        "page": "solar",
+        "category": "Settings",
+        "group": "Solar panel",
+        "device_class": "temperature",
+        "unit": "°C",
+        "state_class": "measurement",
+    },
+}
 
-# Helper functions
+# Moved from const.py - Setpoint sensor definitions
+SETPOINT_SENSORS = {
+    "heating_setpoint": {
+        "name": "Heating Set Point",
+        "label": "Heating set point",
+        "page": "user",
+        "category": "Operation",
+        "group": "User",
+        "device_class": "temperature",
+        "unit": "°C",
+        "state_class": "measurement",
+    },
+    "hot_water_setpoint": {
+        "name": "Hot Water Set Point",
+        "label": "Hot water set point",
+        "page": "user",
+        "category": "Operation",
+        "group": "User",
+        "device_class": "temperature",
+        "unit": "°C",
+        "state_class": "measurement",
+    },
+}
+
+# Moved from const.py - Performance sensor definitions
+PERFORMANCE_SENSORS = {
+    "compressor_speed_v": {
+        "name": "Compressor Speed",
+        "label": "Compressor speed",
+        "page": "heatpump",
+        "category": "Settings",
+        "group": "Heatpump",
+        "unit": "V",
+        "state_class": "measurement",
+    },
+    "compressor_speed_percent": {
+        "name": "Compressor Speed",
+        "label": "Compressor speed %",
+        "page": "heatpump",
+        "category": "Settings",
+        "group": "Heatpump",
+        "unit": "%",
+        "state_class": "measurement",
+    },
+    "cold_pump_speed": {
+        "name": "Cold Pump Speed",
+        "label": "Cold pump speed",
+        "page": "heatpump",
+        "category": "Settings",
+        "group": "Heatpump",
+        "unit": "V",
+        "state_class": "measurement",
+    },
+    "requested_capacity": {
+        "name": "Requested Heating Capacity",
+        "label": "Requested capacity",
+        "page": "heating",
+        "category": "Settings",
+        "group": "Heating",
+        "unit": "%",
+        "state_class": "measurement",
+    },
+    "actual_capacity": {
+        "name": "Actual Capacity",
+        "label": "Actual capacity",
+        "page": "heating",
+        "category": "Settings",
+        "group": "Heating",
+        "unit": "%",
+        "state_class": "measurement",
+    },
+}
+
+# Moved from const.py - Counter sensor definitions (diagnostic)
+COUNTER_SENSORS = {
+    "compressor_runtime": {
+        "name": "Compressor Runtime",
+        "label": "Compressor runtime",
+        "page": "heatpump",
+        "category": "Settings",
+        "group": "Heatpump",
+        "unit": "h",
+        "entity_category": "diagnostic",
+        "state_class": "total_increasing",
+    },
+    "heater_runtime": {
+        "name": "Heater Runtime",
+        "label": "Heater runtime",
+        "page": "heating",
+        "category": "Settings",
+        "group": "Heating",
+        "unit": "h",
+        "entity_category": "diagnostic",
+        "state_class": "total_increasing",
+    },
+    "pump_runtime": {
+        "name": "Pump Runtime",
+        "label": "Pump runtime",
+        "page": "heating",
+        "category": "Settings",
+        "group": "Heating",
+        "unit": "h",
+        "entity_category": "diagnostic",
+        "state_class": "total_increasing",
+    },
+    "heatpump_runtime": {
+        "name": "Heat Pump Runtime",
+        "label": "Heat pump runtime",
+        "page": "heatpump",
+        "category": "Settings",
+        "group": "Heatpump",
+        "unit": "h",
+        "entity_category": "diagnostic",
+        "state_class": "total_increasing",
+    },
+    "hot_water_runtime": {
+        "name": "Hot Water Runtime",
+        "label": "Hot water runtime",
+        "page": "hotwater",
+        "category": "Settings",
+        "group": "Hot water",
+        "unit": "h",
+        "entity_category": "diagnostic",
+        "state_class": "total_increasing",
+    },
+    "cold_pump_runtime": {
+        "name": "Cold Pump Runtime",
+        "label": "Cold pump runtime",
+        "page": "heatpump",
+        "category": "Settings",
+        "group": "Heatpump",
+        "unit": "h",
+        "entity_category": "diagnostic",
+        "state_class": "total_increasing",
+    },
+    "heatpump_ap_runtime": {
+        "name": "Heat Pump AP Runtime",
+        "label": "Heat pump AP runtime",
+        "page": "heatpump",
+        "category": "Settings",
+        "group": "Heatpump",
+        "unit": "h",
+        "entity_category": "diagnostic",
+        "state_class": "total_increasing",
+    },
+    "heatpump_hsp_runtime": {
+        "name": "Heat Pump HSP Runtime",
+        "label": "Heat pump HSP runtime",
+        "page": "heatpump",
+        "category": "Settings",
+        "group": "Heatpump",
+        "unit": "h",
+        "entity_category": "diagnostic",
+        "state_class": "total_increasing",
+    },
+    "heating_electric_runtime": {
+        "name": "Heating Electric Runtime",
+        "label": "Heating electric runtime",
+        "page": "heating",
+        "category": "Settings",
+        "group": "Heating",
+        "unit": "h",
+        "entity_category": "diagnostic",
+        "state_class": "total_increasing",
+    },
+    "solar_panel_runtime": {
+        "name": "Solar Panel Runtime",
+        "label": "Solar panel runtime",
+        "page": "solar",
+        "category": "Settings",
+        "group": "Solar panel",
+        "unit": "h",
+        "entity_category": "diagnostic",
+        "state_class": "total_increasing",
+    },
+}
+
+# Moved from const.py - System information sensors (diagnostic)
+SYSTEM_SENSORS = {
+    "ip_address": {
+        "name": "IP Address",
+        "label": "IP address",
+        "page": "display",
+        "category": "Configuration",
+        "group": "System",
+        "entity_category": "diagnostic",
+    },
+    "mac_address": {
+        "name": "MAC Address",
+        "label": "MAC address",
+        "page": "display",
+        "category": "Configuration",
+        "group": "System",
+        "entity_category": "diagnostic",
+    },
+    "app_version": {
+        "name": "App Version",
+        "label": "App version",
+        "page": "display",
+        "category": "Configuration",
+        "group": "System",
+        "entity_category": "diagnostic",
+    },
+    "lup200_software_version": {
+        "name": "LUP200 Software Version",
+        "label": "LUP200 software version",
+        "page": "display",
+        "category": "Configuration",
+        "group": "System",
+        "entity_category": "diagnostic",
+    },
+    "software_version": {
+        "name": "Software Version",
+        "label": "Software version",
+        "page": "display",
+        "category": "Configuration",
+        "group": "System",
+        "entity_category": "diagnostic",
+    },
+    "log_interval": {
+        "name": "Log Interval",
+        "label": "Log interval",
+        "page": "display",
+        "category": "Configuration",
+        "group": "System",
+        "entity_category": "diagnostic",
+    },
+}
+
+# Moved from const.py - System counter sensors (diagnostic)
+SYSTEM_COUNTER_SENSORS = {
+    "defrost_hot_gas_count": {
+        "name": "Defrost Hot Gas Count",
+        "label": "Defrost hot gas count",
+        "page": "settings_service",
+        "category": "Settings",
+        "group": "Service",
+        "entity_category": "diagnostic",
+        "state_class": "total_increasing",
+    },
+    "defrost_air_count": {
+        "name": "Defrost Air Count",
+        "label": "Defrost air count",
+        "page": "settings_service",
+        "category": "Settings",
+        "group": "Service",
+        "entity_category": "diagnostic",
+        "state_class": "total_increasing",
+    },
+}
+
+# Moved from const.py - Binary sensor definitions
+BINARY_SENSORS = {
+    "alarm_active": {
+        "name": "Alarm Active",
+        "label": "Alarm active",
+        "page": "display",
+        "category": "Operation",
+        "group": "Display",
+        "device_class": "problem",
+    }
+}
+
+# Moved from const.py - Select entity definitions
+SELECT_ENTITIES_LEGACY = {
+    "heatpump_state": {
+        "name": "Heat Pump State",
+        "label": "Heat pump state",
+        "page": "display",
+        "category": "Operation",
+        "group": "Display",
+        "options": ["Off", "Ready", "Start up", "Heating", "Hot water", "El heating", "Defrost", "Drip delay", "Total stop", "Pump exercise", "Forced running", "Manual"],
+        "mappings": {"Off": "off", "Ready": "ready", "Start up": "start_up", "Heating": "heating", "Hot water": "hot_water", "El heating": "el_heating", "Defrost": "defrost", "Drip delay": "drip_delay", "Total stop": "total_stop", "Pump exercise": "pump_exercise", "Forced running": "forced_running", "Manual": "manual"},
+    },
+    "solar_panel_state": {
+        "name": "Solar Panel State",
+        "label": "Solar panel state",
+        "page": "solar",
+        "category": "Settings",
+        "group": "Solar panel",
+        "options": ["Off", "Running", "Forced Stop"],
+        "mappings": {"Off": "off", "Running": "running", "Forced Stop": "forced_stop"},
+    },
+    "season_mode": {
+        "name": "Season Mode",
+        "label": "Season mode",
+        "page": "user",
+        "category": "Operation",
+        "group": "User",
+        "options": ["Summer", "Winter", "Auto"],
+        "mappings": {"Summer": "summer", "Winter": "winter", "Auto": "auto"},
+        "writable": True,
+    },
+}
+
+# Moved from const.py - Number entity definitions (writable)
+NUMBER_ENTITIES_LEGACY = {
+    "hot_water_setpoint": {
+        "name": "Hot Water Set Point",
+        "label": "Hot water set point",
+        "page": "user",
+        "category": "Operation",
+        "group": "User",
+        "min_value": 40,
+        "max_value": 65,
+        "step": 1,
+        "unit": "°C",
+        "device_class": "temperature",
+    },
+    "room_setpoint": {
+        "name": "Room Set Point",
+        "label": "Room set point",
+        "page": "user",
+        "category": "Operation",
+        "group": "User",
+        "min_value": 10,
+        "max_value": 30,
+        "step": 1,
+        "unit": "°C",
+        "device_class": "temperature",
+    },
+}
+
+# Moved from const.py - ID_MAP
+ID_MAP = {
+    # Temperature sensors
+    253: (
+        "display_input_theatsupply",
+        "°C",
+        "temperature",
+        "measurement",
+        "Input.THeatSupply",
+    ),
+    254: (
+        "display_input_theatreturn",
+        "°C",
+        "temperature",
+        "measurement",
+        "Input.THeatReturn",
+    ),
+    255: ("display_input_twatertank", "°C", "temperature", "measurement", "Input.TWaterTank"),
+    256: ("display_input_tamb", "°C", "temperature", "measurement", "Input.Tamb"),
+    257: ("display_input_troom", "°C", "temperature", "measurement", "Input.Troom"),
+    259: ("display_input_theattank", "°C", "temperature", "measurement", "Input.THeatTank"),
+    260: ("display_input_tcoldsupply", "°C", "temperature", "measurement", "Input.TColdSupply"),
+    261: ("display_input_tcoldreturn", "°C", "temperature", "measurement", "Input.TColdReturn"),
+    262: ("display_input_tevap", "°C", "temperature", "measurement", "Input.Tevap"),
+    263: ("display_input_tsolarwater", "°C", "temperature", "measurement", "Input.TSolarWater"),
+    264: ("display_input_tsolarpanel", "°C", "temperature", "measurement", "Input.TSolarPanel"),
+    # Temperature setpoints and limits
+    193: ("user_heatspctrl_troomset", "°C", "temperature", "measurement", "HeatSPCtrl.TroomSet"),
+    383: (
+        "user_hotwater_setpoint",
+        "°C",
+        "temperature",
+        "measurement",
+        "HotWater.SetPoint",
+    ),
+    386: (
+        "display_hotwater_setpointact",
+        "°C",
+        "temperature",
+        "measurement",
+        "HotWater.SetPointAct",
+    ),
+    382: (
+        "hotwater_hotwater_teleclimit",
+        "°C",
+        "temperature",
+        "measurement",
+        "HotWater.TElecLimit",
+    ),
+    384: (
+        "hotwater_hotwater_neutralzone",
+        "°C",
+        "temperature",
+        "measurement",
+        "HotWater.NeutralZone",
+    ),
+    385: ("hotwater_hotwater_capacity", "%", None, "measurement", "HotWater.Capacity"),
+    410: (
+        "heating_heating_setpointmin",
+        "°C",
+        "temperature",
+        "measurement",
+        "Heating.SetPointMin",
+    ),
+    411: (
+        "heating_heating_setpointmax",
+        "°C",
+        "temperature",
+        "measurement",
+        "Heating.SetPointMax",
+    ),
+    409: (
+        "heating_heating_setpmincool",
+        "°C",
+        "temperature",
+        "measurement",
+        "Heating.SetPMinCool",
+    ),
+    420: (
+        "display_heating_setpointact",
+        "°C",
+        "temperature",
+        "measurement",
+        "Heating.SetPointAct",
+    ),
+    419: (
+        "heating_heating_neutralzone",
+        "°C",
+        "temperature",
+        "measurement",
+        "Heating.NeutralZone",
+    ),
+    196: ("user_heatspctrl_toffset", "°C", "temperature", "measurement", "HeatSPCtrl.ToffSet"),
+    352: (
+        "solar_solarpanel_tstartdiff",
+        "°C",
+        "temperature",
+        "measurement",
+        "SolarPanel.TStartDiff",
+    ),
+    353: (
+        "solar_solarpanel_tstopdiff",
+        "°C",
+        "temperature",
+        "measurement",
+        "SolarPanel.TStopDiff",
+    ),
+    354: ("solar_solarpanel_tempmax", "°C", "temperature", "measurement", "SolarPanel.TempMax"),
+    356: (
+        "solar_solarpanel_watermt",
+        "°C",
+        "temperature",
+        "measurement",
+        "SolarPanel.WaterMT",
+    ),
+    361: (
+        "solar_solarpanel_starttemp",
+        "°C",
+        "temperature",
+        "measurement",
+        "SolarPanel.StartTemp",
+    ),
+    # Defrost temperature settings
+    513: (
+        "defrost_defrost_tfrosting",
+        "°C",
+        "temperature",
+        "measurement",
+        "Defrost.TFrosting",
+    ),
+    516: (
+        "defrost_defrost_trelfrost",
+        "°C",
+        "temperature",
+        "measurement",
+        "Defrost.TRelFrost",
+    ),
+    514: (
+        "defrost_defrost_ticemelt",
+        "°C",
+        "temperature",
+        "measurement",
+        "Defrost.TIceMelt",
+    ),
+    515: (
+        "defrost_defrost_tmeltfast",
+        "°C",
+        "temperature",
+        "measurement",
+        "Defrost.TMeltFast",
+    ),
+    510: (
+        "defrost_defrost_fftambmin",
+        "°C",
+        "temperature",
+        "measurement",
+        "Defrost.FFTambMin",
+    ),
+    511: (
+        "defrost_defrost_fftambmax",
+        "°C",
+        "temperature",
+        "measurement",
+        "Defrost.FFTambMax",
+    ),
+    512: (
+        "defrost_defrost_fftevapstop",
+        "°C",
+        "temperature",
+        "measurement",
+        "Defrost.FFTevapStop",
+    ),
+    518: (
+        "defrost_defrost_tairdfrtemp",
+        "°C",
+        "temperature",
+        "measurement",
+        "Defrost.TAirDfrTemp",
+    ),
+    524: ("defrost_defrost_stoptemp", "°C", "temperature", "measurement", "Defrost.StopTemp"),
+    # Capacity and performance metrics
+    299: ("display_heatpump_capacityact", "%", None, "measurement", "HeatPump.CapacityAct"),
+    300: ("display_heatpump_capacityreq", "%", None, "measurement", "HeatPump.CapacityReq"),
+    433: ("display_compressor_output", None, None, "measurement", "Compressor.Output"),
+    405: ("heating_heating_stopcap1", "%", None, "measurement", "Heating.StopCap1"),
+    406: ("heating_heating_stopcap2", "%", None, "measurement", "Heating.StopCap2"),
+    407: (
+        "heating_heating_startdifcap",
+        "%",
+        None,
+        "measurement",
+        "Heating.StartDifCap",
+    ),
+    529: ("defrost_defrost_defrostcap", "%", None, "measurement", "Defrost.DefrostCap"),
+    # Compressor parameters
+    435: ("heating_compressor_gain", None, None, "measurement", "Compressor.Gain"),
+    436: ("heating_compressor_tn", None, None, "measurement", "Compressor.Tn"),
+    430: ("heating_compressor_minvoltage", "V", None, "measurement", "Compressor.MinVoltage"),
+    429: ("heating_compressor_maxvoltage", "V", None, "measurement", "Compressor.MaxVoltage"),
+    428: ("heating_compressor_ustart", "V", None, "measurement", "Compressor.UStart"),
+    427: ("heatpump_compressor_mincprstop", None, None, "measurement", "Compressor.MinCprStop"),
+    447: (
+        "service_compressor_compruntime",
+        "h",
+        None,
+        "total_increasing",
+        "Compressor.CompRunTime",
+    ),
+    # Runtime counters (diagnostic)
+    301: ("service_heatpump_runtime", "h", None, "total_increasing", "HeatPump.RunTime"),
+    302: ("service_heatpump_apruntime", "h", None, "total_increasing", "HeatPump.APRunTime"),
+    303: ("service_heatpump_hspruntime", "h", None, "total_increasing", "HeatPump.HSPRunTime"),
+    376: ("service_coldpump_cpruntime", "h", None, "total_increasing", "ColdPump.CPRunTime"),
+    387: ("service_hotwater_runtime", "h", None, "total_increasing", "HotWater.RunTime"),
+    423: (
+        "service_heating_elecruntime",
+        "h",
+        None,
+        "total_increasing",
+        "Heating.ElecRunTime",
+    ),
+    362: ("service_solarpanel_runtime", "h", None, "total_increasing", "SolarPanel.RunTime"),
+    # System states and modes
+    297: ("display_heatpump_state", None, None, None, "HeatPump.State"),
+    296: ("display_heatpump_seasonstate", None, None, None, "HeatPump.SeasonState"),
+    364: ("display_solarpanel_state", None, None, None, "SolarPanel.State"),
+    374: ("display_coldpump_state", None, None, None, "ColdPump.State"),
+    503: ("display_legionella_state", None, None, None, "Legionella.State"),
+    278: ("user_parameters_seasonmode", None, None, None, "Parameters.SeasonMode"),
+    404: ("heatpump_heating_ctrlmode", None, None, None, "Heating.CtrlMode"),
+    453: ("heatpump_cprcontrol_cprmode", None, None, None, "CprControl.CprMode"),
+    367: ("heatpump_coldpump_mode", None, None, None, "ColdPump.Mode"),
+    509: ("defrost_defrost_mode", None, None, None, "Defrost.Mode"),
+    390: ("service_concrete_mode", None, None, None, "Concrete.Mode"),
+    # Binary outputs and switches
+    219: ("display_output_heater", None, None, None, "Output.Heater"),
+    220: ("display_output_hottapwater", None, None, None, "Output.HotTapWater"),
+    221: ("display_output_coldpump", None, None, None, "Output.ColdPump"),
+    222: ("display_output_coldpumplow", None, None, None, "Output.ColdPumpLow"),
+    223: ("display_output_hotsidepump", None, None, None, "Output.HotSidePump"),
+    224: ("display_output_defrostvalve", None, None, None, "Output.DefrostValve"),
+    225: ("display_output_solarpump", None, None, None, "Output.SolarPump"),
+    227: ("display_output_auxpump", None, None, None, "Output.AuxPump"),
+    228: ("display_output_alarm", None, None, None, "Output.Alarm"),
+    232: ("display_output_coldpumpvolt", None, None, None, "Output.ColdPumpVolt"),
+    265: ("display_input_hpswitch", None, None, None, "Input.HPSwitch"),
+    266: ("display_input_lpswitch", None, None, None, "Input.LPSwitch"),
+    267: ("display_input_bpswitch", None, None, None, "Input.BPSwitch"),
+    268: ("display_input_dfstart", None, None, None, "Input.DFStart"),
+    269: ("display_input_fcswitch", None, None, None, "Input.FCSwitch"),
+    # Cold pump parameters
+    368: ("heatpump_coldpump_stopdelay", None, None, None, "ColdPump.StopDelay"),
+    369: (
+        "heatpump_coldpump_hspeedcap",
+        "%",
+        None,
+        "measurement",
+        "ColdPump.HSpeedCap",
+    ),
+    370: (
+        "heatpump_coldpump_hspeednz",
+        "%",
+        None,
+        "measurement",
+        "ColdPump.HSpeedNZ",
+    ),
+    371: (
+        "heatpump_coldpump_hspeedvolt",
+        "V",
+        None,
+        "measurement",
+        "ColdPump.HSpeedVolt",
+    ),
+    372: (
+        "heatpump_coldpump_lspeedvolt",
+        "V",
+        None,
+        "measurement",
+        "ColdPump.LSpeedVolt",
+    ),
+    # Heating curve parameters
+    184: ("heating_heatspctrl_type", None, None, None, "HeatSPCtrl.Type"),
+    192: ("heating_heatspctrl_curve", None, None, None, "HeatSPCtrl.Curve"),
+    185: (
+        "heating_heatspctrl_curpnt1",
+        "°C",
+        "temperature",
+        "measurement",
+        "HeatSPCtrl.CurPnt1",
+    ),
+    186: (
+        "heating_heatspctrl_curpnt2",
+        "°C",
+        "temperature",
+        "measurement",
+        "HeatSPCtrl.CurPnt2",
+    ),
+    187: (
+        "heating_heatspctrl_curpnt3",
+        "°C",
+        "temperature",
+        "measurement",
+        "HeatSPCtrl.CurPnt3",
+    ),
+    188: (
+        "heating_heatspctrl_curpnt4",
+        "°C",
+        "temperature",
+        "measurement",
+        "HeatSPCtrl.CurPnt4",
+    ),
+    189: (
+        "heating_heatspctrl_curpnt5",
+        "°C",
+        "temperature",
+        "measurement",
+        "HeatSPCtrl.CurPnt5",
+    ),
+    190: (
+        "heating_heatspctrl_curpnt6",
+        "°C",
+        "temperature",
+        "measurement",
+        "HeatSPCtrl.CurPnt6",
+    ),
+    191: (
+        "heating_heatspctrl_curpnt7",
+        "°C",
+        "temperature",
+        "measurement",
+        "HeatSPCtrl.CurPnt7",
+    ),
+    197: (
+        "heating_heatspctrl_ambcmpmax",
+        "°C",
+        "temperature",
+        "measurement",
+        "HeatSPCtrl.AmbCmpMax",
+    ),
+    # System parameters
+    284: ("heatpump_parameters_hpstops", None, None, None, "Parameters.HPStopS"),
+    285: ("heatpump_parameters_totalstops", None, None, None, "Parameters.TotalStopS"),
+    281: (
+        "heatpump_parameters_hpstopt",
+        "°C",
+        "temperature",
+        "measurement",
+        "Parameters.HPStopT",
+    ),
+    283: (
+        "heatpump_parameters_totalstopt",
+        "°C",
+        "temperature",
+        "measurement",
+        "Parameters.TotalStopT",
+    ),
+    282: (
+        "heatpump_parameters_hpambstopt",
+        "°C",
+        "temperature",
+        "measurement",
+        "Parameters.HPAmbStopT",
+    ),
+    286: ("heatpump_parameters_pumpexinter", None, None, None, "Parameters.PumpExInter"),
+    280: ("heatpump_parameters_startuptime", None, None, None, "Parameters.StartUpTime"),
+    408: ("heatpump_heating_elecdelay", None, None, None, "Heating.ElecDelay"),
+    413: (
+        "heating_heating_tevapmin",
+        "°C",
+        "temperature",
+        "measurement",
+        "Heating.TEvapMin",
+    ),
+    421: ("heating_heating_minheattime", None, None, None, "Heating.MinHeatTime"),
+    # Defrost parameters
+    517: ("defrost_defrost_relfrostcmp", None, None, None, "Defrost.RelFrostCmp"),
+    520: ("defrost_defrost_defrtimein", None, None, None, "Defrost.DefrTimeIn"),
+    522: ("defrost_defrost_mininterval", None, None, None, "Defrost.MinInterval"),
+    521: ("defrost_defrost_maxtime", None, None, None, "Defrost.MaxTime"),
+    523: ("defrost_defrost_dripdowndel1", None, None, None, "Defrost.DripDownDel1"),
+    # Legionella parameters
+    500: ("hotwater_legionella_waittime", None, None, None, "Legionella.WaitTime"),
+    501: (
+        "hotwater_legionella_treattemp",
+        "°C",
+        "temperature",
+        "measurement",
+        "Legionella.TreatTemp",
+    ),
+    504: ("hotwater_legionella_timeout1", None, None, None, "Legionella.Timeout1"),
+    # Solar panel parameters
+    351: ("solar_solarpanel_sensorselect", None, None, None, "SolarPanel.SensorSelect"),
+    # Manual controls (service)
+    235: ("service_manual_compressor1", None, None, None, "Manual.Compressor1"),
+    236: ("service_manual_heater", None, None, None, "Manual.Heater"),
+    237: ("service_manual_hottapwater", None, None, None, "Manual.HotTapWater"),
+    238: ("service_manual_coldpump", None, None, None, "Manual.ColdPump"),
+    239: ("service_manual_coldpumplow", None, None, None, "Manual.ColdPumpLow"),
+    240: ("service_manual_hotsidepump", None, None, None, "Manual.HotSidePump"),
+    241: ("service_manual_defrostvalve", None, None, None, "Manual.DefrostValve"),
+    242: ("service_manual_solarpump", None, None, None, "Manual.SolarPump"),
+    243: ("service_manual_re6", None, None, None, "Manual.RE6"),
+    244: ("service_manual_auxpump", None, None, None, "Manual.AuxPump"),
+    245: ("service_manual_alarm", None, None, None, "Manual.Alarm"),
+    250: ("service_manual_coldpumpvolt", None, None, None, "Manual.ColdPumpVolt"),
+    # Service counters
+    525: (
+        "service_defrost_defrhgcount",
+        None,
+        None,
+        "total_increasing",
+        "Defrost.DefrHGCount",
+    ),
+    526: ("service_defrost_defraircnt", None, None, "total_increasing", "Defrost.DefrAirCnt"),
+    # System information (diagnostic)
+    37: ("service_info_appversion", None, None, None, "Info.AppVersion"),
+    53: ("service_com_ipadr", None, None, None, "Com.IpAdr"),
+    52: ("service_com_macadr", None, None, None, "Com.MacAdr"),
+    555: ("service_misc_lup200swver", None, None, None, "Misc.LUP200SWVer"),
+    # Configuration parameters
+    137: ("user_user_language", None, None, None, "User.Language"),
+    291: ("service_parameters_displaymode", None, None, None, "Parameters.DisplayMode"),
+    277: ("service_parameters_mainswitch", None, None, None, "Parameters.MainSwitch"),
+    # Time settings
+    113: ("user_time_year", None, None, None, "Time.Year"),
+    112: ("user_time_month", None, None, None, "Time.Month"),
+    110: ("user_time_day", None, None, None, "Time.Day"),
+    109: ("user_time_hour", None, None, None, "Time.Hour"),
+    108: ("user_time_minute", None, None, None, "Time.Minute"),
+    # Missing entity mappings from catalog.py
+    420: ("heating_heating_setpointact", "°C", "temperature", "measurement", "Heating.SetPointAct"),
+    434: ("heating_heatspctrl_toffset", None, None, None, "HeatSPCtrl.ToffSet"),
+    383: ("hotwater_hotwater_setpoint", "°C", "temperature", "measurement", "HotWater.SetPoint"),
+    1641: ("system_firmwareupgrade_datafile", None, None, None, "Datafile"),
+    1608: ("system_firmwareupgrade_lmc300", None, None, None, "LMC300"),
+    1607: ("system_firmwareupgrade_lom320", None, None, None, "LOM320"),
+    1625: ("system_firmwareupgrade_lup200", None, None, None, "LUP200"),
+    1617: ("system_firmwareupgrade_project_name", None, None, None, "Project name"),
+    1600: ("system_firmwareupgrade_userinterface", None, None, None, "UserInterface"),
+    1660: ("system_groups_admin", None, None, None, "admin"),
+    1661: ("system_groups_ha_user", None, None, None, "ha-user"),
+    1642: ("system_groups_name", None, None, None, "Name"),
+    1670: ("system_systemview", "°C", "temperature", "measurement", "System View"),
+    # Additional missing entity mappings from catalog.py
+    # Using available IDs from DEFAULT_IDS that aren't already mapped
+    530: ("display_heating_setpointact", "°C", "temperature", "measurement", "Heating.SetPointAct"),
+    531: ("display_heating_source", None, None, None, "Heating.Source"),
+    532: ("display_hotwater_source", None, None, None, "HotWater.Source"),
+    403: ("heating_heating_source", None, None, None, "Heating.Source"),
+    533: ("heating_heating_source", None, None, None, "Heating.Source"),
+    380: ("hotwater_hotwater_source", None, None, None, "HotWater.Source"),
+    534: ("hotwater_hotwater_source", None, None, None, "HotWater.Source"),
+    535: ("solar_solarpanel_state", None, None, None, "SolarPanel.State"),
+    536: ("user_hotwater_setpoint", "°C", "temperature", "measurement", "HotWater.SetPoint"),
+}
+
+# Moved from const.py - DEFAULT_IDS
+DEFAULT_IDS = "37;52;53;108;109;110;112;113;137;184;185;186;187;188;189;190;191;192;193;196;197;219;220;221;222;223;224;225;227;228;232;235;236;237;238;239;240;241;242;243;244;245;250;253;254;255;256;257;259;260;261;262;263;264;265;266;267;268;269;277;278;280;281;282;283;284;285;286;291;296;297;299;300;301;302;303;351;352;353;354;356;361;362;364;367;368;369;370;371;372;374;376;380;382;383;384;385;386;387;390;403;404;405;406;407;408;409;410;411;413;419;420;421;423;427;428;429;430;433;435;436;447;453;500;501;503;504;509;510;511;512;513;514;515;516;517;518;520;521;522;523;524;525;526;529;555"
+
+# Moved from const.py - DEFAULT_ENABLED_ENTITIES
+DEFAULT_ENABLED_ENTITIES = [
+    # Operation/Display: Essential temperature sensors and heat pump state
+    253,  # heating_supply_temp
+    255,  # water_tank_temp
+    257,  # room_temp
+    297,  # heatpump_state
+    # Operation/User: Key user-configurable parameters
+    193,  # room_setpoint
+    383,  # hot_water_setpoint
+    278,  # season_mode
+    137,  # user_language
+    # Settings/Heatpump: Critical heat pump settings
+    299,  # capacity_actual
+    447,  # compressor_runtime
+    433,  # compressor_output
+    # Settings/Heating: Essential heating parameters
+    420,  # heating_setpoint_actual
+    403,  # heating_source
+    404,  # heating_control_mode
+    # Settings/Hot water: Key hot water settings
+    380,  # hot_water_source
+    386,  # hot_water_setpoint_actual
+    220,  # hot_tap_water_output
+    # Settings/Solar panel: Basic solar panel status
+    364,  # solar_panel_state
+    263,  # solar_water_temp
+    # Settings/Service: Essential diagnostic entities
+    228,  # alarm_output
+    301,  # heatpump_runtime
+    # Settings/Defrost: Critical defrost parameters
+    509,  # defrost_mode
+    517,  # defrost_relative_frost_compressor
+    # Settings/Extended Display: Key extended display entities
+    296,  # heatpump_season_state
+    300,  # capacity_requested
+]
+
+# Moved from const.py - BINARY_OUTPUT_IDS
+BINARY_OUTPUT_IDS = {
+    219: "Heater",
+    220: "Hot Tap Water",
+    221: "Cold Pump",
+    222: "Cold Pump Low",
+    223: "Hot Side Pump",
+    224: "Defrost Valve",
+    225: "Solar Pump",
+    227: "Aux Pump",
+    228: "Alarm",
+    232: "Cold Pump Volt",
+    265: "HP Switch",
+    266: "LP Switch",
+    267: "BP Switch",
+    268: "DF Start",
+    269: "FC Switch",
+}
+
+# Helper functions moved from const.py
+def get_entity_info(entity_id: int):
+    """Get entity information from ID_MAP.
+
+    Args:
+        entity_id (int): The entity ID to look up
+
+    Returns:
+        tuple: (entity_key, unit, device_class, state_class, original_name) or None if not found
+    """
+    return ID_MAP.get(entity_id)
+
+
+def is_binary_output(entity_id):
+    """Check if an ID is a binary output (should be exposed as binary_sensor).
+
+    Args:
+        entity_id (int): The entity ID to check
+
+    Returns:
+        bool: True if ID is a binary output, False otherwise
+    """
+    return entity_id in BINARY_OUTPUT_IDS
+
+
+def get_original_name(entity_id: int):
+    """Get original name for an entity ID for diagnostics.
+
+    Args:
+        entity_id (int): The entity ID to look up
+
+    Returns:
+        str: The original name or None if not found
+    """
+    entity_info = ID_MAP.get(entity_id)
+    if entity_info and len(entity_info) >= 5:
+        return entity_info[4]
+    return None
+
+
+def get_binary_output_name(entity_id: int):
+    """Get display name for a binary output ID.
+
+    Args:
+        entity_id (int): The binary output ID to look up
+
+    Returns:
+        str: The display name or None if not found
+    """
+    return BINARY_OUTPUT_IDS.get(entity_id)
+
+
+def get_entity_group_info(entity_id: int):
+    """Get HTML group information for an entity.
+
+    Args:
+        entity_id (int): The entity ID to look up
+
+    Returns:
+        dict: Dictionary with category and group information, or None if not found
+    """
+    entity_info = ID_MAP.get(entity_id)
+    if not entity_info or len(entity_info) < 5:
+        return None
+
+    # Get entity key from ID_MAP
+    entity_key = entity_info[0]
+
+    # Check in all entity definition dictionaries
+    for entity_dict in [
+        TEMP_SENSORS,
+        SETPOINT_SENSORS,
+        PERFORMANCE_SENSORS,
+        COUNTER_SENSORS,
+        SYSTEM_SENSORS,
+        SYSTEM_COUNTER_SENSORS,
+        BINARY_SENSORS,
+        SELECT_ENTITIES_LEGACY,
+        NUMBER_ENTITIES_LEGACY,
+    ]:
+        if entity_key in entity_dict:
+            entity_def = entity_dict[entity_key]
+            return {
+                "category": entity_def.get("category"),
+                "group": entity_def.get("group"),
+            }
+
+    return None
+
+
+def get_entity_ids_by_group(category, group):
+    """Get all entity IDs that belong to a specific category and group.
+
+    Args:
+        category (str): The category (Operation, Settings, Configuration)
+        group (str): The group within category
+
+    Returns:
+        list[int]: List of entity IDs that belong to specified group
+    """
+    result = []
+
+    for entity_id, entity_info in ID_MAP.items():
+        if len(entity_info) >= 5:
+            entity_key = entity_info[0]
+            group_info = get_entity_group_info(entity_id)
+
+            if (
+                group_info
+                and group_info.get("category") == category
+                and group_info.get("group") == group
+            ):
+                result.append(entity_id)
+
+    return result
+
+
 def get_all_entities() -> dict[str, dict[str, Any]]:
     """Return all entity definitions."""
     return ENTITIES
@@ -1876,3 +2946,20 @@ def get_entities_by_group(category: str, group: str) -> list[str]:
         for key, entity in ENTITIES.items()
         if entity.get("category") == category and entity.get("group") == group
     ]
+
+
+def get_entity_by_id(entity_id: int):
+    """Get entity definition by ID.
+
+    Args:
+        entity_id (int): The entity ID to look up
+
+    Returns:
+        dict: Entity definition or None if not found
+    """
+    entity_info = ID_MAP.get(entity_id)
+    if not entity_info or len(entity_info) < 1:
+        return None
+
+    entity_key = entity_info[0]
+    return ENTITIES.get(entity_key)
