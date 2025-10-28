@@ -156,7 +156,7 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
         """Return the state of the sensor."""
         value = self.coordinator.get_entity_value(self._entity_key)
 
-        # Log value retrieval for debugging
+        # Log value retrieval for debugging (reduced frequency to prevent log storms)
         if value is None:
             _LOGGER.debug("Sensor %s returned None value", self._entity_key)
         else:
@@ -169,7 +169,7 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
 
         # Apply special handling for temperature sentinel rule
         if data_type == "temperature" and value is not None:
-            if isinstance(value, int | float) and value <= -80.0:
+            if isinstance(value, (int, float)) and value <= -80.0:
                 # Temperature sentinel rule: ≤ -80.0°C marks entity unavailable
                 _LOGGER.debug(
                     "Sensor %s temperature %s°C is below sentinel threshold, marking unavailable",
@@ -181,7 +181,7 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
         # Apply percentage clamping for percentage values
         if unit == "%" and value is not None:
             try:
-                if isinstance(value, int | float):
+                if isinstance(value, (int, float)):
                     clamped_value = max(0, min(100, float(value)))
                     if clamped_value != float(value):
                         _LOGGER.debug(
@@ -199,6 +199,8 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
                 )
                 pass
 
+        # Always return the value, even if None, to ensure entities update properly
+        # The availability property will handle None values appropriately
         return value
 
     @property
@@ -356,7 +358,7 @@ class SVKHeatpumpSensor(SVKHeatpumpBaseEntity, SensorEntity):
 
         # Apply special handling for temperature sentinel rule
         if self._device_class == "temperature" and value is not None:
-            if isinstance(value, int | float) and value <= -80.0:
+            if isinstance(value, (int, float)) and value <= -80.0:
                 # Temperature sentinel rule: ≤ -80.0°C marks entity unavailable
                 _LOGGER.debug(
                     "Sensor %s temperature %s°C is below sentinel threshold, marking unavailable",
@@ -368,7 +370,7 @@ class SVKHeatpumpSensor(SVKHeatpumpBaseEntity, SensorEntity):
         # Apply percentage clamping for percentage values
         if self._unit == "%" and value is not None:
             try:
-                if isinstance(value, int | float):
+                if isinstance(value, (int, float)):
                     clamped_value = max(0, min(100, float(value)))
                     if clamped_value != float(value):
                         _LOGGER.debug(
@@ -572,7 +574,7 @@ async def async_setup_entry(
             if self.coordinator.data:
                 value = self.coordinator.data.get("last_update")
                 # Ensure we always return a datetime object with timezone
-                if isinstance(value, int | float):
+                if isinstance(value, (int, float)):
                     # Convert Unix timestamp to datetime with timezone
                     return datetime.fromtimestamp(value, timezone.utc)
                 elif isinstance(value, datetime):

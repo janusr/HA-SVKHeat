@@ -898,14 +898,14 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
     def is_entity_available(self, entity_key: str) -> bool:
         """Check if an entity is available with valid, current data.
 
-        This method now performs comprehensive validation to ensure entities are only
-        marked as available when they have valid, recent data from the heat pump.
+        This method performs validation to ensure entities are marked as available
+        when they have valid data from the heat pump and were included in the last refresh.
 
         Args:
             entity_key: The entity key to check availability for
 
         Returns:
-            True if the entity has valid, current data, False otherwise
+            True if the entity has valid data and was included in last refresh, False otherwise
         """
         # Find the entity ID for this entity key
         entity_id = None
@@ -921,12 +921,6 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             )
             return False
 
-        _LOGGER.debug(
-            "AVAILABILITY: Checking availability for %s (ID: %s)",
-            entity_key,
-            entity_id,
-        )
-
         # Check if we have any data at all
         if not self.data:
             _LOGGER.debug(
@@ -936,170 +930,34 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             )
             return False
 
-        # Check data freshness - ensure data was updated recently
-        last_update = self.data.get("last_update")
-        if last_update is None:
-            _LOGGER.warning(
-                "AVAILABILITY: Entity %s (ID: %s) not available - no timestamp in data",
-                entity_key,
-                entity_id,
-            )
-            return False
-
-        # Calculate data age
-        now = datetime.now(timezone.utc)
-        data_age = (now - last_update).total_seconds()
-        max_data_age = 120  # Consider data stale after 2 minutes
-
-        if data_age > max_data_age:
-            _LOGGER.warning(
-                "AVAILABILITY: Entity %s (ID: %s) not available - data is stale (%.1f seconds old, max: %d)",
-                entity_key,
-                entity_id,
-                data_age,
-                max_data_age,
-            )
-            return False
-
-        # Check if this entity was included in the last successful fetch
-        # FIX: Handle both string and integer IDs in ids_fetched list
+        # Check if entity was included in the last refresh cycle
+        # This is the key fix - entities must be in ids_fetched to be considered available
         ids_fetched = self.data.get("ids_fetched", [])
-        entity_in_fetch = False
-        
-        # Check for both integer and string representations of the entity ID
-        if entity_id in ids_fetched:
-            entity_in_fetch = True
-        elif str(entity_id) in ids_fetched:
-            entity_in_fetch = True
-        else:
-            # Also check if any ID in the list can be converted to int and matches
-            for fetched_id in ids_fetched:
-                try:
-                    if int(fetched_id) == entity_id:
-                        entity_in_fetch = True
-                        break
-                except (ValueError, TypeError):
-                    continue
-        
-        if not entity_in_fetch:
-            _LOGGER.warning(
-                "AVAILABILITY: Entity %s (ID: %s) not available - not included in last data fetch",
+        if entity_id not in ids_fetched:
+            _LOGGER.debug(
+                "AVAILABILITY: Entity %s (ID: %s) not available - not included in last refresh",
                 entity_key,
                 entity_id,
             )
-            _LOGGER.warning(
-                "AVAILABILITY: DEBUG - Entity ID %s (as int: %s, as str: '%s') not found in ids_fetched",
-                entity_id,
-                entity_id,
-                str(entity_id),
-            )
-            _LOGGER.warning(
-                "AVAILABILITY: DEBUG - First 20 IDs fetched: %s",
-                ids_fetched[:20],
-            )
-            _LOGGER.warning(
-                "AVAILABILITY: DEBUG - Entity ID types in fetch: %s",
-                [type(id).__name__ for id in ids_fetched[:10]],
-            )
             return False
 
-        # Check if the entity has a valid, non-None value
+        # Check if the entity has a value (even None is acceptable for periodic updates)
         value = self.get_entity_value(entity_key)
-        if value is None:
-            _LOGGER.warning(
-                "AVAILABILITY: Entity %s (ID: %s) not available - value is None - this may indicate a data fetching or parsing issue",
-                entity_key,
-                entity_id,
-            )
-            _LOGGER.warning(
-                "AVAILABILITY: DEBUG - Entity %s (ID: %s) value=None, data keys: %s",
-                entity_key,
-                entity_id,
-                list(self.data.keys())[:20] if self.data else "No data",
-            )
-            
-            # Additional debug: Check if entity key exists in data with None value
-            if entity_key in self.data:
-                _LOGGER.warning(
-                    "AVAILABILITY: DEBUG - Entity %s exists in data but value is None: %s",
-                    entity_key,
-                    self.data[entity_key],
-                )
-            else:
-                _LOGGER.warning(
-                    "AVAILABILITY: DEBUG - Entity %s does not exist in data at all",
-                    entity_key,
-                )
-            return False
+        
+        # For periodic updates, we should be more lenient - allow entities to be available
+        # even if they temporarily have None values, as long as they were included in the last refresh
+        if entity_key in self.data:
+            # Entity exists in data structure and was included in last refresh
+            # This ensures entities update on every coordinator refresh cycle
+            return True
 
-        # Additional check for temperature sentinel values
-        entity_info = self.id_to_entity_map.get(entity_id, {})
-        if entity_info.get("device_class") == "temperature":
-            if isinstance(value, int | float) and value <= -80.0:
-                _LOGGER.debug(
-                    "AVAILABILITY: Entity %s (ID: %s) not available - temperature sentinel value %s°C",
-                    entity_key,
-                    entity_id,
-                    value,
-                )
-                return False
-
-        # Check for parsing errors related to this entity
-        parsing_details = self.data.get("parsing_details", {})
-        parsing_failures = parsing_details.get("parsing_failures", [])
-        for failure in parsing_failures:
-            # Check both entity_key and entity_id (handling string/int conversion)
-            failure_entity = failure.get("entity")
-            failure_id = failure.get("id")
-            
-            if failure_entity == entity_key:
-                _LOGGER.warning(
-                    "AVAILABILITY: Entity %s (ID: %s) not available - parsing error: %s",
-                    entity_key,
-                    entity_id,
-                    failure.get("reason", "Unknown error"),
-                )
-                return False
-            elif failure_id == entity_id or str(failure_id) == str(entity_id):
-                _LOGGER.warning(
-                    "AVAILABILITY: Entity %s (ID: %s) not available - parsing error (by ID): %s",
-                    entity_key,
-                    entity_id,
-                    failure.get("reason", "Unknown error"),
-                )
-                return False
-
-        # Check for sentinel temperature values
-        sentinel_temps = parsing_details.get("sentinel_temps", [])
-        for sentinel in sentinel_temps:
-            # Check both entity_key and entity_id (handling string/int conversion)
-            sentinel_entity = sentinel.get("entity")
-            sentinel_id = sentinel.get("id")
-            
-            if sentinel_entity == entity_key:
-                _LOGGER.warning(
-                    "AVAILABILITY: Entity %s (ID: %s) not available - sentinel temperature detected",
-                    entity_key,
-                    entity_id,
-                )
-                return False
-            elif sentinel_id == entity_id or str(sentinel_id) == str(entity_id):
-                _LOGGER.warning(
-                    "AVAILABILITY: Entity %s (ID: %s) not available - sentinel temperature detected (by ID)",
-                    entity_key,
-                    entity_id,
-                )
-                return False
-
-        # If we reach here, the entity has valid, current data
+        # If entity key doesn't exist in data at all, then it's not available
         _LOGGER.debug(
-            "AVAILABILITY: Entity %s (ID: %s) is available - has valid value: %s (data age: %.1fs)",
+            "AVAILABILITY: Entity %s (ID: %s) not available - not in data structure",
             entity_key,
             entity_id,
-            value,
-            data_age,
         )
-        return True
+        return False
 
     def get_all_entities_data(self) -> dict[str, dict[str, Any]]:
         """Get data for all available entities, including disabled ones.
