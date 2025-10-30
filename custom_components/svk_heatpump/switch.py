@@ -31,7 +31,7 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .catalog import ENTITIES, SWITCH_ENTITIES
+from .catalog import ENTITIES, get_switch_entities
 
 # Import specific items from modules
 from .const import DOMAIN
@@ -402,10 +402,10 @@ async def async_setup_entry(
 
     switch_entities = []
 
-    # Create switch entities based on SWITCH_ENTITIES from catalog
+    # Create switch entities based on ENTITIES from catalog
     if coordinator.is_json_client:
         # Create all switch entities from catalog
-        for entity_key in SWITCH_ENTITIES:
+        for entity_key in get_switch_entities():
             try:
                 # Get entity info from catalog
                 entity_info = ENTITIES.get(entity_key, {})

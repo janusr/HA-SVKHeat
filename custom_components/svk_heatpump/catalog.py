@@ -1,4 +1,5 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
+import warnings
 
 # Entity definitions
 ENTITIES = {
@@ -2046,8 +2047,6 @@ AVAILABLE_ENTITIES = {
 
 # Platform-specific entity lists
 SENSOR_ENTITIES = [
-    "defrost_defrost_tfrosting",
-    "defrost_defrost_trelfrost",
     "display_input_theatsupply",
     "display_input_theatreturn",
     "display_input_twatertank",
@@ -2065,6 +2064,7 @@ SENSOR_ENTITIES = [
     "display_heatpump_capacityact",
     "display_hotwater_source",
     "display_heating_source",
+    "display_output_coldpumpvolt",
     "heating_heating_setpointact",
     "service_info_appversion",
     "service_misc_lup200swver",
@@ -2080,11 +2080,6 @@ SENSOR_ENTITIES = [
     "service_heatpump_apruntime",
     "service_defrost_defrhgcount",
     "service_defrost_defraircnt",
-    "user_time_year",
-    "user_time_month",
-    "user_time_day",
-    "user_time_hour",
-    "user_time_minute",
     "system_systemview",
 ]
 
@@ -2104,23 +2099,16 @@ BINARY_SENSOR_ENTITIES = [
     "display_output_solarpump",
     "display_output_auxpump",
     "display_output_alarm",
+    "display_input_hpswitch",
+    "display_input_lpswitch",
+    "display_input_bpswitch",
+    "display_input_dfstart",
+    "display_input_fcswitch",
     "solar_solarpanel_state",
 ]
 
 NUMBER_ENTITIES = [
-    "defrost_defrost_relfrostcmp",
-    "defrost_defrost_defrtimein",
-    "defrost_defrost_mininterval",
-    "defrost_defrost_stoptemp",
-    "defrost_defrost_maxtime",
-    "defrost_defrost_defrostcap",
-    "defrost_defrost_ticemelt",
-    "defrost_defrost_tmeltfast",
-    "defrost_defrost_fftambmin",
-    "defrost_defrost_fftambmax",
-    "defrost_defrost_fftevapstop",
-    "defrost_defrost_tairdfrtemp",
-    "defrost_defrost_dripdowndel1",
+    "display_manual_coldpumpvolt",
     "heating_heating_setpointmin",
     "heating_heating_setpointmax",
     "heating_heating_setpmincool",
@@ -2174,7 +2162,6 @@ NUMBER_ENTITIES = [
 ]
 
 SELECT_ENTITIES = [
-    "defrost_defrost_mode",
     "heating_heating_source",
     "heating_heatspctrl_type",
     "heatpump_heating_ctrlmode",
@@ -2851,29 +2838,6 @@ def get_all_entities() -> dict[str, dict[str, Any]]:
     return ENTITIES
 
 
-def get_entities_by_platform(platform: str) -> list[str]:
-    """Return entity keys for a specific platform."""
-    return [
-        key for key, entity in ENTITIES.items() if entity.get("platform") == platform
-    ]
-
-
-def get_entities_by_category(category: str) -> list[str]:
-    """Return entity keys for a specific category."""
-    return [
-        key for key, entity in ENTITIES.items() if entity.get("category") == category
-    ]
-
-
-def get_entities_by_group(category: str, group: str) -> list[str]:
-    """Return entity keys for a specific category and group."""
-    return [
-        key
-        for key, entity in ENTITIES.items()
-        if entity.get("category") == category and entity.get("group") == group
-    ]
-
-
 # ID_MAP has been successfully removed - all entity information is now directly available in ENTITIES
 
 def get_entity_by_id(entity_id: int) -> Optional[Dict[str, Any]]:
@@ -2890,3 +2854,151 @@ def get_entity_by_id(entity_id: int) -> Optional[Dict[str, Any]]:
         if "id" in entity_data and entity_data["id"] == entity_id:
             return entity_data
     return None
+
+
+# ============================================================================
+# UNIFIED ENTITIES ARCHITECTURE - Platform Filtering Functions
+# ============================================================================
+
+def get_sensor_entities() -> List[str]:
+    """Return all sensor entity keys from ENTITIES."""
+    return [key for key, entity in ENTITIES.items()
+            if entity.get("platform") == "sensor"]
+
+
+def get_binary_sensor_entities() -> List[str]:
+    """Return all binary sensor entity keys from ENTITIES."""
+    return [key for key, entity in ENTITIES.items()
+            if entity.get("platform") == "binary_sensor"]
+
+
+def get_number_entities() -> List[str]:
+    """Return all number entity keys from ENTITIES."""
+    return [key for key, entity in ENTITIES.items()
+            if entity.get("platform") == "number"]
+
+
+def get_select_entities() -> List[str]:
+    """Return all select entity keys from ENTITIES."""
+    return [key for key, entity in ENTITIES.items()
+            if entity.get("platform") == "select"]
+
+
+def get_switch_entities() -> List[str]:
+    """Return all switch entity keys from ENTITIES."""
+    return [key for key, entity in ENTITIES.items()
+            if entity.get("platform") == "switch"]
+
+
+# ============================================================================
+# ADVANCED FILTERING FUNCTIONS
+# ============================================================================
+
+def get_entities_by_platform(platform: str) -> List[str]:
+    """Generic function to get entities by platform type."""
+    return [key for key, entity in ENTITIES.items()
+            if entity.get("platform") == platform]
+
+
+def get_entities_by_category(category: str) -> List[str]:
+    """Return all entity keys for a specific category."""
+    return [key for key, entity in ENTITIES.items()
+            if entity.get("category") == category]
+
+
+def get_entities_by_group(category: str, group: str) -> List[str]:
+    """Return all entity keys for a specific category and group."""
+    return [key for key, entity in ENTITIES.items()
+            if entity.get("category") == category and entity.get("group") == group]
+
+
+def get_writable_entities() -> List[str]:
+    """Return all writable entity keys."""
+    return [key for key, entity in ENTITIES.items()
+            if entity.get("access_type") == "readwrite"]
+
+
+def get_entities_by_data_type(data_type: str) -> List[str]:
+    """Return all entity keys for a specific data type."""
+    return [key for key, entity in ENTITIES.items()
+            if entity.get("data_type") == data_type]
+
+
+# ============================================================================
+# HELPER FUNCTIONS
+# ============================================================================
+
+def get_entity_platform(entity_key: str) -> Optional[str]:
+    """Get platform type for an entity."""
+    return ENTITIES.get(entity_key, {}).get("platform")
+
+
+def is_entity_writable(entity_key: str) -> bool:
+    """Check if an entity is writable."""
+    return ENTITIES.get(entity_key, {}).get("access_type") == "readwrite"
+
+
+def get_entity_config(entity_key: str) -> Dict[str, Any]:
+    """Get full entity configuration."""
+    return ENTITIES.get(entity_key, {})
+
+
+def validate_entity_structure(entities: Dict[str, Dict[str, Any]]) -> bool:
+    """Validate that all entities have required fields."""
+    required_fields = ["name", "platform", "category", "group", "data_type"]
+    for key, entity in entities.items():
+        missing = [field for field in required_fields if field not in entity]
+        if missing:
+            import logging
+            _LOGGER = logging.getLogger(__name__)
+            _LOGGER.error("Entity %s missing required fields: %s", key, missing)
+            return False
+    return True
+
+
+def get_entity_statistics() -> Dict[str, Any]:
+    """Return statistics about entities by platform/category."""
+    stats = {
+        "by_platform": {},
+        "by_category": {},
+        "total": len(ENTITIES),
+        "writable": len(get_writable_entities())
+    }
+    
+    for entity in ENTITIES.values():
+        platform = entity.get("platform", "unknown")
+        category = entity.get("category", "unknown")
+        
+        stats["by_platform"][platform] = stats["by_platform"].get(platform, 0) + 1
+        stats["by_category"][category] = stats["by_category"].get(category, 0) + 1
+    
+    return stats
+
+
+# ============================================================================
+# BACKWARD COMPATIBILITY
+# ============================================================================
+
+def _get_legacy_platform_lists() -> Dict[str, List[str]]:
+    """Generate legacy platform lists for backward compatibility."""
+    return {
+        "SENSOR_ENTITIES": get_sensor_entities(),
+        "BINARY_SENSOR_ENTITIES": get_binary_sensor_entities(),
+        "NUMBER_ENTITIES": get_number_entities(),
+        "SELECT_ENTITIES": get_select_entities(),
+        "SWITCH_ENTITIES": get_switch_entities(),
+    }
+
+
+def __getattr__(name: str) -> List[str]:
+    """Provide backward compatibility with deprecation warnings."""
+    if name in ["SENSOR_ENTITIES", "BINARY_SENSOR_ENTITIES", "NUMBER_ENTITIES",
+                "SELECT_ENTITIES", "SWITCH_ENTITIES"]:
+        warnings.warn(
+            f"{name} is deprecated. Use get_{name.lower()}_entities() instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        legacy_lists = _get_legacy_platform_lists()
+        return legacy_lists[name]
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

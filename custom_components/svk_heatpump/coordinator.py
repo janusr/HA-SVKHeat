@@ -61,7 +61,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             self.user_configured_ids = None
 
             # Create reverse mapping for efficient lookups using get_id_map function
-            ENTITIES, DEFAULT_ENABLED_ENTITIES = _get_constants()
+            entities_local, default_enabled_entities = _get_constants()
             id_map = get_id_map()
             self.id_to_entity_map = {}
             for entity_id, (entity_key, unit, device_class, state_class, original_name) in id_map.items():
@@ -1010,8 +1010,8 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             True if the entity should be enabled, False otherwise
         """
         # Check if the entity is in DEFAULT_ENABLED_ENTITIES
-        _, DEFAULT_ENABLED_ENTITIES = _get_constants()
-        return entity_id in DEFAULT_ENABLED_ENTITIES
+        _, default_enabled_entities = _get_constants()
+        return entity_id in default_enabled_entities
 
     def get_entity_value(self, entity_key: str) -> Any:
         """Get the current value for an entity."""

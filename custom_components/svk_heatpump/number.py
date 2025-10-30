@@ -37,7 +37,7 @@ from homeassistant.const import EntityCategory, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .catalog import ENTITIES, NUMBER_ENTITIES
+from .catalog import ENTITIES, get_number_entities
 
 # Import specific items from modules
 from .const import DOMAIN
@@ -242,10 +242,10 @@ class SVKHeatpumpNumber(SVKHeatpumpBaseEntity, NumberEntity):
         )
 
         # Get entity info from ENTITIES structure
-        ENTITIES, _ = _get_constants()
+        entities_local, _ = _get_constants()
         # Find entity by ID in ENTITIES
         entity_info = None
-        for entity_key, entity_data in ENTITIES.items():
+        for entity_key, entity_data in entities_local.items():
             if "id" in entity_data and entity_data["id"] == entity_id:
                 entity_info = {
                     "entity_key": entity_key,
@@ -278,12 +278,12 @@ class SVKHeatpumpNumber(SVKHeatpumpBaseEntity, NumberEntity):
         # Set entity category based on entity definition
         entity_category = None
 
-        if self._entity_key in ENTITIES and ENTITIES.get(
+        if self._entity_key in entities_local and entities_local.get(
             self._entity_key, {}
         ).get("category"):
             entity_category = getattr(
                 EntityCategory,
-                ENTITIES[self._entity_key]["category"].upper(),
+                entities_local[self._entity_key]["category"].upper(),
             )
 
         self.entity_description = NumberEntityDescription(
@@ -388,17 +388,17 @@ class SVKHeatpumpHotWaterSetpoint(SVKNumber):
 
         if self.coordinator.data:
             # Add current tank temperature
-            tank_temp = self.coordinator.data.get("water_tank_temp")
+            tank_temp = self.coordinator.get_entity_value("display_input_twatertank")
             if tank_temp is not None:
                 attributes["current_tank_temperature"] = tank_temp
 
             # Add heating status
-            heatpump_state = self.coordinator.data.get("heatpump_state")
-            if heatpump_state:
+            heatpump_state = self.coordinator.get_entity_value("display_heatpump_state")
+            if heatpump_state is not None:
                 attributes["heatpump_state"] = heatpump_state
 
             # Add heating setpoint for comparison
-            heating_setpoint = self.coordinator.data.get("heating_setpoint")
+            heating_setpoint = self.coordinator.get_entity_value("user_heatspctrl_troomset")
             if heating_setpoint is not None:
                 attributes["heating_setpoint"] = heating_setpoint
 
@@ -425,18 +425,18 @@ class SVKHeatpumpRoomSetpoint(SVKNumber):
 
         if self.coordinator.data:
             # Add current room temperature
-            room_temp = self.coordinator.data.get("room_temp")
+            room_temp = self.coordinator.get_entity_value("display_input_troom")
             if room_temp is not None:
                 attributes["current_room_temperature"] = room_temp
 
             # Add ambient temperature
-            ambient_temp = self.coordinator.data.get("ambient_temp")
+            ambient_temp = self.coordinator.get_entity_value("display_input_tamb")
             if ambient_temp is not None:
                 attributes["ambient_temperature"] = ambient_temp
 
             # Add heating status
-            heatpump_state = self.coordinator.data.get("heatpump_state")
-            if heatpump_state:
+            heatpump_state = self.coordinator.get_entity_value("display_heatpump_state")
+            if heatpump_state is not None:
                 attributes["heatpump_state"] = heatpump_state
 
         return attributes
@@ -455,10 +455,10 @@ async def async_setup_entry(
 
     number_entities = []
 
-    # Create number entities based on NUMBER_ENTITIES from catalog
+    # Create number entities based on ENTITIES from catalog
     if coordinator.is_json_client:
         # Create all number entities from catalog
-        for entity_key in NUMBER_ENTITIES:
+        for entity_key in get_number_entities():
             try:
                 # Get entity info from catalog
                 entity_info = ENTITIES.get(entity_key, {})
@@ -500,7 +500,7 @@ async def async_setup_entry(
         )
 
         # Get constants using lazy import
-        entities_local, DEFAULT_ENABLED_ENTITIES = _get_constants()
+        entities_local, default_enabled_entities = _get_constants()
 
         # Create all possible entities from ENTITIES
         for entity_key, entity_data in entities_local.items():
@@ -519,7 +519,8 @@ async def async_setup_entry(
                 "room_setpoint",
             ]:
                 # Check if this entity should be enabled by default
-                enabled_by_default = coordinator.is_entity_enabled(entity_data["id"])
+                entity_id = entity_data.get("id")
+                enabled_by_default = coordinator.is_entity_enabled(entity_id) if entity_id else False
 
                 # Create specialized classes for specific entities
                 if entity_key == "hot_water_setpoint":
@@ -549,7 +550,7 @@ async def async_setup_entry(
                 _LOGGER.debug(
                     "Added number entity: %s (ID: %s, enabled_by_default: %s)",
                     entity_key,
-                    entity_data["id"],
+                    entity_data.get("id", "unknown"),
                     enabled_by_default,
                 )
 
@@ -579,7 +580,7 @@ async def async_setup_entry(
         @property
         def native_value(self) -> float | None:
             """Return current heating setpoint value."""
-            value = self.coordinator.get_entity_value("heating_setpoint")
+            value = self.coordinator.get_entity_value("user_heatspctrl_troomset")
             if value is not None:
                 try:
                     return float(value)
@@ -592,7 +593,7 @@ async def async_setup_entry(
             """This monitor should be available when data is present."""
             return (
                 self.coordinator.last_update_success
-                and self.coordinator.is_entity_available("heating_setpoint")
+                and self.coordinator.is_entity_available("user_heatspctrl_troomset")
             )
 
         async def async_set_native_value(self, value: float) -> None:
@@ -629,7 +630,7 @@ async def async_setup_entry(
         @property
         def native_value(self) -> float | None:
             """Return the current compressor speed percentage."""
-            value = self.coordinator.get_entity_value("compressor_speed_pct")
+            value = self.coordinator.get_entity_value("display_heatpump_capacityact")
             if value is not None:
                 try:
                     return float(value)
@@ -642,7 +643,7 @@ async def async_setup_entry(
             """This monitor should be available when data is present."""
             return (
                 self.coordinator.last_update_success
-                and self.coordinator.is_entity_available("compressor_speed_pct")
+                and self.coordinator.is_entity_available("display_heatpump_capacityact")
             )
 
         async def async_set_native_value(self, value: float) -> None:

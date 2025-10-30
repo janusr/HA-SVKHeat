@@ -33,7 +33,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 # Import specific items from modules
-from .catalog import BINARY_SENSORS
+from .catalog import BINARY_SENSORS, get_binary_sensor_entities
 from .const import DOMAIN
 from .coordinator import SVKHeatpumpDataCoordinator
 
@@ -89,11 +89,11 @@ class SVKHeatpumpBinarySensor(SVKHeatpumpBaseEntity, BinarySensorEntity):
         )
 
         # Get entity info from ENTITIES structure
-        ENTITIES, _ = _get_constants()
+        entities_local, _ = _get_constants()
         # Find entity by key in ENTITIES
         entity_info = None
-        if self._entity_key in ENTITIES:
-            entity_data = ENTITIES[self._entity_key]
+        if self._entity_key in entities_local:
+            entity_data = entities_local[self._entity_key]
             entity_info = {
                 "entity_key": self._entity_key,
                 "unit": entity_data.get("unit", ""),
@@ -217,10 +217,10 @@ async def async_setup_entry(
     # Create binary sensors based on ENTITIES for JSON API
     if coordinator.is_json_client:
         # Get constants using lazy import
-        ENTITIES, DEFAULT_ENABLED_ENTITIES = _get_constants()
+        entities_local, default_enabled_entities = _get_constants()
 
         # Create all possible entities from ENTITIES
-        for entity_key, entity_data in ENTITIES.items():
+        for entity_key, entity_data in entities_local.items():
             # Only process entities that have an ID
             if "id" not in entity_data or entity_data["id"] is None:
                 continue

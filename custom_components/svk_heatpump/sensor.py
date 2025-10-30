@@ -38,20 +38,13 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .catalog import ENTITIES, SENSOR_ENTITIES, COUNTER_SENSORS, SYSTEM_COUNTER_SENSORS, SYSTEM_SENSORS
+from .catalog import ENTITIES, get_sensor_entities, COUNTER_SENSORS, SYSTEM_COUNTER_SENSORS, SYSTEM_SENSORS
 
 # Import specific items from modules
 from .const import DOMAIN
 from .coordinator import SVKHeatpumpDataCoordinator
 
 _LOGGER = logging.getLogger(__name__)
-
-
-def _get_constants() -> tuple[dict[str, dict[str, Any]], list[int]]:
-    """Lazy import of constants to prevent blocking during async setup."""
-    from .catalog import DEFAULT_ENABLED_ENTITIES, ENTITIES
-
-    return ENTITIES, DEFAULT_ENABLED_ENTITIES
 
 
 class SVKHeatpumpBaseEntity(CoordinatorEntity):
@@ -264,8 +257,6 @@ class SVKHeatpumpSensor(SVKHeatpumpBaseEntity, SensorEntity):
             enabled_by_default,
         )
 
-        # Get entity info from ENTITIES structure
-        ENTITIES, _ = _get_constants()
         # Find entity by ID in ENTITIES
         entity_info = None
         for entity_key, entity_data in ENTITIES.items():
@@ -438,16 +429,12 @@ async def async_setup_entry(
 
     sensors = []
 
-    # Create sensors based on SENSOR_ENTITIES from catalog
+    # Create sensors based on sensor entities from catalog
     if coordinator.is_json_client:
         # Create all sensor entities from the catalog
-        for entity_key in SENSOR_ENTITIES:
+        for entity_key in get_sensor_entities():
             try:
                 # Get entity info from catalog
-                entity_info = ENTITIES.get(entity_key, {})
-                entity_info.get("category", "")
-
-                # Get entity ID to check against DEFAULT_ENABLED_ENTITIES
                 entity_info = ENTITIES.get(entity_key, {})
                 entity_id = entity_info.get("id")
                 enabled_by_default = coordinator.is_entity_enabled(entity_id) if entity_id else False

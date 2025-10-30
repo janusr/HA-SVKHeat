@@ -25,7 +25,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .catalog import ENTITIES, SELECT_ENTITIES
+from .catalog import ENTITIES, get_select_entities, SELECT_ENTITIES
 
 # Import specific items from modules
 from .const import DOMAIN
@@ -319,10 +319,10 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
         )
 
         # Get entity info from ENTITIES structure
-        ENTITIES, _, _ = _get_constants()
+        entities_local, _, _ = _get_constants()
         # Find entity by ID in ENTITIES
         entity_info = None
-        for entity_key, entity_data in ENTITIES.items():
+        for entity_key, entity_data in entities_local.items():
             if "id" in entity_data and entity_data["id"] == entity_id:
                 entity_info = {
                     "entity_key": entity_key,
@@ -379,8 +379,8 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
         entity_category = None
 
         # Get entity info from ENTITIES dictionary instead of SELECT_ENTITIES list
-        if self._entity_key in ENTITIES:
-            entity_data = ENTITIES.get(self._entity_key, {})
+        if self._entity_key in entities_local:
+            entity_data = entities_local.get(self._entity_key, {})
             if entity_data.get("category"):
                 entity_category = getattr(
                     EntityCategory,
@@ -518,8 +518,6 @@ async def async_setup_entry(
         for entity_key in SELECT_ENTITIES:
             try:
                 # Get entity info from catalog
-                # Get ENTITIES from the catalog module
-                from .catalog import ENTITIES
                 entity_info = ENTITIES.get(entity_key, {})
                 access_type = entity_info.get("access_type", "")
 
@@ -529,7 +527,6 @@ async def async_setup_entry(
                     continue
 
                 # Get entity ID to check against DEFAULT_ENABLED_ENTITIES
-                entity_info = ENTITIES.get(entity_key, {})
                 entity_id = entity_info.get("id")
                 enabled_by_default = coordinator.is_entity_enabled(entity_id) if entity_id else False
 
@@ -555,10 +552,10 @@ async def async_setup_entry(
     else:
         # Fall back to HTML scraping entities for backward compatibility
         # Get constants using lazy import
-        ENTITIES, _, DEFAULT_ENABLED_ENTITIES = _get_constants()
+        entities_local, _, default_enabled_entities = _get_constants()
 
-        # Create all possible entities from ENTITIES
-        for entity_key, entity_data in ENTITIES.items():
+        # Create all possible entities from entities_local
+        for entity_key, entity_data in entities_local.items():
             # Only process entities that have an ID
             if "id" not in entity_data or entity_data["id"] is None:
                 continue
