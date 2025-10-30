@@ -133,10 +133,6 @@ async def async_get_config_entry_diagnostics(
         # Create a copy of data and redact sensitive information
         data_copy = dict(coordinator.data)
 
-        # Redact any HTML content that might contain sensitive info
-        if "raw_html" in data_copy:
-            data_copy["raw_html"] = "[REDACTED]"
-
         # Add parsed data (already cleaned by parser)
         diagnostics_data["parsed_data"] = _redact_auth_data(
             async_redact_data(data_copy, TO_REDACT)
@@ -202,67 +198,6 @@ async def async_get_device_diagnostics(
     """Return diagnostics for a device."""
     # For now, device diagnostics are the same as config entry diagnostics
     return await async_get_config_entry_diagnostics(hass, config_entry)
-
-
-def get_html_debug_info(coordinator) -> dict[str, Any]:
-    """Get debug information about HTML parsing."""
-    debug_info = {}
-
-    if not coordinator.data:
-        return debug_info
-
-    # Add pages fetched
-    pages_fetched = coordinator.data.get("pages_fetched", [])
-    debug_info["pages_fetched"] = pages_fetched
-
-    # Add entity availability status
-    enabled_entities = coordinator.get_enabled_entities(coordinator.config_entry)
-    entity_status = {}
-
-    for entity_key in enabled_entities:
-        entity_status[entity_key] = {
-            "available": coordinator.is_entity_available(entity_key),
-            "has_value": coordinator.get_entity_value(entity_key) is not None,
-        }
-
-    debug_info["entity_status"] = entity_status
-
-    # Add parsing statistics
-    debug_info["parsing_stats"] = {
-        "total_data_items": len(coordinator.data) if coordinator.data else 0,
-        "temperature_sensors": (
-            len([k for k in coordinator.data.keys() if "temp" in k.lower()])
-            if coordinator.data
-            else 0
-        ),
-        "performance_metrics": (
-            len(
-                [
-                    k
-                    for k in coordinator.data.keys()
-                    if any(
-                        metric in k.lower()
-                        for metric in ["speed", "capacity", "runtime"]
-                    )
-                ]
-            )
-            if coordinator.data
-            else 0
-        ),
-        "system_info": (
-            len(
-                [
-                    k
-                    for k in coordinator.data.keys()
-                    if any(info in k.lower() for info in ["ip", "version", "log"])
-                ]
-            )
-            if coordinator.data
-            else 0
-        ),
-    }
-
-    return debug_info
 
 
 def get_connection_debug_info(client) -> dict[str, Any]:
@@ -369,9 +304,6 @@ def create_diagnostics_report(
     unavailable_analysis = identify_unavailable_entities(coordinator)
     report["unavailable_entity_analysis"] = unavailable_analysis
 
-    # Add HTML parsing debug info
-    report["parsing_debug"] = get_html_debug_info(coordinator)
-
     # Add current data summary
     if coordinator.data:
         report["data_summary"] = {
@@ -383,7 +315,7 @@ def create_diagnostics_report(
         # Add sample values (excluding potentially sensitive data)
         sample_data = {}
         for key, value in coordinator.data.items():
-            if key in ["last_update", "pages_fetched"]:
+            if key in ["last_update"]:
                 sample_data[key] = value
             elif isinstance(value, int | float | bool):
                 sample_data[key] = value

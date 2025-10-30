@@ -40,48 +40,6 @@ CONF_PASSWORD = "password"
 CONF_SCAN_INTERVAL = "scan_interval"
 CONF_ENABLE_WRITES = "enable_writes"
 
-# HTML Interface Grouping Structure
-# Based on the HTML interface navigation structure
-HTML_GROUPS = {
-    "Operation": {
-        "Display": {
-            "description": "Main operational view entities (temperatures, states)",
-            "pages": ["display"],
-        },
-        "User": {"description": "User-configurable parameters", "pages": ["user"]},
-    },
-    "Settings": {
-        "Heatpump": {
-            "description": "Heat pump settings",
-            "pages": ["heatpump", "settings_heatpump"],
-        },
-        "Extended Display": {
-            "description": "Extended display settings",
-            "pages": ["extended_display"],
-        },
-        "Heating": {
-            "description": "Heating system settings",
-            "pages": ["heating", "settings_heating"],
-        },
-        "Defrost": {"description": "Defrost parameters", "pages": ["settings_defrost"]},
-        "Service": {"description": "Service parameters", "pages": ["settings_service"]},
-        "Solar panel": {
-            "description": "Solar panel settings",
-            "pages": ["solar", "settings_solar"],
-        },
-        "Hot water": {
-            "description": "Hot water settings",
-            "pages": ["hotwater", "settings_hotwater"],
-        },
-    },
-    "Configuration": {
-        "System": {
-            "description": "System configuration",
-            "pages": [],  # Configuration entities may not have specific pages
-        }
-    },
-}
-
 # Heat pump state mappings
 HEATPUMP_STATES = {
     "Off": "off",
@@ -186,28 +144,6 @@ def parse_id_list(id_list_str: str) -> list[int]:
 
 
 
-def get_all_groups() -> dict[str, Any]:
-    """Get all available categories and groups.
-
-    Returns:
-        dict: Dictionary with categories as keys and lists of groups as values
-    """
-    return HTML_GROUPS
-
-
-def get_group_description(category: str, group: str) -> str | None:
-    """Get the description for a specific group.
-
-    Args:
-        category (str): The category
-        group (str): The group within the category
-
-    Returns:
-        str: The group description, or None if not found
-    """
-    if category in HTML_GROUPS and group in HTML_GROUPS[category]:
-        return HTML_GROUPS[category][group].get("description")
-    return None
 
 
 def parse_items(items_list: list) -> dict[int, tuple[str, Any]]:

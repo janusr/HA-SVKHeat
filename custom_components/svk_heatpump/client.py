@@ -52,16 +52,6 @@ class SVKInvalidDataFormatError(SVKParseError):
         super().__init__("json", message)
 
 
-class SVKHTMLResponseError(SVKParseError):
-    """HTML error page received instead of JSON."""
-
-    def __init__(self, status_code: int, title: str = ""):
-        message = f"Received HTML error page (status {status_code})"
-        if title:
-            message += f": {title}"
-        super().__init__("json", message)
-
-
 class SVKWriteError(Exception):
     """Write operation failed."""
 
@@ -247,64 +237,6 @@ class LOMJsonClient:
                 f"{type(data).__name__}",
                 f"Unsupported data type: {type(data).__name__}",
             )
-
-    def _detect_html_error_page(self, text: str) -> str | None:
-        """
-        Detect if the response is an HTML error page and extract error information.
-
-        Args:
-            text: Response text to analyze
-
-        Returns:
-            Error title if HTML error page detected, None otherwise
-        """
-        if not text or not text.strip():
-            return None
-
-        text = text.strip()
-
-        # Check for HTML doctype or html tag
-        if not (text.startswith("<!DOCTYPE") or text.startswith("<html")):
-            return None
-
-        _LOGGER.debug("Detected HTML response, checking for error indicators")
-
-        # Look for common error indicators in HTML
-        error_patterns = [
-            r"<title[^>]*>([^<]+Error[^<]*)</title>",
-            r"<title[^>]*>([^<]+Unauthorized[^<]*)</title>",
-            r"<title[^>]*>([^<]+Forbidden[^<]*)</title>",
-            r"<title[^>]*>([^<]+Not Found[^<]*)</title>",
-            r"<title[^>]*>([^<]+Internal Server Error[^<]*)</title>",
-            r"<h1[^>]*>([^<]+Error[^<]*)</h1>",
-            r"<h1[^>]*>([^<]+Unauthorized[^<]*)</h1>",
-            r"<h1[^>]*>([^<]+Forbidden[^<]*)</h1>",
-            r"<h1[^>]*>([^<]+Not Found[^<]*)</h1>",
-            r"<h1[^>]*>([^<]+Internal Server Error[^<]*)</h1>",
-        ]
-
-        for pattern in error_patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                error_title = match.group(1).strip()
-                _LOGGER.debug("Found HTML error: %s", error_title)
-                return error_title
-
-        # Look for error messages in common patterns
-        error_msg_patterns = [
-            r"error[:\s]+([^\n<]+)",
-            r"error code[:\s]+(\d+)",
-            r"status[:\s]+([^\n<]+)",
-        ]
-
-        for pattern in error_msg_patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                error_msg = match.group(1).strip()
-                _LOGGER.debug("Found HTML error message: %s", error_msg)
-                return f"Error: {error_msg}"
-
-        return "HTML Error Page"
 
     async def start(self) -> None:
         """Start the client session."""
@@ -707,11 +639,6 @@ class LOMJsonClient:
                 response_text[:500],
             )
 
-            # Check if it's an HTML error page
-            html_error = self._detect_html_error_page(response_text)
-            if html_error:
-                raise SVKHTMLResponseError(resp.status, html_error) from err
-
             raise SVKParseError(
                 "json", f"Invalid JSON response: {response_text[:100]}"
             ) from err
@@ -928,14 +855,6 @@ class LOMJsonClient:
                 "WRITE_OPERATION: Response body (first 300 chars): %s",
                 response_text[:300]
             )
-            
-            # Check if it's an HTML error page
-            html_error = self._detect_html_error_page(response_text)
-            if html_error:
-                _LOGGER.error(
-                    "WRITE_OPERATION: HTML error page detected: %s", html_error
-                )
-                raise SVKHTMLResponseError(resp.status, html_error)
             
             raise SVKConnectionError(f"HTTP {resp.status}: {response_text[:160]}")
 

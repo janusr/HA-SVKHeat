@@ -13,7 +13,6 @@ from .client import (
     LOMJsonClient,
     SVKAuthenticationError,
     SVKConnectionError,
-    SVKHTMLResponseError,
     SVKInvalidDataFormatError,
     SVKParseError,
     SVKTimeoutError,
@@ -209,13 +208,6 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow):
                     errors["base"] = "invalid_data_format"
                     _LOGGER.error(
                         "Invalid data format from host %s: %s",
-                        self._host,
-                        parse_err.message,
-                    )
-                elif isinstance(parse_err, SVKHTMLResponseError):
-                    errors["base"] = "html_error_response"
-                    _LOGGER.error(
-                        "Received HTML error page from host %s: %s",
                         self._host,
                         parse_err.message,
                     )
@@ -472,13 +464,6 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow):
                     errors["base"] = "invalid_data_format"
                     _LOGGER.error(
                         "Invalid data format during reauth for host %s: %s",
-                        host,
-                        parse_err.message,
-                    )
-                elif isinstance(parse_err, SVKHTMLResponseError):
-                    errors["base"] = "html_error_response"
-                    _LOGGER.error(
-                        "Received HTML error page during reauth for host %s: %s",
                         host,
                         parse_err.message,
                     )

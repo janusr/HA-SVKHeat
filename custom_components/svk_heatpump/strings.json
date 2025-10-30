@@ -27,7 +27,6 @@
       "unknown": "Unknown error",
       "unexpected_auth_scheme": "Device does not support Digest authentication",
       "invalid_data_format": "Invalid data format received",
-      "html_error_response": "Received HTML error page",
       "parse_error": "Failed to parse response",
       "invalid_reauth": "Invalid reauthentication request"
     }

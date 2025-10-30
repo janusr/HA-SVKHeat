@@ -33,7 +33,6 @@
       "timeout": "Forbindelsestimeout. Enheden svarer ikke.",
       "parse_error": "Kunne ikke parse svar fra enhed. Ugyldigt dataformat.",
       "invalid_data_format": "Ugyldigt dataformat fra enhed. Enheden returnerede et uventet format.",
-      "html_error_response": "Enheden returnerede en HTML-fejlside i stedet for JSON-data. Dette kan indikere en autentificerings- eller serverfejl.",
       "readonly_select": "Denne select-enhed er skrivebeskyttet",
       "readonly_monitor": "Dette er en skrivebeskyttet monitor-enhed",
       "write_controls_disabled": "Skrivekontroller er deaktiveret i indstillingerne",
@@ -43,8 +42,7 @@
       "invalid_json_response": "Ugyldigt JSON-svar: {text}",
       "response_format_mismatch": "Svarformat mismatch. Forventede {expected}, modtog {received}.",
       "unsupported_response_type": "Ikke-understøttet svar-type: {response_type}. Enheden bruger muligvis en anden API-version.",
-      "empty_response_body": "Tom svar-krop modtaget fra enheden.",
-      "html_error_page_received": "Modtog HTML-fejlside: {error_title}"
+      "empty_response_body": "Tom svar-krop modtaget fra enheden."
     },
     "abort": {
       "reauth_successful": "Genautentificering succesfuld"
