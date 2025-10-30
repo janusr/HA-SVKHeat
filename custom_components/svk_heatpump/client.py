@@ -486,6 +486,12 @@ class LOMJsonClient:
                     headers["Authorization"] = digest_header
                     kwargs["headers"] = headers
 
+                    # Check if session is None and reinitialize if needed
+                    if self._session is None:
+                        await self.start()
+                        if self._session is None:  # Check again after start()
+                            raise SVKConnectionError("Failed to initialize HTTP session")
+
                     resp = await self._session.request(
                         method, url, allow_redirects=False, **kwargs
                     )
@@ -515,6 +521,13 @@ class LOMJsonClient:
 
                     # Step 1: Make unauthenticated request to get WWW-Authenticate header
                     allow_redirects = method != "GET"
+                    
+                    # Check if session is None and reinitialize if needed
+                    if self._session is None:
+                        await self.start()
+                        if self._session is None:  # Check again after start()
+                            raise SVKConnectionError("Failed to initialize HTTP session")
+                    
                     resp = await self._session.request(
                         method, url, allow_redirects=allow_redirects, **kwargs
                     )
@@ -803,38 +816,151 @@ class LOMJsonClient:
 
         # Prepare JSON payload
         payload = {"id": id, "value": value}
+        start_time = time.time()
 
         resp = None
         try:
+            _LOGGER.info(
+                "WRITE_OPERATION: Starting write of value %s to register %s", value, id
+            )
             _LOGGER.debug(
-                "Making POST request to write value %s to register %s", value, id
+                "WRITE_OPERATION: Request payload: %s", payload
+            )
+            _LOGGER.debug(
+                "WRITE_OPERATION: Authentication state valid: %s", self._is_authentication_valid()
             )
 
             resp = await self._digest_auth_request(
                 "/cgi-bin/json_values.cgi", method="POST", json=payload
             )
 
+            # Log timing and response details
+            request_time = time.time() - start_time
+            _LOGGER.debug(
+                "WRITE_OPERATION: Request completed in %.2f seconds, status: %d",
+                request_time, resp.status
+            )
+            _LOGGER.debug(
+                "WRITE_OPERATION: Response headers: %s", dict(resp.headers)
+            )
+
             # Check for success
             if resp.status == 200:
-                # Parse JSON response
+                # Parse JSON response with enhanced error handling
+                response_text = await resp.text(errors="ignore")
+                _LOGGER.debug(
+                    "WRITE_OPERATION: Raw response text: %s", response_text[:200]
+                )
+                
                 try:
-                    data = await resp.json()
-                    return bool(data.get("success", False))
-                except (aiohttp.ContentTypeError, ValueError):
+                    data = json.loads(response_text)
+                    _LOGGER.debug(
+                        "WRITE_OPERATION: Parsed JSON response: %s", data
+                    )
+                    
+                    success = bool(data.get("success", False))
+                    
+                    if success:
+                        _LOGGER.info(
+                            "WRITE_OPERATION: Successfully wrote value %s to register %s",
+                            value, id
+                        )
+                        return True
+                    else:
+                        # Enhanced error logging for failed writes
+                        error_message = data.get("message", data.get("error", "Unknown error"))
+                        error_code = data.get("code", "N/A")
+                        _LOGGER.error(
+                            "WRITE_OPERATION: Heat pump rejected write to register %s: %s",
+                            id, error_message
+                        )
+                        _LOGGER.error(
+                            "WRITE_OPERATION: Error details - Code: %s, Value: %s, Full response: %s",
+                            error_code, value, data
+                        )
+                        
+                        # Create a detailed error for diagnostics
+                        raise SVKWriteError(
+                            parameter=str(id),
+                            value=value,
+                            message=f"Heat pump rejected write: {error_message} (code: {error_code})"
+                        )
+                        
+                except json.JSONDecodeError as json_err:
+                    _LOGGER.error(
+                        "WRITE_OPERATION: JSON decode error for register %s: %s",
+                        id, json_err
+                    )
+                    _LOGGER.error(
+                        "WRITE_OPERATION: Raw response that failed to parse: %s",
+                        response_text[:500]
+                    )
+                    _LOGGER.error(
+                        "WRITE_OPERATION: Response content-type: %s, status: %d",
+                        resp.headers.get("Content-Type", "unknown"), resp.status
+                    )
                     return False
 
             # Handle errors with improved diagnostics
             if resp.status == 401:
-                _LOGGER.error("Write operation failed with 401 - invalid credentials")
+                _LOGGER.error(
+                    "WRITE_OPERATION: Authentication failed for write to register %s", id
+                )
+                _LOGGER.error(
+                    "WRITE_OPERATION: Current auth state - nonce: %s, realm: %s, last_auth: %s",
+                    self._auth_nonce is not None,
+                    self._auth_realm,
+                    time.time() - self._last_auth_time if self._last_auth_time > 0 else "never"
+                )
                 raise SVKAuthenticationError(
                     "Invalid username or password for write operation"
                 )
 
-            text = await resp.text(errors="ignore")
-            raise SVKConnectionError(f"HTTP {resp.status}: {text[:160]}")
+            # For other HTTP errors, capture full response details
+            response_text = await resp.text(errors="ignore")
+            _LOGGER.error(
+                "WRITE_OPERATION: HTTP error %d for register %s", resp.status, id
+            )
+            _LOGGER.error(
+                "WRITE_OPERATION: Response headers: %s", dict(resp.headers)
+            )
+            _LOGGER.error(
+                "WRITE_OPERATION: Response body (first 300 chars): %s",
+                response_text[:300]
+            )
+            
+            # Check if it's an HTML error page
+            html_error = self._detect_html_error_page(response_text)
+            if html_error:
+                _LOGGER.error(
+                    "WRITE_OPERATION: HTML error page detected: %s", html_error
+                )
+                raise SVKHTMLResponseError(resp.status, html_error)
+            
+            raise SVKConnectionError(f"HTTP {resp.status}: {response_text[:160]}")
 
+        except SVKWriteError:
+            # Re-raise SVKWriteError without wrapping
+            raise
         except (asyncio.TimeoutError, aiohttp.ClientError) as err:
-            _LOGGER.error("Failed to write value %s to register %s: %s", value, id, err)
+            request_time = time.time() - start_time
+            _LOGGER.error(
+                "WRITE_OPERATION: Network error after %.2f seconds for register %s: %s",
+                request_time, id, err
+            )
+            _LOGGER.error(
+                "WRITE_OPERATION: Write value was: %s", value
+            )
+            return False
+        except Exception as err:
+            request_time = time.time() - start_time
+            _LOGGER.error(
+                "WRITE_OPERATION: Unexpected error after %.2f seconds for register %s: %s",
+                request_time, id, err
+            )
+            _LOGGER.error(
+                "WRITE_OPERATION: Exception type: %s", type(err).__name__
+            )
             return False
         finally:
             if resp:

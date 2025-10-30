@@ -54,6 +54,7 @@ test_outputs/
 data/
 reports/
 scripts/
+.devcontainer/
 
 # Translations
 *.mo

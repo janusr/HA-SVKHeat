@@ -86,6 +86,10 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             self.is_first_refresh = True
             # Track if first refresh has been attempted to avoid duplicate attempts
             self.first_refresh_attempted = False
+            
+            # Track write operation diagnostics
+            self.write_operations: list[dict[str, Any]] = []
+            self.max_write_operations = 50  # Keep last 50 write operations
 
         super().__init__(
             hass,
@@ -828,31 +832,159 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
 
     async def async_set_parameter(self, parameter: str, value: Any) -> bool:
         """Set a parameter value."""
+        start_time = datetime.now()
+        entity_info = None
+        entity_id = None
+        
         try:
+            _LOGGER.info(
+                "SET_PARAMETER: Starting parameter set operation - %s = %s",
+                parameter, value
+            )
+            
             # For JSON API, we need to find the entity ID for this parameter
-            entity_id = None
             for eid, info in self.id_to_entity_map.items():
                 if info["key"] == parameter:
                     entity_id = eid
+                    entity_info = info
                     break
 
             if entity_id is None:
-                _LOGGER.error("Unknown parameter for JSON API: %s", parameter)
+                _LOGGER.error(
+                    "SET_PARAMETER: Unknown parameter for JSON API: %s", parameter
+                )
+                _LOGGER.error(
+                    "SET_PARAMETER: Available parameters: %s",
+                    [info["key"] for info in self.id_to_entity_map.values()][:20]
+                )
                 return False
 
+            # Log entity details for debugging
+            if entity_info:
+                _LOGGER.debug(
+                    "SET_PARAMETER: Entity details - ID: %s, Key: %s, Name: %s, Unit: %s",
+                    entity_id,
+                    entity_info.get("key", "unknown"),
+                    entity_info.get("original_name", "unknown"),
+                    entity_info.get("unit", "unknown")
+                )
+            
+            # Log heat pump operational state if available
+            if self.data:
+                heatpump_state = self.data.get("heatpump_state", "unknown")
+                alarm_active = self.data.get("alarm_active", False)
+                _LOGGER.debug(
+                    "SET_PARAMETER: Heat pump state - State: %s, Alarm: %s",
+                    heatpump_state, alarm_active
+                )
+                
+                # Warn if heat pump is in a state that might reject writes
+                if heatpump_state in ["off", "total_stop"]:
+                    _LOGGER.warning(
+                        "SET_PARAMETER: Heat pump is in %s state - write operations may be rejected",
+                        heatpump_state
+                    )
+                elif alarm_active:
+                    _LOGGER.warning(
+                        "SET_PARAMETER: Heat pump has active alarms - write operations may be rejected"
+                    )
+
             # Write the value using the JSON API
+            _LOGGER.debug(
+                "SET_PARAMETER: Attempting to write value %s to entity ID %s",
+                value, entity_id
+            )
+            
             success = await self.client.write_value(entity_id, value)
+            
+            # Log timing information
+            operation_time = (datetime.now() - start_time).total_seconds()
+            _LOGGER.debug(
+                "SET_PARAMETER: Write operation completed in %.2f seconds",
+                operation_time
+            )
 
             if success:
+                _LOGGER.info(
+                    "SET_PARAMETER: Successfully set %s to %s", parameter, value
+                )
                 # Trigger a refresh to get the updated value
+                _LOGGER.debug(
+                    "SET_PARAMETER: Triggering data refresh to verify the change"
+                )
                 await self.async_request_refresh()
                 return True
             else:
+                _LOGGER.error(
+                    "SET_PARAMETER: Failed to set %s to %s - write operation returned False",
+                    parameter, value
+                )
                 return False
 
         except Exception as err:
-            _LOGGER.error("Failed to set %s to %s: %s", parameter, value, err)
+            operation_time = (datetime.now() - start_time).total_seconds()
+            
+            # Enhanced error logging with context
+            _LOGGER.error(
+                "SET_PARAMETER: Failed to set %s to %s after %.2f seconds",
+                parameter, value, operation_time
+            )
+            _LOGGER.error(
+                "SET_PARAMETER: Error type: %s, Message: %s",
+                type(err).__name__, str(err)
+            )
+            
+            # Log entity information if available
+            if entity_info:
+                _LOGGER.error(
+                    "SET_PARAMETER: Entity context - ID: %s, Name: %s, Unit: %s",
+                    entity_id,
+                    entity_info.get("original_name", "unknown"),
+                    entity_info.get("unit", "unknown")
+                )
+            
+            # Log heat pump state if available
+            if self.data:
+                heatpump_state = self.data.get("heatpump_state", "unknown")
+                alarm_active = self.data.get("alarm_active", False)
+                _LOGGER.error(
+                    "SET_PARAMETER: Heat pump context - State: %s, Alarm: %s",
+                    heatpump_state, alarm_active
+                )
+            
+            # Log full exception details for debugging
+            if hasattr(err, "__traceback__"):
+                import traceback
+                _LOGGER.error(
+                    "SET_PARAMETER: Full traceback: %s",
+                    traceback.format_exc()
+                )
+            
+            # Re-raise SVKWriteError to preserve specific error details
+            from .client import SVKWriteError
+            if isinstance(err, SVKWriteError):
+                _LOGGER.error(
+                    "SET_PARAMETER: Heat pump specific error - Parameter: %s, Value: %s, Reason: %s",
+                    err.parameter, err.value, err.message
+                )
+                # Don't return False for SVKWriteError, let it propagate
+                raise
+            
+            # For other exceptions, return False to maintain backward compatibility
             return False
+        finally:
+            # Record write operation for diagnostics
+            operation_time = (datetime.now() - start_time).total_seconds()
+            # Determine success - check if we have a success variable and it's True
+            operation_success = 'success' in locals() and success is True
+            self._record_write_operation(
+                parameter=parameter,
+                value=value,
+                success=operation_success,
+                operation_time=operation_time,
+                entity_id=entity_id if entity_id is not None else -1,
+                entity_info=entity_info if entity_info is not None else {}
+            )
 
     def get_enabled_entities(self, config_entry) -> list[str]:
         """Get list of enabled entities based on configuration."""
@@ -1114,6 +1246,9 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         # Add entity availability summary
         if self.data:
             diagnostics["entity_availability"] = self._get_entity_availability_summary()
+        
+        # Add write operation diagnostics
+        diagnostics["write_operations"] = self.get_write_operation_diagnostics()
 
         return diagnostics
 
@@ -1266,6 +1401,96 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                 )
 
         return disabled
+
+    def _record_write_operation(self, parameter: str, value: Any, success: bool,
+                            operation_time: float, entity_id: int = -1,
+                            entity_info: dict[str, Any] | None = None) -> None:
+        """Record write operation for diagnostics."""
+        operation = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "parameter": parameter,
+            "value": value,
+            "success": success,
+            "operation_time": operation_time,
+            "entity_id": entity_id,
+            "entity_name": entity_info.get("original_name", "unknown") if entity_info else "unknown",
+            "entity_unit": entity_info.get("unit", "unknown") if entity_info else "unknown",
+            "heatpump_state": self.data.get("heatpump_state") if self.data else "unknown",
+            "alarm_active": self.data.get("alarm_active", False) if self.data else False,
+        }
+        
+        # Add to write operations list
+        self.write_operations.append(operation)
+        
+        # Keep only the last N operations
+        if len(self.write_operations) > self.max_write_operations:
+            self.write_operations = self.write_operations[-self.max_write_operations:]
+        
+        # Log operation summary
+        if success:
+            _LOGGER.info(
+                "WRITE_DIAGNOSTIC: %s = %s completed in %.2fs (ID: %s)",
+                parameter, value, operation_time, entity_id
+            )
+        else:
+            _LOGGER.warning(
+                "WRITE_DIAGNOSTIC: %s = %s failed in %.2fs (ID: %s)",
+                parameter, value, operation_time, entity_id
+            )
+
+    def get_write_operation_diagnostics(self) -> dict[str, Any]:
+        """Get comprehensive write operation diagnostics."""
+        if not self.write_operations:
+            return {"message": "No write operations recorded"}
+        
+        # Calculate statistics
+        total_operations = len(self.write_operations)
+        successful_operations = sum(1 for op in self.write_operations if op["success"])
+        failed_operations = total_operations - successful_operations
+        
+        # Calculate average operation time
+        avg_operation_time = sum(op["operation_time"] for op in self.write_operations) / total_operations
+        
+        # Get recent operations (last 10)
+        recent_operations = self.write_operations[-10:]
+        
+        # Group failures by parameter
+        failures_by_parameter = {}
+        for op in self.write_operations:
+            if not op["success"]:
+                param = op["parameter"]
+                if param not in failures_by_parameter:
+                    failures_by_parameter[param] = []
+                failures_by_parameter[param].append(op)
+        
+        # Find most common failure reasons
+        failure_contexts = {}
+        for op in self.write_operations:
+            if not op["success"]:
+                context_key = f"{op['heatpump_state']}_{'alarm' if op['alarm_active'] else 'no_alarm'}"
+                if context_key not in failure_contexts:
+                    failure_contexts[context_key] = 0
+                failure_contexts[context_key] += 1
+        
+        return {
+            "total_operations": total_operations,
+            "successful_operations": successful_operations,
+            "failed_operations": failed_operations,
+            "success_rate": round((successful_operations / total_operations) * 100, 1) if total_operations > 0 else 0,
+            "average_operation_time": round(avg_operation_time, 3),
+            "recent_operations": recent_operations,
+            "failures_by_parameter": {
+                param: {
+                    "count": len(failures),
+                    "last_failure": failures[-1]["timestamp"],
+                    "failure_rate": round((len(failures) / sum(1 for op in self.write_operations if op["parameter"] == param)) * 100, 1)
+                }
+                for param, failures in failures_by_parameter.items()
+            },
+            "failure_contexts": failure_contexts,
+            "oldest_operation": self.write_operations[0]["timestamp"],
+            "newest_operation": self.write_operations[-1]["timestamp"],
+        }
 
     @property
     def device_info(self) -> DeviceInfo:

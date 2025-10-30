@@ -127,6 +127,11 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
         elif data_type == "time" and unit == "h":
             state_class = SensorStateClass.TOTAL_INCREASING
 
+        # Add explicit handling for string data types
+        if data_type == "string":
+            device_class = None  # Explicitly set to None for text sensors
+            state_class = None  # Explicitly set to None for text sensors
+
         # Set entity category based on category
         entity_category = None
         if category == "Configuration":
