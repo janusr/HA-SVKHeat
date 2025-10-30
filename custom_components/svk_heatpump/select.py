@@ -106,22 +106,31 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
             # Try to get options from entity info or use defaults based on entity key
             if entity_key == "defrost_defrost_mode":
                 options = ["Off", "Manual", "Automatic"]
+                mappings = {"Off": "0", "Manual": "1", "Automatic": "2"}
             elif entity_key == "heating_heating_source":
                 options = ["Heat pump", "Electric", "Manual"]
+                mappings = {"Heat pump": "0", "Electric": "1", "Manual": "2"}
             elif entity_key == "heating_heatspctrl_type":
                 options = ["Off", "Curve", "Room", "Outdoor"]
+                mappings = {"Off": "0", "Curve": "1", "Room": "2", "Outdoor": "3"}
             elif entity_key == "heatpump_heating_ctrlmode":
                 options = ["Off", "Room", "Outdoor", "Curve"]
+                mappings = {"Off": "0", "Room": "1", "Outdoor": "2", "Curve": "3"}
             elif entity_key == "heatpump_cprcontrol_cprmode":
                 options = ["Off", "Standard", "Eco", "Comfort"]
+                mappings = {"Off": "0", "Standard": "1", "Eco": "2", "Comfort": "3"}
             elif entity_key == "heatpump_coldpump_mode":
                 options = ["Off", "Auto", "Manual"]
+                mappings = {"Off": "0", "Auto": "1", "Manual": "2"}
             elif entity_key == "hotwater_hotwater_source":
                 options = ["Heat pump", "Electric", "Solar"]
+                mappings = {"Heat pump": "0", "Electric": "1", "Solar": "2"}
             elif entity_key == "service_parameters_displaymode":
                 options = ["Basic", "Advanced", "Service"]
+                mappings = {"Basic": "0", "Advanced": "1", "Service": "2"}
             elif entity_key == "solar_solarpanel_sensorselect":
                 options = ["Internal", "External"]
+                mappings = {"Internal": "0", "External": "1"}
             elif entity_key == "user_user_language":
                 # Use translation keys that will be resolved by Home Assistant
                 # These keys correspond to the translations in en.json and da.json
@@ -140,6 +149,7 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
             else:
                 # Default options for unknown enum
                 options = ["Option 1", "Option 2", "Option 3"]
+                mappings = {"Option 1": "0", "Option 2": "1", "Option 3": "2"}
 
         # Set icon based on entity name or group
         icon = None
@@ -186,12 +196,59 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
         """Return the current selected option."""
         value = self.coordinator.get_entity_value(self._entity_key)
         if value is not None:
-            # Map the internal value to the display option
-            for option, mapped_value in self._mappings.items():
-                if mapped_value == value:
-                    return option
-            # If no mapping found, return the raw value as string
-            return str(value)
+            _LOGGER.debug(
+                "Select %s: raw value from API: %s (type: %s)",
+                self._entity_key,
+                value,
+                type(value).__name__
+            )
+            
+            # Convert value to string for consistent comparison
+            str_value = str(value)
+            
+            # First try to map using the mappings dictionary
+            if self._mappings:
+                for option, mapped_value in self._mappings.items():
+                    if str(mapped_value) == str_value:
+                        _LOGGER.debug(
+                            "Select %s: mapped value %s to option %s",
+                            self._entity_key,
+                            str_value,
+                            option
+                        )
+                        return option
+            
+            # If no mapping found or mappings empty, try to match directly with options
+            options = self.options
+            if options:
+                # Try direct match with string value
+                if str_value in options:
+                    _LOGGER.debug(
+                        "Select %s: direct match found for value %s",
+                        self._entity_key,
+                        str_value
+                    )
+                    return str_value
+                
+                # For numeric values, try to match by index
+                if str_value.isdigit():
+                    index = int(str_value)
+                    if 0 <= index < len(options):
+                        _LOGGER.debug(
+                            "Select %s: mapped index %d to option %s",
+                            self._entity_key,
+                            index,
+                            options[index]
+                        )
+                        return options[index]
+            
+            # If still no match, return the raw value as string
+            _LOGGER.debug(
+                "Select %s: no mapping found, returning raw value %s",
+                self._entity_key,
+                str_value
+            )
+            return str_value
         return None
     
     @property
@@ -265,8 +322,32 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
             _LOGGER.warning("Write controls are disabled for %s", self._entity_key)
             raise ValueError("Write controls are disabled in options")
 
+        _LOGGER.debug(
+            "Select %s: attempting to set option %s",
+            self._entity_key,
+            option
+        )
+
         # Map the option to the internal value
         internal_value = self._mappings.get(option, option)
+        
+        # If no mapping found, try to find the option index
+        if internal_value == option and self.options:
+            try:
+                index = self.options.index(option)
+                internal_value = str(index)
+                _LOGGER.debug(
+                    "Select %s: converted option %s to index value %s",
+                    self._entity_key,
+                    option,
+                    internal_value
+                )
+            except ValueError:
+                _LOGGER.debug(
+                    "Select %s: option %s not found in options list, using raw value",
+                    self._entity_key,
+                    option
+                )
 
         # Set the new value
         success = await self.coordinator.async_set_parameter(
@@ -274,10 +355,10 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
         )
 
         if not success:
-            _LOGGER.error("Failed to set %s to %s", self._entity_key, internal_value)
+            _LOGGER.error("Failed to set %s to %s (internal value: %s)", self._entity_key, option, internal_value)
             raise ValueError(f"Failed to set {self._entity_key} to {option}")
 
-        _LOGGER.info("Successfully set %s to %s", self._entity_key, internal_value)
+        _LOGGER.info("Successfully set %s to %s (internal value: %s)", self._entity_key, option, internal_value)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
@@ -407,12 +488,59 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
         """Return the current selected option."""
         value = self.coordinator.get_entity_value(self._entity_key)
         if value is not None:
-            # Map the internal value to the display option
-            for option, mapped_value in self._mappings.items():
-                if mapped_value == value:
-                    return option
-            # If no mapping found, return the raw value
-            return str(value)
+            _LOGGER.debug(
+                "Legacy Select %s: raw value from API: %s (type: %s)",
+                self._entity_key,
+                value,
+                type(value).__name__
+            )
+            
+            # Convert value to string for consistent comparison
+            str_value = str(value)
+            
+            # First try to map using the mappings dictionary
+            if self._mappings:
+                for option, mapped_value in self._mappings.items():
+                    if str(mapped_value) == str_value:
+                        _LOGGER.debug(
+                            "Legacy Select %s: mapped value %s to option %s",
+                            self._entity_key,
+                            str_value,
+                            option
+                        )
+                        return option
+            
+            # If no mapping found or mappings empty, try to match directly with options
+            options = self.options
+            if options:
+                # Try direct match with string value
+                if str_value in options:
+                    _LOGGER.debug(
+                        "Legacy Select %s: direct match found for value %s",
+                        self._entity_key,
+                        str_value
+                    )
+                    return str_value
+                
+                # For numeric values, try to match by index
+                if str_value.isdigit():
+                    index = int(str_value)
+                    if 0 <= index < len(options):
+                        _LOGGER.debug(
+                            "Legacy Select %s: mapped index %d to option %s",
+                            self._entity_key,
+                            index,
+                            options[index]
+                        )
+                        return options[index]
+            
+            # If still no match, return the raw value as string
+            _LOGGER.debug(
+                "Legacy Select %s: no mapping found, returning raw value %s",
+                self._entity_key,
+                str_value
+            )
+            return str_value
         return None
 
     @property
@@ -448,8 +576,32 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
             _LOGGER.warning("Write controls are disabled for %s", self._entity_key)
             raise ValueError("Write controls are disabled in options")
 
+        _LOGGER.debug(
+            "Legacy Select %s: attempting to set option %s",
+            self._entity_key,
+            option
+        )
+
         # Map the option to the internal value
         internal_value = self._mappings.get(option, option)
+        
+        # If no mapping found, try to find the option index
+        if internal_value == option and self.options:
+            try:
+                index = self.options.index(option)
+                internal_value = str(index)
+                _LOGGER.debug(
+                    "Legacy Select %s: converted option %s to index value %s",
+                    self._entity_key,
+                    option,
+                    internal_value
+                )
+            except ValueError:
+                _LOGGER.debug(
+                    "Legacy Select %s: option %s not found in options list, using raw value",
+                    self._entity_key,
+                    option
+                )
 
         # Set the new value
         success = await self.coordinator.async_set_parameter(
@@ -457,10 +609,10 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
         )
 
         if not success:
-            _LOGGER.error("Failed to set %s to %s", self._entity_key, internal_value)
+            _LOGGER.error("Failed to set %s to %s (internal value: %s)", self._entity_key, option, internal_value)
             raise ValueError(f"Failed to set {self._entity_key} to {option}")
 
-        _LOGGER.info("Successfully set %s to %s", self._entity_key, internal_value)
+        _LOGGER.info("Successfully set %s to %s (internal value: %s)", self._entity_key, option, internal_value)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:

@@ -8,7 +8,7 @@ SVK Heat Pump Home Assistant Integration
 
 A custom Home Assistant integration for SVK LMC320 heat pump controllers, providing comprehensive monitoring and control capabilities through both modern JSON API and legacy HTML scraping interfaces.
 
-**Version:** 0.0.1
+**Version:** 0.2.x
 
 .. contents::
    :local:
@@ -145,7 +145,7 @@ Digest Authentication
 Entities
 --------
 
-The integration provides 150+ entities organized into the following categories:
+The integration provides 100+ entities organized into the following categories:
 
 Temperature Sensors
 ~~~~~~~~~~~~~~~~~~
