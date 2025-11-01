@@ -557,7 +557,7 @@ async def async_setup_entry(
     # Add additional number entities for monitoring (read-only)
     heating_setpoint_desc = NumberEntityDescription(
         key="heating_setpoint_monitor",
-        name="Heating Set Point",
+        name=None,  # Use None for translation
         native_min_value=10,
         native_max_value=35,
         native_step=1,

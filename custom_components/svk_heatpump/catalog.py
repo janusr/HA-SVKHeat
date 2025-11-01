@@ -2408,67 +2408,6 @@ BINARY_SENSORS = {
     }
 }
 
-# Moved from const.py - Select entity definitions
-SELECT_ENTITIES_LEGACY = {
-    "heatpump_state": {
-        "name": "Heat Pump State",
-        "label": "Heat pump state",
-        "page": "display",
-        "category": "Operation",
-        "group": "Display",
-        "options": ["Off", "Ready", "Start up", "Heating", "Hot water", "El heating", "Defrost", "Drip delay", "Total stop", "Pump exercise", "Forced running", "Manual"],
-        "mappings": {"Off": "off", "Ready": "ready", "Start up": "start_up", "Heating": "heating", "Hot water": "hot_water", "El heating": "el_heating", "Defrost": "defrost", "Drip delay": "drip_delay", "Total stop": "total_stop", "Pump exercise": "pump_exercise", "Forced running": "forced_running", "Manual": "manual"},
-    },
-    "solar_panel_state": {
-        "name": "Solar Panel State",
-        "label": "Solar panel state",
-        "page": "solar",
-        "category": "Settings",
-        "group": "Solar panel",
-        "options": ["Off", "Running", "Forced Stop"],
-        "mappings": {"Off": "off", "Running": "running", "Forced Stop": "forced_stop"},
-    },
-    "season_mode": {
-        "name": "Season Mode",
-        "label": "Season mode",
-        "page": "user",
-        "category": "Operation",
-        "group": "User",
-        "options": ["Summer", "Winter", "Auto"],
-        "mappings": {"Summer": "summer", "Winter": "winter", "Auto": "auto"},
-        "writable": True,
-    },
-}
-
-# Moved from const.py - Number entity definitions (writable)
-NUMBER_ENTITIES_LEGACY = {
-    "hot_water_setpoint": {
-        "name": "Hot Water Set Point",
-        "label": "Hot water set point",
-        "page": "user",
-        "category": "Operation",
-        "group": "User",
-        "min_value": 40,
-        "max_value": 65,
-        "step": 1,
-        "unit": "°C",
-        "device_class": "temperature",
-    },
-    "room_setpoint": {
-        "name": "Room Set Point",
-        "label": "Room set point",
-        "page": "user",
-        "category": "Operation",
-        "group": "User",
-        "min_value": 10,
-        "max_value": 30,
-        "step": 1,
-        "unit": "°C",
-        "device_class": "temperature",
-    },
-}
-
-# ID_MAP has been successfully removed - all entity information is now directly available in the ENTITIES dictionary
 
 # Function to generate default IDs from ENTITIES
 def get_default_ids() -> str:
@@ -2484,12 +2423,6 @@ def get_default_ids() -> str:
             all_ids.add(entity_data["id"])
     
     return ";".join(str(id) for id in sorted(all_ids))
-
-
-
-
-
-
 
 def get_id_map() -> dict[int, tuple[str, str, Any, Any, str]]:
     """Generate ID mapping from ENTITIES dictionary.
@@ -2547,26 +2480,6 @@ DEFAULT_ENABLED_ENTITIES = [
     300,  # display_heatpump_capacityreq
 ]
 
-# Moved from const.py - BINARY_OUTPUT_IDS
-BINARY_OUTPUT_IDS = {
-    219: "Heater",
-    220: "Hot Tap Water",
-    221: "Cold Pump",
-    222: "Cold Pump Low",
-    223: "Hot Side Pump",
-    224: "Defrost Valve",
-    225: "Solar Pump",
-    227: "Aux Pump",
-    228: "Alarm",
-    232: "Cold Pump Volt",
-    265: "HP Switch",
-    266: "LP Switch",
-    267: "BP Switch",
-    268: "DF Start",
-    269: "FC Switch",
-}
-
-
 # Helper functions moved from const.py
 def get_entity_info(entity_id: int):
     """Get entity information from ENTITIES.
@@ -2589,18 +2502,6 @@ def get_entity_info(entity_id: int):
     return None
 
 
-def is_binary_output(entity_id):
-    """Check if an ID is a binary output (should be exposed as binary_sensor).
-
-    Args:
-        entity_id (int): The entity ID to check
-
-    Returns:
-        bool: True if ID is a binary output, False otherwise
-    """
-    return entity_id in BINARY_OUTPUT_IDS
-
-
 def get_original_name(entity_id: int):
     """Get original name for an entity ID for diagnostics.
 
@@ -2615,18 +2516,6 @@ def get_original_name(entity_id: int):
         if "id" in entity_data and entity_data["id"] == entity_id:
             return entity_data.get("name")
     return None
-
-
-def get_binary_output_name(entity_id: int):
-    """Get display name for a binary output ID.
-
-    Args:
-        entity_id (int): The binary output ID to look up
-
-    Returns:
-        str: The display name or None if not found
-    """
-    return BINARY_OUTPUT_IDS.get(entity_id)
 
 
 def get_entity_group_info(entity_id: int):

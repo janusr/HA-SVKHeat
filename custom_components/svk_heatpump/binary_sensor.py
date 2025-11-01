@@ -276,7 +276,7 @@ async def async_setup_entry(
     # Add additional binary sensors for system states
     system_state_desc = BinarySensorEntityDescription(
         key="system_active",
-        name="System Active",
+        name=None,  # Use None for translation
         device_class=BinarySensorDeviceClass.RUNNING,
     )
 
@@ -316,7 +316,7 @@ async def async_setup_entry(
     # Add online status binary sensor
     online_desc = BinarySensorEntityDescription(
         key="online_status",
-        name="Online Status",
+        name=None,  # Use None for translation
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
     )
 

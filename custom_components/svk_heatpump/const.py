@@ -475,19 +475,14 @@ try:
         SYSTEM_SENSORS,
         SYSTEM_COUNTER_SENSORS,
         BINARY_SENSORS,
-        SELECT_ENTITIES_LEGACY,
-        NUMBER_ENTITIES_LEGACY,
         
         # Entity mappings and lists
-        BINARY_OUTPUT_IDS,
         get_default_ids,
         DEFAULT_ENABLED_ENTITIES,
         
         # Entity helper functions
         get_entity_info,
-        is_binary_output,
         get_original_name,
-        get_binary_output_name,
         get_entity_group_info,
         get_entity_ids_by_group,
         get_entity_by_id,  # type: ignore
@@ -516,9 +511,6 @@ except ImportError:
     SYSTEM_SENSORS = {}
     SYSTEM_COUNTER_SENSORS = {}
     BINARY_SENSORS = {}
-    SELECT_ENTITIES_LEGACY = {}
-    NUMBER_ENTITIES_LEGACY = {}
-    BINARY_OUTPUT_IDS = {}
     DEFAULT_ENABLED_ENTITIES = []
     
     def get_default_ids():
@@ -542,13 +534,7 @@ except ImportError:
     def get_entity_info(entity_id: int) -> tuple[str, Any, Any, Any, str] | None:
         return None
     
-    def is_binary_output(entity_id) -> bool:
-        return False
-    
     def get_original_name(entity_id: int) -> str | None:
-        return None
-    
-    def get_binary_output_name(entity_id: int) -> str | None:
         return None
     
     def get_entity_group_info(entity_id: int) -> dict[str, Any] | None:

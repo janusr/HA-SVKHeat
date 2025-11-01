@@ -27,7 +27,7 @@ class SVKBaseEntity(Entity):
         from .catalog import ENTITIES
         entity_info = ENTITIES.get(entity_key, {})
         # Use entity_key (identifier) as display name instead of name property
-        self._attr_name = entity_key
+        # self._attr_name = entity_key  # Commented out to allow translation system to work
         
         self._attr_unique_id = f"{DOMAIN}_{group_key}_{unique_suffix}"
 

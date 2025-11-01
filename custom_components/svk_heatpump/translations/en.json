@@ -71,563 +71,576 @@
   },
   "entity": {
     "sensor": {
-      "display_input_theatsupply": {
-        "name": "Heating Supply Temp"
-      },
-      "display_input_theatreturn": {
-        "name": "Heating Return Temp"
-      },
-      "display_input_twatertank": {
-        "name": "Water Tank Temp"
-      },
-      "display_input_tamb": {
-        "name": "Ambient Temp"
-      },
-      "display_input_troom": {
-        "name": "Room Temp"
-      },
-      "display_input_theattank": {
-        "name": "Heating Tank Temp"
-      },
-      "display_input_tcoldsupply": {
-        "name": "Cold Side Supply Temp"
-      },
-      "display_input_tcoldreturn": {
-        "name": "Cold Side Return Temp"
-      },
-      "display_input_tevap": {
-        "name": "Evaporator Temp"
-      },
-      "display_input_tsolarpanel": {
-        "name": "Solar Panel Temp"
-      },
-      "display_input_tsolarwater": {
-        "name": "Solar Water Temp"
-      },
-      "display_heating_setpointact": {
-        "name": "Heating Set Point"
-      },
-      "display_hotwater_setpointact": {
-        "name": "Hot Water Set Point Actual"
-      },
-      "display_heatpump_capacityreq": {
-        "name": "Requested Capacity"
-      },
-      "display_heatpump_capacityact": {
-        "name": "Actual Capacity"
-      },
-      "display_output_coldpumpvolt": {
-        "name": "Cold Pump Speed"
-      },
-      "display_hotwater_source": {
-        "name": "Hot Water Source"
-      },
-      "display_heating_source": {
-        "name": "Heating Source"
-      },
-      "service_heatpump_runtime": {
-        "name": "Heat Pump Runtime"
-      },
-      "service_compressor_compruntime": {
-        "name": "Compressor Runtime"
-      },
-      "service_heating_elecruntime": {
-        "name": "Heater Runtime"
-      },
-      "service_hotwater_runtime": {
-        "name": "Hot Water Runtime"
-      },
-      "service_coldpump_cpruntime": {
-        "name": "Cold Pump Runtime"
-      },
-      "service_heatpump_hspruntime": {
-        "name": "Heat Pump HSP Runtime"
-      },
-      "service_heatpump_apruntime": {
-        "name": "Heat Pump AP Runtime"
-      },
-      "service_solarpanel_runtime": {
-        "name": "Solar Panel Runtime"
-      },
-      "service_com_ipadr": {
-        "name": "IP Address"
-      },
-      "service_com_macadr": {
-        "name": "MAC Address"
-      },
-      "service_info_appversion": {
-        "name": "Software Version"
-      },
-      "service_misc_lup200swver": {
-        "name": "LUP200 Software Version"
-      },
-      "user_heatspctrl_troomset": {
-        "name": "Room Setpoint"
-      },
-      "user_hotwater_setpoint": {
-        "name": "Hot Water Set Point"
-      },
-      "heating_heating_setpointact": {
-        "name": "Heating Set Point Actual"
-      },
-      "defrost_defrost_tfrosting": {
-        "name": "Evaporator Temp"
-      },
-      "defrost_defrost_trelfrost": {
-        "name": "Evaporator Temp"
-      },
-      "defrost_defrost_fftambmin": {
-        "name": "Defrost Ambient Min Temperature"
-      },
-      "defrost_defrost_fftambmax": {
-        "name": "Defrost Ambient Max Temperature"
-      },
-      "defrost_defrost_fftevapstop": {
-        "name": "Defrost Evaporator Stop Temperature"
-      },
-      "defrost_defrost_tairdfrtemp": {
-        "name": "Defrost Air Temperature"
-      },
-      "service_defrost_defrhgcount": {
-        "name": "Defrost Hot Gas Count"
-      },
-      "service_defrost_defraircnt": {
-        "name": "Defrost Air Count"
-      },
-      "system_systemview": {
-        "name": "Software Version"
-      },
-      "user_time_year": {
-        "name": "Time Year"
-      },
-      "user_time_month": {
-        "name": "Time Month"
-      },
-      "user_time_day": {
-        "name": "Time Day"
-      },
-      "user_time_hour": {
-        "name": "Time Hour"
-      },
-      "user_time_minute": {
-        "name": "Time Minute"
-      },
-      "alarm_count": {
-        "name": "Alarm Count"
-      },
-      "last_update_sensor": {
-        "name": "Last Update"
-      },
-      "defrost_defrost_mode": {
-        "name": "Defrost Mode"
-      },
-      "defrost_defrost_relfrostcmp": {
-        "name": "Relative Frost Compressor"
-      },
-      "defrost_defrost_defrtimein": {
-        "name": "Defrost Time In"
-      },
-      "defrost_defrost_mininterval": {
-        "name": "Defrost Minimum Interval"
-      },
-      "defrost_defrost_maxtime": {
-        "name": "Defrost Maximum Time"
-      },
-      "defrost_defrost_defrostcap": {
-        "name": "Defrost Capacity"
-      },
-      "defrost_defrost_dripdowndel1": {
-        "name": "Defrost Drip Down Delay 1"
-      },
-      "defrost_defrost_ticemelt": {
-        "name": "Defrost Ice Melt Temperature"
-      },
-      "defrost_defrost_tmeltfast": {
-        "name": "Defrost Fast Melt Temperature"
-      },
-      "defrost_defrost_stoptemp": {
-        "name": "Defrost Stop Temperature"
+      "svk_heatpump": {
+        "display_input_theatsupply": {
+          "name": "Heating Supply Temp"
+        },
+        "display_input_theatreturn": {
+          "name": "Heating Return Temp"
+        },
+        "display_input_twatertank": {
+          "name": "Water Tank Temp"
+        },
+        "display_input_tamb": {
+          "name": "Ambient Temp"
+        },
+        "display_input_troom": {
+          "name": "Room Temp"
+        },
+        "display_input_theattank": {
+          "name": "Heating Tank Temp"
+        },
+        "display_input_tcoldsupply": {
+          "name": "Cold Side Supply Temp"
+        },
+        "display_input_tcoldreturn": {
+          "name": "Cold Side Return Temp"
+        },
+        "display_input_tevap": {
+          "name": "Evaporator Temp"
+        },
+        "display_input_tsolarpanel": {
+          "name": "Solar Panel Temp"
+        },
+        "display_input_tsolarwater": {
+          "name": "Solar Water Temp"
+        },
+        "display_heating_setpointact": {
+          "name": "Heating Set Point"
+        },
+        "display_hotwater_setpointact": {
+          "name": "Hot Water Set Point Actual"
+        },
+        "display_heatpump_capacityreq": {
+          "name": "Requested Capacity"
+        },
+        "display_heatpump_capacityact": {
+          "name": "Actual Capacity"
+        },
+        "display_output_coldpumpvolt": {
+          "name": "Cold Pump Speed"
+        },
+        "display_hotwater_source": {
+          "name": "Hot Water Source"
+        },
+        "display_heating_source": {
+          "name": "Heating Source"
+        },
+        "service_heatpump_runtime": {
+          "name": "Heat Pump Runtime"
+        },
+        "service_compressor_compruntime": {
+          "name": "Compressor Runtime"
+        },
+        "service_heating_elecruntime": {
+          "name": "Heater Runtime"
+        },
+        "service_hotwater_runtime": {
+          "name": "Hot Water Runtime"
+        },
+        "service_coldpump_cpruntime": {
+          "name": "Cold Pump Runtime"
+        },
+        "service_heatpump_hspruntime": {
+          "name": "Heat Pump HSP Runtime"
+        },
+        "service_heatpump_apruntime": {
+          "name": "Heat Pump AP Runtime"
+        },
+        "service_solarpanel_runtime": {
+          "name": "Solar Panel Runtime"
+        },
+        "service_com_ipadr": {
+          "name": "IP Address"
+        },
+        "service_com_macadr": {
+          "name": "MAC Address"
+        },
+        "service_info_appversion": {
+          "name": "Software Version"
+        },
+        "service_misc_lup200swver": {
+          "name": "LUP200 Software Version"
+        },
+        "user_heatspctrl_troomset": {
+          "name": "Room Setpoint"
+        },
+        "user_hotwater_setpoint": {
+          "name": "Hot Water Set Point"
+        },
+        "heating_heating_setpointact": {
+          "name": "Heating Set Point Actual"
+        },
+        "defrost_defrost_tfrosting": {
+          "name": "Evaporator Temp"
+        },
+        "defrost_defrost_trelfrost": {
+          "name": "Evaporator Temp"
+        },
+        "defrost_defrost_fftambmin": {
+          "name": "Defrost Ambient Min Temperature"
+        },
+        "defrost_defrost_fftambmax": {
+          "name": "Defrost Ambient Max Temperature"
+        },
+        "defrost_defrost_fftevapstop": {
+          "name": "Defrost Evaporator Stop Temperature"
+        },
+        "defrost_defrost_tairdfrtemp": {
+          "name": "Defrost Air Temperature"
+        },
+        "service_defrost_defrhgcount": {
+          "name": "Defrost Hot Gas Count"
+        },
+        "service_defrost_defraircnt": {
+          "name": "Defrost Air Count"
+        },
+        "system_systemview": {
+          "name": "Software Version"
+        },
+        "user_time_year": {
+          "name": "Time Year"
+        },
+        "user_time_month": {
+          "name": "Time Month"
+        },
+        "user_time_day": {
+          "name": "Time Day"
+        },
+        "user_time_hour": {
+          "name": "Time Hour"
+        },
+        "user_time_minute": {
+          "name": "Time Minute"
+        },
+        "defrost_defrost_mode": {
+          "name": "Defrost Mode"
+        },
+        "defrost_defrost_relfrostcmp": {
+          "name": "Relative Frost Compressor"
+        },
+        "defrost_defrost_defrtimein": {
+          "name": "Defrost Time In"
+        },
+        "defrost_defrost_mininterval": {
+          "name": "Defrost Minimum Interval"
+        },
+        "defrost_defrost_maxtime": {
+          "name": "Defrost Maximum Time"
+        },
+        "defrost_defrost_defrostcap": {
+          "name": "Defrost Capacity"
+        },
+        "defrost_defrost_dripdowndel1": {
+          "name": "Defrost Drip Down Delay 1"
+        },
+        "defrost_defrost_ticemelt": {
+          "name": "Defrost Ice Melt Temperature"
+        },
+        "defrost_defrost_tmeltfast": {
+          "name": "Defrost Fast Melt Temperature"
+        },
+        "defrost_defrost_stoptemp": {
+          "name": "Defrost Stop Temperature"
+        },
+        "alarm_count": {
+          "name": "Alarm Count"
+        },
+        "last_update_sensor": {
+          "name": "Last Update"
+        }
       }
     },
     "binary_sensor": {
-      "alarm_active": {
-        "name": "Alarm Active"
-      },
-      "system_active": {
-        "name": "System Active"
-      },
-      "online_status": {
-        "name": "Online Status"
-      },
-      "display_heatpump_state": {
-        "name": "Heat Pump State"
-      },
-      "display_solarpanel_state": {
-        "name": "Solar Panel State"
-      },
-      "display_heatpump_seasonstate": {
-        "name": "Heat Pump Season State"
-      },
-      "display_coldpump_state": {
-        "name": "Cold Pump State"
-      },
-      "display_legionella_state": {
-        "name": "Legionella State"
-      },
-      "display_compressor_output": {
-        "name": "Compressor Output"
-      },
-      "display_output_heater": {
-        "name": "Heater Output"
-      },
-      "display_output_hottapwater": {
-        "name": "Hot Tap Water Output"
-      },
-      "display_output_coldpump": {
-        "name": "Cold Pump Output"
-      },
-      "display_output_coldpumplow": {
-        "name": "Cold Pump Low Output"
-      },
-      "display_output_hotsidepump": {
-        "name": "Hot Side Pump Output"
-      },
-      "display_output_defrostvalve": {
-        "name": "Defrost Valve Output"
-      },
-      "display_output_solarpump": {
-        "name": "Solar Pump Output"
-      },
-      "display_output_auxpump": {
-        "name": "Aux Pump Output"
-      },
-      "display_output_alarm": {
-        "name": "Alarm Output"
-      },
-      "display_input_hpswitch": {
-        "name": "HP Switch Input"
-      },
-      "display_input_lpswitch": {
-        "name": "LP Switch Input"
-      },
-      "display_input_bpswitch": {
-        "name": "BP Switch Input"
-      },
-      "display_input_dfstart": {
-        "name": "DF Start Input"
-      },
-      "display_input_fcswitch": {
-        "name": "FC Switch Input"
-      },
-      "solar_solarpanel_state": {
-        "name": "Solar Panel State"
+      "svk_heatpump": {
+        "alarm_active": {
+          "name": "Alarm Active"
+        },
+        "system_active": {
+          "name": "System Active"
+        },
+        "online_status": {
+          "name": "Online Status"
+        },
+        "display_heatpump_state": {
+          "name": "Heat Pump State"
+        },
+        "display_solarpanel_state": {
+          "name": "Solar Panel State"
+        },
+        "display_heatpump_seasonstate": {
+          "name": "Heat Pump Season State"
+        },
+        "display_coldpump_state": {
+          "name": "Cold Pump State"
+        },
+        "display_legionella_state": {
+          "name": "Legionella State"
+        },
+        "display_compressor_output": {
+          "name": "Compressor Output"
+        },
+        "display_output_heater": {
+          "name": "Heater Output"
+        },
+        "display_output_hottapwater": {
+          "name": "Hot Tap Water Output"
+        },
+        "display_output_coldpump": {
+          "name": "Cold Pump Output"
+        },
+        "display_output_coldpumplow": {
+          "name": "Cold Pump Low Output"
+        },
+        "display_output_hotsidepump": {
+          "name": "Hot Side Pump Output"
+        },
+        "display_output_defrostvalve": {
+          "name": "Defrost Valve Output"
+        },
+        "display_output_solarpump": {
+          "name": "Solar Pump Output"
+        },
+        "display_output_auxpump": {
+          "name": "Aux Pump Output"
+        },
+        "display_output_alarm": {
+          "name": "Alarm Output"
+        },
+        "display_input_hpswitch": {
+          "name": "HP Switch Input"
+        },
+        "display_input_lpswitch": {
+          "name": "LP Switch Input"
+        },
+        "display_input_bpswitch": {
+          "name": "BP Switch Input"
+        },
+        "display_input_dfstart": {
+          "name": "DF Start Input"
+        },
+        "display_input_fcswitch": {
+          "name": "FC Switch Input"
+        },
+        "solar_solarpanel_state": {
+          "name": "Solar Panel State"
+        }
+      }
+    },
+    "number": {
+      "svk_heatpump": {
+        "hot_water_setpoint": {
+          "name": "Hot Water Set Point"
+        },
+        "room_setpoint": {
+          "name": "Room Set Point"
+        },
+        "heating_setpoint_monitor": {
+          "name": "Heating Set Point"
+        },
+        "display_manual_coldpumpvolt": {
+          "name": "Manual Cold Pump Voltage"
+        },
+        "heating_heating_setpointmin": {
+          "name": "Heating Set Point Min"
+        },
+        "heating_heating_setpointmax": {
+          "name": "Heating Set Point Max"
+        },
+        "heating_heating_setpmincool": {
+          "name": "Heating Set Point Min Cool"
+        },
+        "heating_heating_neutralzone": {
+          "name": "Heating Neutral Zone"
+        },
+        "heating_heating_stopcap1": {
+          "name": "Heating Stop Capacity 1"
+        },
+        "heating_heating_stopcap2": {
+          "name": "Heating Stop Capacity 2"
+        },
+        "heating_heating_startdifcap": {
+          "name": "Heating Start Diff Capacity"
+        },
+        "heating_compressor_minvoltage": {
+          "name": "Compressor Min Voltage"
+        },
+        "heating_compressor_maxvoltage": {
+          "name": "Compressor Max Voltage"
+        },
+        "heating_compressor_ustart": {
+          "name": "Compressor U Start"
+        },
+        "heating_compressor_gain": {
+          "name": "Compressor Gain"
+        },
+        "heating_compressor_tn": {
+          "name": "Compressor TN"
+        },
+        "heating_heating_tevapmin": {
+          "name": "Heating Evaporator Min Temp"
+        },
+        "heating_heating_minheattime": {
+          "name": "Heating Min Heat Time"
+        },
+        "heating_heatspctrl_curve": {
+          "name": "Heating Control Curve"
+        },
+        "heating_heatspctrl_curpnt1": {
+          "name": "Heating Control Curve Point 1"
+        },
+        "heating_heatspctrl_curpnt2": {
+          "name": "Heating Control Curve Point 2"
+        },
+        "heating_heatspctrl_curpnt3": {
+          "name": "Heating Control Curve Point 3"
+        },
+        "heating_heatspctrl_curpnt4": {
+          "name": "Heating Control Curve Point 4"
+        },
+        "heating_heatspctrl_curpnt5": {
+          "name": "Heating Control Curve Point 5"
+        },
+        "heating_heatspctrl_curpnt6": {
+          "name": "Heating Control Curve Point 6"
+        },
+        "heating_heatspctrl_curpnt7": {
+          "name": "Heating Control Curve Point 7"
+        },
+        "heating_heatspctrl_ambcmpmax": {
+          "name": "Heating Ambient Compressor Max"
+        },
+        "heatpump_parameters_hpstops": {
+          "name": "Heat Pump Stops"
+        },
+        "heatpump_parameters_totalstops": {
+          "name": "Total Stops"
+        },
+        "heatpump_parameters_hpstopt": {
+          "name": "Heat Pump Stop Time"
+        },
+        "heatpump_parameters_totalstopt": {
+          "name": "Total Stop Time"
+        },
+        "heatpump_parameters_hpambstopt": {
+          "name": "Heat Pump Ambient Stop Time"
+        },
+        "heatpump_compressor_mincprstop": {
+          "name": "Compressor Min Stop Time"
+        },
+        "heatpump_heating_elecdelay": {
+          "name": "Heating Electric Delay"
+        },
+        "heatpump_parameters_pumpexinter": {
+          "name": "Pump Exercise Interval"
+        },
+        "heatpump_parameters_startuptime": {
+          "name": "Startup Time"
+        },
+        "heatpump_coldpump_stopdelay": {
+          "name": "Cold Pump Stop Delay"
+        },
+        "heatpump_coldpump_hspeedcap": {
+          "name": "Cold Pump High Speed Capacity"
+        },
+        "heatpump_coldpump_hspeednz": {
+          "name": "Cold Pump High Speed Neutral Zone"
+        },
+        "heatpump_coldpump_hspeedvolt": {
+          "name": "Cold Pump High Speed Voltage"
+        },
+        "heatpump_coldpump_lspeedvolt": {
+          "name": "Cold Pump Low Speed Voltage"
+        },
+        "hotwater_hotwater_setpoint": {
+          "name": "Hot Water Set Point"
+        },
+        "hotwater_hotwater_capacity": {
+          "name": "Hot Water Capacity"
+        },
+        "hotwater_hotwater_teleclimit": {
+          "name": "Hot Water Electric Limit"
+        },
+        "hotwater_legionella_waittime": {
+          "name": "Legionella Wait Time"
+        },
+        "hotwater_legionella_treattemp": {
+          "name": "Legionella Treatment Temp"
+        },
+        "hotwater_legionella_timeout1": {
+          "name": "Legionella Timeout 1"
+        },
+        "solar_solarpanel_tstartdiff": {
+          "name": "Solar Panel Start Diff Temp"
+        },
+        "solar_solarpanel_tstopdiff": {
+          "name": "Solar Panel Stop Diff Temp"
+        },
+        "solar_solarpanel_tempmax": {
+          "name": "Solar Panel Max Temp"
+        },
+        "solar_solarpanel_watermt": {
+          "name": "Solar Panel Water Max Temp"
+        },
+        "solar_solarpanel_starttemp": {
+          "name": "Solar Panel Start Temp"
+        },
+        "defrost_defrost_dripdowndel1": {
+          "name": "Defrost Drip Down Delay 1"
+        },
+        "defrost_defrost_ticemelt": {
+          "name": "Defrost Ice Melt Temperature"
+        },
+        "defrost_defrost_tmeltfast": {
+          "name": "Defrost Fast Melt Temperature"
+        },
+        "defrost_defrost_stoptemp": {
+          "name": "Defrost Stop Temperature"
+        }
       }
     },
     "select": {
-      "heatpump_state": {
-        "name": "Heat Pump State",
-        "state": {
-          "off": "Off",
-          "ready": "Ready",
-          "start_up": "Start up",
-          "heating": "Heating",
-          "hot_water": "Hot water",
-          "el_heating": "El heating",
-          "defrost": "Defrost",
-          "drip_delay": "Drip delay",
-          "total_stop": "Total stop",
-          "pump_exercise": "Pump exercise",
-          "forced_running": "Forced running",
-          "manual": "Manual"
+      "svk_heatpump": {
+        "heatpump_state": {
+          "name": "Heat Pump State",
+          "state": {
+            "off": "Off",
+            "ready": "Ready",
+            "start_up": "Start up",
+            "heating": "Heating",
+            "hot_water": "Hot water",
+            "el_heating": "El heating",
+            "defrost": "Defrost",
+            "drip_delay": "Drip delay",
+            "total_stop": "Total stop",
+            "pump_exercise": "Pump exercise",
+            "forced_running": "Forced running",
+            "manual": "Manual"
+          }
+        },
+        "solar_panel_state": {
+          "name": "Solar Panel State",
+          "state": {
+            "off": "Off",
+            "running": "Running",
+            "forced_stop": "Forced Stop"
+          }
+        },
+        "season_mode": {
+          "name": "Season Mode",
+          "state": {
+            "summer": "Summer",
+            "winter": "Winter",
+            "auto": "Auto"
+          }
+        },
+        "system_status": {
+          "name": "System Status",
+          "state": {
+            "off": "Off",
+            "standby": "Standby",
+            "active": "Active",
+            "alarm": "Alarm",
+            "unknown": "Unknown"
+          }
+        },
+        "user_user_language": {
+          "name": "User Language",
+          "state": {
+            "0": "English",
+            "1": "German",
+            "2": "French",
+            "3": "Finnish",
+            "4": "Spanish",
+            "5": "Danish",
+            "6": "Dutch",
+            "7": "Portuguese",
+            "8": "Italian"
+          }
+        },
+        "heating_heating_source": {
+          "name": "Heating Source"
+        },
+        "heating_heatspctrl_type": {
+          "name": "Heating Control Type"
+        },
+        "heatpump_heating_ctrlmode": {
+          "name": "Heat Pump Control Mode"
+        },
+        "heatpump_cprcontrol_cprmode": {
+          "name": "Compressor Control Mode"
+        },
+        "heatpump_coldpump_mode": {
+          "name": "Cold Pump Mode"
+        },
+        "hotwater_hotwater_source": {
+          "name": "Hot Water Source"
+        },
+        "service_parameters_displaymode": {
+          "name": "Display Mode"
+        },
+        "solar_solarpanel_sensorselect": {
+          "name": "Solar Panel Sensor Select"
+        },
+        "defrost_defrost_mode": {
+          "name": "Defrost Mode"
         }
-      },
-      "solar_panel_state": {
-        "name": "Solar Panel State",
-        "state": {
-          "off": "Off",
-          "running": "Running",
-          "forced_stop": "Forced Stop"
-        }
-      },
-      "season_mode": {
-        "name": "Season Mode",
-        "state": {
-          "summer": "Summer",
-          "winter": "Winter",
-          "auto": "Auto"
-        }
-      },
-      "system_status": {
-        "name": "System Status",
-        "state": {
-          "off": "Off",
-          "standby": "Standby",
-          "active": "Active",
-          "alarm": "Alarm",
-          "unknown": "Unknown"
-        }
-      },
-      "user_user_language": {
-        "name": "User Language",
-        "state": {
-          "0": "English",
-          "1": "German",
-          "2": "French",
-          "3": "Finnish",
-          "4": "Spanish",
-          "5": "Danish",
-          "6": "Dutch",
-          "7": "Portuguese",
-          "8": "Italian"
-        }
-      },
-      "heating_heating_source": {
-        "name": "Heating Source"
-      },
-      "heating_heatspctrl_type": {
-        "name": "Heating Control Type"
-      },
-      "heatpump_heating_ctrlmode": {
-        "name": "Heat Pump Control Mode"
-      },
-      "heatpump_cprcontrol_cprmode": {
-        "name": "Compressor Control Mode"
-      },
-      "heatpump_coldpump_mode": {
-        "name": "Cold Pump Mode"
-      },
-      "hotwater_hotwater_source": {
-        "name": "Hot Water Source"
-      },
-      "service_parameters_displaymode": {
-        "name": "Display Mode"
-      },
-      "solar_solarpanel_sensorselect": {
-        "name": "Solar Panel Sensor Select"
       }
-   },
-   "number": {
-     "hot_water_setpoint": {
-       "name": "Hot Water Set Point"
-     },
-     "room_setpoint": {
-       "name": "Room Set Point"
-     },
-     "heating_setpoint_monitor": {
-       "name": "Heating Set Point"
-     },
-     "display_manual_coldpumpvolt": {
-       "name": "Manual Cold Pump Voltage"
-     },
-     "heating_heating_setpointmin": {
-       "name": "Heating Set Point Min"
-     },
-     "heating_heating_setpointmax": {
-       "name": "Heating Set Point Max"
-     },
-     "heating_heating_setpmincool": {
-       "name": "Heating Set Point Min Cool"
-     },
-     "heating_heating_neutralzone": {
-       "name": "Heating Neutral Zone"
-     },
-     "heating_heating_stopcap1": {
-       "name": "Heating Stop Capacity 1"
-     },
-     "heating_heating_stopcap2": {
-       "name": "Heating Stop Capacity 2"
-     },
-     "heating_heating_startdifcap": {
-       "name": "Heating Start Diff Capacity"
-     },
-     "heating_compressor_minvoltage": {
-       "name": "Compressor Min Voltage"
-     },
-     "heating_compressor_maxvoltage": {
-       "name": "Compressor Max Voltage"
-     },
-     "heating_compressor_ustart": {
-       "name": "Compressor U Start"
-     },
-     "heating_compressor_gain": {
-       "name": "Compressor Gain"
-     },
-     "heating_compressor_tn": {
-       "name": "Compressor TN"
-     },
-     "heating_heating_tevapmin": {
-       "name": "Heating Evaporator Min Temp"
-     },
-     "heating_heating_minheattime": {
-       "name": "Heating Min Heat Time"
-     },
-     "heating_heatspctrl_curve": {
-       "name": "Heating Control Curve"
-     },
-     "heating_heatspctrl_curpnt1": {
-       "name": "Heating Control Curve Point 1"
-     },
-     "heating_heatspctrl_curpnt2": {
-       "name": "Heating Control Curve Point 2"
-     },
-     "heating_heatspctrl_curpnt3": {
-       "name": "Heating Control Curve Point 3"
-     },
-     "heating_heatspctrl_curpnt4": {
-       "name": "Heating Control Curve Point 4"
-     },
-     "heating_heatspctrl_curpnt5": {
-       "name": "Heating Control Curve Point 5"
-     },
-     "heating_heatspctrl_curpnt6": {
-       "name": "Heating Control Curve Point 6"
-     },
-     "heating_heatspctrl_curpnt7": {
-       "name": "Heating Control Curve Point 7"
-     },
-     "heating_heatspctrl_ambcmpmax": {
-       "name": "Heating Ambient Compressor Max"
-     },
-     "heatpump_parameters_hpstops": {
-       "name": "Heat Pump Stops"
-     },
-     "heatpump_parameters_totalstops": {
-       "name": "Total Stops"
-     },
-     "heatpump_parameters_hpstopt": {
-       "name": "Heat Pump Stop Time"
-     },
-     "heatpump_parameters_totalstopt": {
-       "name": "Total Stop Time"
-     },
-     "heatpump_parameters_hpambstopt": {
-       "name": "Heat Pump Ambient Stop Time"
-     },
-     "heatpump_compressor_mincprstop": {
-       "name": "Compressor Min Stop Time"
-     },
-     "heatpump_heating_elecdelay": {
-       "name": "Heating Electric Delay"
-     },
-     "heatpump_parameters_pumpexinter": {
-       "name": "Pump Exercise Interval"
-     },
-     "heatpump_parameters_startuptime": {
-       "name": "Startup Time"
-     },
-     "heatpump_coldpump_stopdelay": {
-       "name": "Cold Pump Stop Delay"
-     },
-     "heatpump_coldpump_hspeedcap": {
-       "name": "Cold Pump High Speed Capacity"
-     },
-     "heatpump_coldpump_hspeednz": {
-       "name": "Cold Pump High Speed Neutral Zone"
-     },
-     "heatpump_coldpump_hspeedvolt": {
-       "name": "Cold Pump High Speed Voltage"
-     },
-     "heatpump_coldpump_lspeedvolt": {
-       "name": "Cold Pump Low Speed Voltage"
-     },
-     "hotwater_hotwater_setpoint": {
-       "name": "Hot Water Set Point"
-     },
-     "hotwater_hotwater_capacity": {
-       "name": "Hot Water Capacity"
-     },
-     "hotwater_hotwater_teleclimit": {
-       "name": "Hot Water Electric Limit"
-     },
-     "hotwater_legionella_waittime": {
-       "name": "Legionella Wait Time"
-     },
-     "hotwater_legionella_treattemp": {
-       "name": "Legionella Treatment Temp"
-     },
-     "hotwater_legionella_timeout1": {
-       "name": "Legionella Timeout 1"
-     },
-     "solar_solarpanel_tstartdiff": {
-       "name": "Solar Panel Start Diff Temp"
-     },
-     "solar_solarpanel_tstopdiff": {
-       "name": "Solar Panel Stop Diff Temp"
-     },
-     "solar_solarpanel_tempmax": {
-       "name": "Solar Panel Max Temp"
-     },
-     "solar_solarpanel_watermt": {
-       "name": "Solar Panel Water Max Temp"
-     },
-     "solar_solarpanel_starttemp": {
-       "name": "Solar Panel Start Temp"
-     },
-     "defrost_defrost_dripdowndel1": {
-       "name": "Defrost Drip Down Delay 1"
-     },
-     "defrost_defrost_ticemelt": {
-       "name": "Defrost Ice Melt Temperature"
-     },
-     "defrost_defrost_tmeltfast": {
-       "name": "Defrost Fast Melt Temperature"
-     },
-     "defrost_defrost_stoptemp": {
-       "name": "Defrost Stop Temperature"
-     }
-   },
-   "switch": {
-     "heating_heatspctrl_toffset": {
-       "name": "Heating Temperature Offset"
-     },
-     "hotwater_hotwater_neutralzone": {
-       "name": "Hot Water Neutral Zone"
-     },
-     "service_parameters_mainswitch": {
-       "name": "Main Switch"
-     },
-     "service_manual_compressor1": {
-       "name": "Manual Compressor 1"
-     },
-     "service_manual_re6": {
-       "name": "Manual RE6"
-     },
-     "service_manual_heater": {
-       "name": "Manual Heater"
-     },
-     "service_manual_hottapwater": {
-       "name": "Manual Hot Tap Water"
-     },
-     "service_manual_coldpump": {
-       "name": "Manual Cold Pump"
-     },
-     "service_manual_coldpumplow": {
-       "name": "Manual Cold Pump Low"
-     },
-     "service_manual_hotsidepump": {
-       "name": "Manual Hot Side Pump"
-     },
-     "service_manual_defrostvalve": {
-       "name": "Manual Defrost Valve"
-     },
-     "service_manual_solarpump": {
-       "name": "Manual Solar Pump"
-     },
-     "service_manual_auxpump": {
-       "name": "Manual Aux Pump"
-     },
-     "service_manual_alarm": {
-       "name": "Manual Alarm"
-     },
-     "service_concrete_mode": {
-       "name": "Concrete Mode"
-     },
-     "user_heatspctrl_toffset": {
-       "name": "User Heating Temperature Offset"
-     },
-     "user_parameters_seasonmode": {
-       "name": "Season Mode"
-     }
-   }
- }
+    },
+    "switch": {
+      "svk_heatpump": {
+        "heating_heatspctrl_toffset": {
+          "name": "Heating Temperature Offset"
+        },
+        "hotwater_hotwater_neutralzone": {
+          "name": "Hot Water Neutral Zone"
+        },
+        "service_parameters_mainswitch": {
+          "name": "Main Switch"
+        },
+        "service_manual_compressor1": {
+          "name": "Manual Compressor 1"
+        },
+        "service_manual_re6": {
+          "name": "Manual RE6"
+        },
+        "service_manual_heater": {
+          "name": "Manual Heater"
+        },
+        "service_manual_hottapwater": {
+          "name": "Manual Hot Tap Water"
+        },
+        "service_manual_coldpump": {
+          "name": "Manual Cold Pump"
+        },
+        "service_manual_coldpumplow": {
+          "name": "Manual Cold Pump Low"
+        },
+        "service_manual_hotsidepump": {
+          "name": "Manual Hot Side Pump"
+        },
+        "service_manual_defrostvalve": {
+          "name": "Manual Defrost Valve"
+        },
+        "service_manual_solarpump": {
+          "name": "Manual Solar Pump"
+        },
+        "service_manual_auxpump": {
+          "name": "Manual Aux Pump"
+        },
+        "service_manual_alarm": {
+          "name": "Manual Alarm"
+        },
+        "service_concrete_mode": {
+          "name": "Concrete Mode"
+        },
+        "user_heatspctrl_toffset": {
+          "name": "User Heating Temperature Offset"
+        },
+        "user_parameters_seasonmode": {
+          "name": "Season Mode"
+        }
+      }
+    }
+  }
 }

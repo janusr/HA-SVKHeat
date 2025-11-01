@@ -755,7 +755,7 @@ async def async_setup_entry(
     # Add additional select entities for system status
     system_status_desc = SelectEntityDescription(
         key="system_status",
-        name="System Status",
+        name=None,  # Use None for translation
         options=["Off", "Standby", "Active", "Alarm", "Unknown"],
     )
 

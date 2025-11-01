@@ -532,7 +532,7 @@ async def async_setup_entry(
     # Add alarm count sensor
     alarm_count_desc = SensorEntityDescription(
         key="alarm_count",
-        name="Alarm Count",
+        name=None,  # Use None for translation
         device_class=None,
         native_unit_of_measurement="alarms",
         state_class=SensorStateClass.MEASUREMENT,
@@ -565,7 +565,7 @@ async def async_setup_entry(
     # Add last update sensor
     last_update_desc = SensorEntityDescription(
         key="last_update_sensor",
-        name="Last Update",
+        name=None,  # Use None for translation
         device_class=SensorDeviceClass.TIMESTAMP,
         native_unit_of_measurement=None,
         state_class=None,
