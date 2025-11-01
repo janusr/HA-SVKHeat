@@ -18,10 +18,16 @@ class SVKBaseEntity(Entity):
 
     _attr_has_entity_name = True
 
-    def __init__(self, group_key, name, unique_suffix):
+    def __init__(self, group_key, entity_key, unique_suffix):
         """Initialize the SVK base entity."""
         self._group_key = group_key
-        self._attr_name = name
+        self._entity_key = entity_key
+        
+        # Look up the proper entity name from the ENTITIES dictionary
+        from .catalog import ENTITIES
+        entity_info = ENTITIES.get(entity_key, {})
+        self._attr_name = entity_info.get("name", entity_key)  # Fallback to entity_key if not found
+        
         self._attr_unique_id = f"{DOMAIN}_{group_key}_{unique_suffix}"
 
     @property

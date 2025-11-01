@@ -93,6 +93,9 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
         self._entity_key = entity_key
         self._attr_entity_registry_enabled_default = enabled_by_default
         self._group_key = group_key  # For unique_id property
+        
+        # Initialize the name properly from ENTITIES dictionary
+        self._attr_name = entity_info.get("name", entity_key)  # Use proper name from catalog
 
         _LOGGER.debug(
             "Creating sensor entity: %s (group: %s, enabled_by_default: %s)",

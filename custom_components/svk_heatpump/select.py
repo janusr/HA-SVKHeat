@@ -89,6 +89,9 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
         self._attr_entity_registry_enabled_default = enabled_by_default
         self._group_key = group_key  # For unique_id property
         self._hass = hass  # Store hass for translation
+        
+        # Initialize name properly from ENTITIES dictionary
+        self._attr_name = entity_info.get("name", entity_key)  # Use proper name from catalog
 
         _LOGGER.debug(
             "Creating select entity: %s (group: %s, enabled_by_default: %s)",
