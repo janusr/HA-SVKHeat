@@ -1688,11 +1688,8 @@ ENTITIES = {
         "category": "Configuration",
         "group": "System",
         "page": "systemview",
-        "data_type": "temperature",
-        "unit": "°C",
+        "data_type": "string",
         "id": 1670,
-        "state_class": "measurement",
-        "device_class": "temperature",
         "access_type": "read",
     },
 }

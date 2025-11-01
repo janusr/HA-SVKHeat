@@ -128,7 +128,7 @@ class SVKNumber(SVKHeatpumpBaseEntity, NumberEntity):
         # Create entity description
         self.entity_description = NumberEntityDescription(
             key=entity_key,
-            name=entity_key,  # Use entity_key for translation
+            name=None,  # Use None for translation
             native_min_value=min_value,
             native_max_value=max_value,
             native_step=step,
@@ -288,7 +288,7 @@ class SVKHeatpumpNumber(SVKHeatpumpBaseEntity, NumberEntity):
 
         self.entity_description = NumberEntityDescription(
             key=self._entity_key,
-            name=self._entity_key,  # Use entity_key for translation
+            name=None,  # Use None for translation
             native_min_value=self._min_value,
             native_max_value=self._max_value,
             native_step=self._step,

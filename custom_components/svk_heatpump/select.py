@@ -174,7 +174,7 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
         # Create entity description
         self.entity_description = SelectEntityDescription(
             key=entity_key,
-            name=entity_key,  # Use entity_key for translation
+            name=None,  # Use None for translation
             options=options,
             icon=icon,
             entity_category=entity_category,
@@ -470,7 +470,7 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
 
         self.entity_description = SelectEntityDescription(
             key=self._entity_key,
-            name=self._entity_key,  # Use entity_key for translation
+            name=None,  # Use None for translation
             options=options,
             entity_category=entity_category,
         )

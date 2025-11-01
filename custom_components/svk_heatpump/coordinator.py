@@ -531,9 +531,30 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                         )
                     continue
 
-                # Apply temperature sentinel rule
+                # Apply temperature sentinel rule and validate temperature data types
                 if entity_info.get("device_class") == "temperature":
-                    if isinstance(value, int | float) and value <= -80.0:
+                    # Validate that temperature entities receive numeric values
+                    if not isinstance(value, (int, float)):
+                        parsing_failures.append(
+                            {
+                                "entity": entity_key,
+                                "id": entity_id,
+                                "reason": f"Non-numeric temperature value: {value} (type: {type(value).__name__})",
+                                "name": name,
+                            }
+                        )
+                        _LOGGER.error(
+                            "DATA PIPELINE: Entity %s (ID: %s): Temperature value is not numeric (%s: %s), marking unavailable",
+                            entity_key,
+                            entity_id,
+                            type(value).__name__,
+                            value,
+                        )
+                        data[entity_key] = None
+                        continue
+                    
+                    # Apply temperature sentinel rule
+                    if value <= -80.0:
                         sentinel_temps.append(
                             {"entity": entity_key, "id": entity_id, "value": value}
                         )

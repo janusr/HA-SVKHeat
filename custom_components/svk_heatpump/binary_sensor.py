@@ -139,7 +139,7 @@ class SVKHeatpumpBinarySensor(SVKHeatpumpBaseEntity, BinarySensorEntity):
         # Use entity_key for translation
         self.entity_description = BinarySensorEntityDescription(
             key=self._entity_key,
-            name=self._entity_key,  # Use entity_key for translation
+            name=None,  # Use None for translation
             device_class=device_class,
             entity_category=entity_category,
         )
