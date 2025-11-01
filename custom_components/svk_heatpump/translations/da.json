@@ -33,7 +33,7 @@
       "timeout": "Forbindelsestimeout. Enheden svarer ikke.",
       "parse_error": "Kunne ikke parse svar fra enhed. Ugyldigt dataformat.",
       "invalid_data_format": "Ugyldigt dataformat fra enhed. Enheden returnerede et uventet format.",
-      "readonly_select": "Denne select-enhed er skrivebeskyttet",
+      "readonly_select": "Denne valgmulighed er skrivebeskyttet",
       "readonly_monitor": "Dette er en skrivebeskyttet monitor-enhed",
       "write_controls_disabled": "Skrivekontroller er deaktiveret i indstillingerne",
       "json_parse_failed": "JSON-parsing mislykkedes: {err}",
@@ -117,10 +117,10 @@
         "name": "Kold pumpehastighed"
       },
       "display_hotwater_source": {
-        "name": "Hot Water Source"
+        "name": "Varmtvand Kilde"
       },
       "display_heating_source": {
-        "name": "Heating Source"
+        "name": "Varmekilde"
       },
       "service_heatpump_runtime": {
         "name": "Heat Pump Runtime"
@@ -223,6 +223,48 @@
       },
       "last_update_sensor": {
         "name": "Sidste Opdatering"
+      },
+      "defrost_defrost_mode": {
+        "name": "Afisning Tilstand"
+      },
+      "defrost_defrost_relfrostcmp": {
+        "name": "Relativ Frost Kompressor"
+      },
+      "defrost_defrost_defrtimein": {
+        "name": "Afisningstid Ind"
+      },
+      "defrost_defrost_mininterval": {
+        "name": "Afisning Minimum Interval"
+      },
+      "defrost_defrost_maxtime": {
+        "name": "Afisning Maksimum Tid"
+      },
+      "defrost_defrost_defrostcap": {
+        "name": "Afisningskapacitet"
+      },
+      "defrost_defrost_fftambmin": {
+        "name": "Afisning Omgivelses Min Temperatur"
+      },
+      "defrost_defrost_fftambmax": {
+        "name": "Afisning Omgivelses Maks Temperatur"
+      },
+      "defrost_defrost_fftevapstop": {
+        "name": "Afisning Fordamper Stop Temperatur"
+      },
+      "defrost_defrost_tairdfrtemp": {
+        "name": "Afisning Luft Temperatur"
+      },
+      "defrost_defrost_dripdowndel1": {
+        "name": "Afisning Dryp Ned Forsinkelse 1"
+      },
+      "defrost_defrost_ticemelt": {
+        "name": "Afisning Is Smelte Temperatur"
+      },
+      "defrost_defrost_tmeltfast": {
+        "name": "Afisning Hurtig Smelte Temperatur"
+      },
+      "defrost_defrost_stoptemp": {
+        "name": "Afisning Stop Temperatur"
       }
     },
     "binary_sensor": {
@@ -538,6 +580,9 @@
      },
      "solar_solarpanel_starttemp": {
        "name": "Solpanel Start Temp"
+     },
+     "defrost_defrost_dripdowndel1": {
+       "name": "Afisning Dryp Ned Forsinkelse 1"
      }
    },
    "switch": {

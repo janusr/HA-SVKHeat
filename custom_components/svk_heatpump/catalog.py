@@ -1849,17 +1849,6 @@ AVAILABLE_ENTITIES = {
         "id": 515,
         "access_type": "readwrite",
     },
-    "defrost_defrost_tfrosting": {
-        "name": "Defrost.TFrosting",
-        "platform": "sensor",
-        "category": "Settings",
-        "group": "Defrost",
-        "page": "settings_defrost",
-        "data_type": "temperature",
-        "unit": "°C",
-        "id": 513,
-        "access_type": "read",
-    },
     "defrost_defrost_fftambmin": {
         "name": "Defrost.FFTambMin",
         "platform": "number",

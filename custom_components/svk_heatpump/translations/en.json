@@ -186,16 +186,16 @@
         "name": "Evaporator Temp"
       },
       "defrost_defrost_fftambmin": {
-        "name": "Ambient Temp"
+        "name": "Defrost Ambient Min Temperature"
       },
       "defrost_defrost_fftambmax": {
-        "name": "Ambient Temp"
+        "name": "Defrost Ambient Max Temperature"
       },
       "defrost_defrost_fftevapstop": {
-        "name": "Evaporator Temp"
+        "name": "Defrost Evaporator Stop Temperature"
       },
       "defrost_defrost_tairdfrtemp": {
-        "name": "Evaporator Temp"
+        "name": "Defrost Air Temperature"
       },
       "service_defrost_defrhgcount": {
         "name": "Defrost Hot Gas Count"
@@ -226,6 +226,36 @@
       },
       "last_update_sensor": {
         "name": "Last Update"
+      },
+      "defrost_defrost_mode": {
+        "name": "Defrost Mode"
+      },
+      "defrost_defrost_relfrostcmp": {
+        "name": "Relative Frost Compressor"
+      },
+      "defrost_defrost_defrtimein": {
+        "name": "Defrost Time In"
+      },
+      "defrost_defrost_mininterval": {
+        "name": "Defrost Minimum Interval"
+      },
+      "defrost_defrost_maxtime": {
+        "name": "Defrost Maximum Time"
+      },
+      "defrost_defrost_defrostcap": {
+        "name": "Defrost Capacity"
+      },
+      "defrost_defrost_dripdowndel1": {
+        "name": "Defrost Drip Down Delay 1"
+      },
+      "defrost_defrost_ticemelt": {
+        "name": "Defrost Ice Melt Temperature"
+      },
+      "defrost_defrost_tmeltfast": {
+        "name": "Defrost Fast Melt Temperature"
+      },
+      "defrost_defrost_stoptemp": {
+        "name": "Defrost Stop Temperature"
       }
     },
     "binary_sensor": {
@@ -541,6 +571,18 @@
      },
      "solar_solarpanel_starttemp": {
        "name": "Solar Panel Start Temp"
+     },
+     "defrost_defrost_dripdowndel1": {
+       "name": "Defrost Drip Down Delay 1"
+     },
+     "defrost_defrost_ticemelt": {
+       "name": "Defrost Ice Melt Temperature"
+     },
+     "defrost_defrost_tmeltfast": {
+       "name": "Defrost Fast Melt Temperature"
+     },
+     "defrost_defrost_stoptemp": {
+       "name": "Defrost Stop Temperature"
      }
    },
    "switch": {
