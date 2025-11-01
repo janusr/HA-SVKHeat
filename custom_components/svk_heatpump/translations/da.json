@@ -502,61 +502,19 @@
     "select": {
       "svk_heatpump": {
         "heatpump_state": {
-          "name": "Varmepumpetilstand",
-          "state": {
-            "off": "Slukket",
-            "ready": "Klar",
-            "start_up": "Opstart",
-            "heating": "Opvarmning",
-            "hot_water": "Brugsvand",
-            "el_heating": "El-opvarmning",
-            "defrost": "Afisning",
-            "drip_delay": "Dryp-forsinkelse",
-            "total_stop": "Total stop",
-            "pump_exercise": "Pumpeøvelse",
-            "forced_running": "Tvungen drift",
-            "manual": "Manuel"
-          }
+          "name": "Heat Pump State"
         },
         "solar_panel_state": {
-          "name": "Solpanel Tilstand",
-          "state": {
-            "off": "Slukket",
-            "running": "Kører",
-            "forced_stop": "Tvunget Stop"
-          }
+          "name": "Solar Panel State"
         },
         "season_mode": {
-          "name": "Sæson Tilstand",
-          "state": {
-            "summer": "Sommer",
-            "winter": "Vinter",
-            "auto": "Auto"
-          }
+          "name": "Season Mode"
         },
         "system_status": {
-          "name": "System Status",
-          "state": {
-            "off": "Slukket",
-            "standby": "Standby",
-            "active": "Aktiv",
-            "alarm": "Alarm",
-            "unknown": "Ukendt"
-          }
+          "name": "System Status"
         },
         "user_user_language": {
-          "name": "Brugersprog",
-          "state": {
-            "0": "Engelsk",
-            "1": "Tysk",
-            "2": "Fransk",
-            "3": "Finsk",
-            "4": "Spansk",
-            "5": "Dansk",
-            "6": "Hollandsk",
-            "7": "Portugisisk",
-            "8": "Italiensk"
-          }
+          "name": "User Language"
         },
         "heating_heating_source": {
           "name": "Varmekilde"
@@ -640,6 +598,52 @@
         "user_parameters_seasonmode": {
           "name": "Sæson Tilstand"
         }
+      }
+    }
+  },
+  "state": {
+    "svk_heatpump": {
+      "heatpump_state": {
+        "off": "Slukket",
+        "ready": "Klar",
+        "start_up": "Opstart",
+        "heating": "Opvarmning",
+        "hot_water": "Brugsvand",
+        "el_heating": "El-opvarmning",
+        "defrost": "Afisning",
+        "drip_delay": "Dryp-forsinkelse",
+        "total_stop": "Total stop",
+        "pump_exercise": "Pumpeøvelse",
+        "forced_running": "Tvungen drift",
+        "manual": "Manuel"
+      },
+      "solar_panel_state": {
+        "off": "Slukket",
+        "running": "Kører",
+        "forced_stop": "Tvunget Stop"
+      },
+      "season_mode": {
+        "summer": "Sommer",
+        "winter": "Vinter",
+        "auto": "Auto"
+      },
+      "system_status": {
+        "off": "Slukket",
+        "standby": "Standby",
+        "active": "Aktiv",
+        "alarm": "Alarm",
+        "unknown": "Ukendt"
+      },
+      "user_user_language": {
+        "0": "Engelsk",
+        "1": "Tysk",
+        "2": "Fransk",
+        "3": "Finsk",
+        "4": "Spansk",
+        "5": "Dansk",
+        "6": "Hollandsk",
+        "7": "Portugisisk",
+        "8": "Italiensk"
       }
     }
   }

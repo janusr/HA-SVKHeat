@@ -502,61 +502,19 @@
     "select": {
       "svk_heatpump": {
         "heatpump_state": {
-          "name": "Heat Pump State",
-          "state": {
-            "off": "Off",
-            "ready": "Ready",
-            "start_up": "Start up",
-            "heating": "Heating",
-            "hot_water": "Hot water",
-            "el_heating": "El heating",
-            "defrost": "Defrost",
-            "drip_delay": "Drip delay",
-            "total_stop": "Total stop",
-            "pump_exercise": "Pump exercise",
-            "forced_running": "Forced running",
-            "manual": "Manual"
-          }
+          "name": "Heat Pump State"
         },
         "solar_panel_state": {
-          "name": "Solar Panel State",
-          "state": {
-            "off": "Off",
-            "running": "Running",
-            "forced_stop": "Forced Stop"
-          }
+          "name": "Solar Panel State"
         },
         "season_mode": {
-          "name": "Season Mode",
-          "state": {
-            "summer": "Summer",
-            "winter": "Winter",
-            "auto": "Auto"
-          }
+          "name": "Season Mode"
         },
         "system_status": {
-          "name": "System Status",
-          "state": {
-            "off": "Off",
-            "standby": "Standby",
-            "active": "Active",
-            "alarm": "Alarm",
-            "unknown": "Unknown"
-          }
+          "name": "System Status"
         },
         "user_user_language": {
-          "name": "User Language",
-          "state": {
-            "0": "English",
-            "1": "German",
-            "2": "French",
-            "3": "Finnish",
-            "4": "Spanish",
-            "5": "Danish",
-            "6": "Dutch",
-            "7": "Portuguese",
-            "8": "Italian"
-          }
+          "name": "User Language"
         },
         "heating_heating_source": {
           "name": "Heating Source"
@@ -640,6 +598,52 @@
         "user_parameters_seasonmode": {
           "name": "Season Mode"
         }
+      }
+    }
+  },
+  "state": {
+    "svk_heatpump": {
+      "heatpump_state": {
+        "off": "Off",
+        "ready": "Ready",
+        "start_up": "Start up",
+        "heating": "Heating",
+        "hot_water": "Hot water",
+        "el_heating": "El heating",
+        "defrost": "Defrost",
+        "drip_delay": "Drip delay",
+        "total_stop": "Total stop",
+        "pump_exercise": "Pump exercise",
+        "forced_running": "Forced running",
+        "manual": "Manual"
+      },
+      "solar_panel_state": {
+        "off": "Off",
+        "running": "Running",
+        "forced_stop": "Forced Stop"
+      },
+      "season_mode": {
+        "summer": "Summer",
+        "winter": "Winter",
+        "auto": "Auto"
+      },
+      "system_status": {
+        "off": "Off",
+        "standby": "Standby",
+        "active": "Active",
+        "alarm": "Alarm",
+        "unknown": "Unknown"
+      },
+      "user_user_language": {
+        "0": "English",
+        "1": "German",
+        "2": "French",
+        "3": "Finnish",
+        "4": "Spanish",
+        "5": "Danish",
+        "6": "Dutch",
+        "7": "Portuguese",
+        "8": "Italian"
       }
     }
   }

@@ -16,6 +16,7 @@ except ImportError:
         """Fallback SelectEntityDescription for older HA versions."""
         key: str
         name: str | None = None
+        translation_key: str | None = None
         options: list | None = None
         icon: str | None = None
         entity_category: str | None = None
@@ -175,6 +176,7 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
         self.entity_description = SelectEntityDescription(
             key=entity_key,
             name=None,  # Use None for translation
+            translation_key=self._entity_key,
             options=options,
             icon=icon,
             entity_category=entity_category,
@@ -471,6 +473,7 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
         self.entity_description = SelectEntityDescription(
             key=self._entity_key,
             name=None,  # Use None for translation
+            translation_key=self._entity_key,
             options=options,
             entity_category=entity_category,
         )
@@ -756,6 +759,7 @@ async def async_setup_entry(
     system_status_desc = SelectEntityDescription(
         key="system_status",
         name=None,  # Use None for translation
+        translation_key="system_status",
         options=["Off", "Standby", "Active", "Alarm", "Unknown"],
     )
 

@@ -23,6 +23,7 @@ except ImportError:
         """Fallback BinarySensorEntityDescription for older HA versions."""
         key: str
         name: str | None = None
+        translation_key: str | None = None
         device_class: str | None = None
         entity_category: str | None = None
         icon: str | None = None
@@ -140,6 +141,7 @@ class SVKHeatpumpBinarySensor(SVKHeatpumpBaseEntity, BinarySensorEntity):
         self.entity_description = BinarySensorEntityDescription(
             key=self._entity_key,
             name=None,  # Use None for translation
+            translation_key=self._entity_key,
             device_class=device_class,
             entity_category=entity_category,
         )
@@ -277,6 +279,7 @@ async def async_setup_entry(
     system_state_desc = BinarySensorEntityDescription(
         key="system_active",
         name=None,  # Use None for translation
+        translation_key="system_active",
         device_class=BinarySensorDeviceClass.RUNNING,
     )
 
@@ -317,6 +320,7 @@ async def async_setup_entry(
     online_desc = BinarySensorEntityDescription(
         key="online_status",
         name=None,  # Use None for translation
+        translation_key="online_status",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
     )
 

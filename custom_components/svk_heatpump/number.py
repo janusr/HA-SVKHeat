@@ -25,6 +25,7 @@ except ImportError:
         """Fallback NumberEntityDescription for older HA versions."""
         key: str
         name: str | None = None
+        translation_key: str | None = None
         device_class: str | None = None
         native_unit_of_measurement: str | None = None
         native_min_value: float | None = None
@@ -129,6 +130,7 @@ class SVKNumber(SVKHeatpumpBaseEntity, NumberEntity):
         self.entity_description = NumberEntityDescription(
             key=entity_key,
             name=None,  # Use None for translation
+            translation_key=self._entity_key,
             native_min_value=min_value,
             native_max_value=max_value,
             native_step=step,
@@ -289,6 +291,7 @@ class SVKHeatpumpNumber(SVKHeatpumpBaseEntity, NumberEntity):
         self.entity_description = NumberEntityDescription(
             key=self._entity_key,
             name=None,  # Use None for translation
+            translation_key=self._entity_key,
             native_min_value=self._min_value,
             native_max_value=self._max_value,
             native_step=self._step,
@@ -558,6 +561,7 @@ async def async_setup_entry(
     heating_setpoint_desc = NumberEntityDescription(
         key="heating_setpoint_monitor",
         name=None,  # Use None for translation
+        translation_key="heating_setpoint_monitor",
         native_min_value=10,
         native_max_value=35,
         native_step=1,

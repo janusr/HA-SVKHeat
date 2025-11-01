@@ -26,6 +26,7 @@ except ImportError:
         """Fallback SensorEntityDescription for older HA versions."""
         key: str
         name: str | None = None
+        translation_key: str | None = None
         device_class: str | None = None
         native_unit_of_measurement: str | None = None
         state_class: str | None = None
@@ -160,6 +161,7 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
         self.entity_description = SensorEntityDescription(
             key=entity_key,
             name=None,  # Use None for translation
+            translation_key=self._entity_key,
             device_class=device_class,
             native_unit_of_measurement=unit,
             state_class=state_class,
@@ -346,6 +348,7 @@ class SVKHeatpumpSensor(SVKHeatpumpBaseEntity, SensorEntity):
         self.entity_description = SensorEntityDescription(
             key=self._entity_key,
             name=None,  # Use None for translation
+            translation_key=self._entity_key,
             device_class=device_class,
             native_unit_of_measurement=self._unit,
             state_class=state_class,
@@ -533,6 +536,7 @@ async def async_setup_entry(
     alarm_count_desc = SensorEntityDescription(
         key="alarm_count",
         name=None,  # Use None for translation
+        translation_key="alarm_count",
         device_class=None,
         native_unit_of_measurement="alarms",
         state_class=SensorStateClass.MEASUREMENT,
@@ -566,6 +570,7 @@ async def async_setup_entry(
     last_update_desc = SensorEntityDescription(
         key="last_update_sensor",
         name=None,  # Use None for translation
+        translation_key="last_update_sensor",
         device_class=SensorDeviceClass.TIMESTAMP,
         native_unit_of_measurement=None,
         state_class=None,
