@@ -514,16 +514,16 @@ async def async_setup_entry(
             _original_name = entity_data.get("original_name", "")
             # Only include writable setpoint entities
             if entity_key in [
-                "heating_setpoint",
-                "hot_water_setpoint",
-                "room_setpoint",
+                "heating_heating_setpointact",
+                "user_hotwater_setpoint",
+                "user_heatspctrl_troomset",
             ]:
                 # Check if this entity should be enabled by default
                 entity_id = entity_data.get("id")
                 enabled_by_default = coordinator.is_entity_enabled(entity_id) if entity_id else False
 
                 # Create specialized classes for specific entities
-                if entity_key == "hot_water_setpoint":
+                if entity_key == "user_hotwater_setpoint":
                     number_entity = SVKHeatpumpHotWaterSetpoint(
                         coordinator,
                         entity_key,
@@ -604,55 +604,6 @@ async def async_setup_entry(
     heating_monitor = HeatingSetpointMonitor(coordinator, config_entry.entry_id)
     number_entities.append(heating_monitor)
 
-    # Add compressor speed monitor (if available)
-    compressor_speed_desc = NumberEntityDescription(
-        key="compressor_speed_monitor",
-        name="Compressor Speed Monitor",
-        native_min_value=0,
-        native_max_value=100,
-        native_step=1,
-        native_unit_of_measurement="%",
-        device_class=None,
-    )
-
-    class CompressorSpeedMonitor(SVKHeatpumpBaseEntity, NumberEntity):
-        """Read-only monitor for compressor speed."""
-
-        _attr_entity_registry_enabled_default = False
-
-        def __init__(self, coordinator, config_entry_id):
-            # Initialize SVKHeatpumpBaseEntity (which inherits from CoordinatorEntity)
-            super().__init__(coordinator, config_entry_id)
-            self._attr_name = "Compressor Speed Monitor"
-            self._attr_unique_id = f"{DOMAIN}_system_compressor_speed_monitor"
-            self.entity_description = compressor_speed_desc
-
-        @property
-        def native_value(self) -> float | None:
-            """Return the current compressor speed percentage."""
-            value = self.coordinator.get_entity_value("display_heatpump_capacityact")
-            if value is not None:
-                try:
-                    return float(value)
-                except (ValueError, TypeError):
-                    pass
-            return None
-
-        @property
-        def available(self) -> bool:
-            """This monitor should be available when data is present."""
-            return (
-                self.coordinator.last_update_success
-                and self.coordinator.is_entity_available("display_heatpump_capacityact")
-            )
-
-        async def async_set_native_value(self, value: float) -> None:
-            """Prevent setting value on monitor."""
-            raise ValueError("This is a read-only monitor entity")
-
-    # Compressor speed monitor is disabled by default
-    compressor_monitor = CompressorSpeedMonitor(coordinator, config_entry.entry_id)
-    number_entities.append(compressor_monitor)
 
     _LOGGER.info("Created %d number entities", len(number_entities))
     if number_entities:

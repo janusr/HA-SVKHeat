@@ -1,7 +1,7 @@
 SVK Heat Pump Home Assistant Integration
 =======================================
 
-.. image:: custom_components/svk_heatpump/logo.png
+.. image:: custom_integrations/svk_heatpump/logo.png
     :alt: SVK Heat Pump Logo
     :align: center
     :width: 300px
@@ -108,7 +108,7 @@ JSON API
 The integration prioritizes the modern JSON API for optimal performance:
 
 * **Endpoint**: ``/cgi-bin/json_values.cgi``
-* **Method**: POST requests with JSON payload
+* **Method**: GET requests for reading values and POST requests for writing values.
 * **Authentication**: Digest authentication with automatic nonce handling
 * **Chunking**: Automatic request optimization for large entity sets
 * **Parallel Processing**: Concurrent data retrieval for improved responsiveness
@@ -145,7 +145,7 @@ Digest Authentication
 Entities
 --------
 
-The integration provides 100+ entities organized into the following categories:
+The integration provides 165+ entities organized into the following categories:
 
 Temperature Sensors
 ~~~~~~~~~~~~~~~~~~

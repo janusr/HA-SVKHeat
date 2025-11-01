@@ -68,95 +68,155 @@
   },
   "entity": {
     "sensor": {
-      "heating_supply_temp": {
+      "display_input_theatsupply": {
         "name": "Fremløbstemperatur"
       },
-      "heating_return_temp": {
+      "display_input_theatreturn": {
         "name": "Returtemperatur"
       },
-      "water_tank_temp": {
+      "display_input_twatertank": {
         "name": "Vandtanktemperatur"
       },
-      "ambient_temp": {
+      "display_input_tamb": {
         "name": "Omgivelsestemperatur"
       },
-      "room_temp": {
+      "display_input_troom": {
         "name": "Rumtemperatur"
       },
-      "heating_tank_temp": {
+      "display_input_theattank": {
         "name": "Varmetanktemperatur"
       },
-      "cold_side_supply_temp": {
+      "display_input_tcoldsupply": {
         "name": "Kold side fremløb"
       },
-      "cold_side_return_temp": {
+      "display_input_tcoldreturn": {
         "name": "Kold side retur"
       },
-      "cold_supply_temp": {
-        "name": "Kold Side Fremløbstemp"
-      },
-      "cold_return_temp": {
-        "name": "Kold Side Returtemp"
-      },
-      "evaporator_temp": {
+      "display_input_tevap": {
         "name": "Fordampertemperatur"
       },
-      "solar_collector_temp": {
-        "name": "Solkollektortemperatur"
-      },
-      "solar_water_temp": {
-        "name": "Sol-vandtemperatur"
-      },
-      "solar_panel_temp": {
+      "display_input_tsolarpanel": {
         "name": "Solpanel Temp"
       },
-      "heating_setpoint": {
+      "display_input_tsolarwater": {
+        "name": "Sol-vandtemperatur"
+      },
+      "display_heating_setpointact": {
         "name": "Varmesættemp"
       },
-      "hot_water_setpoint": {
-        "name": "Brugsvandssættemp"
-      },
-      "hot_water_setpoint_actual": {
+      "display_hotwater_setpointact": {
         "name": "Varmtvand Sættemp Faktisk"
       },
-      "compressor_speed_v": {
-        "name": "Kompressorhastighed"
+      "display_heatpump_capacityreq": {
+        "name": "Anmodet Kapacitet"
       },
-      "compressor_speed_percent": {
-        "name": "Kompressorhastighed"
+      "display_heatpump_capacityact": {
+        "name": "Faktisk Kapacitet"
       },
-      "cold_pump_speed": {
+      "display_output_coldpumpvolt": {
         "name": "Kold pumpehastighed"
       },
-      "requested_capacity": {
-        "name": "Anmodet Kapacitet"
+      "display_hotwater_source": {
+        "name": "Hot Water Source"
       },
-      "capacity_requested": {
-        "name": "Anmodet Kapacitet"
+      "display_heating_source": {
+        "name": "Heating Source"
       },
-      "actual_capacity": {
-        "name": "Faktisk Kapacitet"
+      "service_heatpump_runtime": {
+        "name": "Heat Pump Runtime"
       },
-      "capacity_actual": {
-        "name": "Faktisk Kapacitet"
-      },
-      "compressor_runtime": {
+      "service_compressor_compruntime": {
         "name": "Kompressor Driftstid"
       },
-      "heater_runtime": {
+      "service_heating_elecruntime": {
         "name": "Varmeelement Driftstid"
       },
-      "pump_runtime": {
-        "name": "Pumpe Driftstid"
+      "service_hotwater_runtime": {
+        "name": "Hot Water Runtime"
       },
-      "ip_address": {
+      "service_coldpump_cpruntime": {
+        "name": "Cold Pump Runtime"
+      },
+      "service_heatpump_hspruntime": {
+        "name": "Heat Pump HSP Runtime"
+      },
+      "service_heatpump_apruntime": {
+        "name": "Heat Pump AP Runtime"
+      },
+      "service_solarpanel_runtime": {
+        "name": "Solar Panel Runtime"
+      },
+      "service_com_ipadr": {
         "name": "IP-adresse"
       },
-      "software_version": {
+      "service_com_macadr": {
+        "name": "MAC-adresse"
+      },
+      "service_info_appversion": {
         "name": "Softwareversion"
       },
-      "log_interval": {
-        "name": "Loginterval"
+      "service_misc_lup200swver": {
+        "name": "LUP200 Softwareversion"
+      },
+      "user_heatspctrl_troomset": {
+        "name": "Room Setpoint"
+      },
+      "user_hotwater_setpoint": {
+        "name": "Hot Water Set Point"
+      },
+      "heating_heating_setpointact": {
+        "name": "Heating Set Point Actual"
+      },
+      "defrost_defrost_tfrosting": {
+        "name": "Evaporator Temp"
+      },
+      "defrost_defrost_trelfrost": {
+        "name": "Evaporator Temp"
+      },
+      "defrost_defrost_ticemelt": {
+        "name": "Evaporator Temp"
+      },
+      "defrost_defrost_tmeltfast": {
+        "name": "Evaporator Temp"
+      },
+      "defrost_defrost_stoptemp": {
+        "name": "Evaporator Temp"
+      },
+      "defrost_defrost_fftambmin": {
+        "name": "Ambient Temp"
+      },
+      "defrost_defrost_fftambmax": {
+        "name": "Ambient Temp"
+      },
+      "defrost_defrost_fftevapstop": {
+        "name": "Evaporator Temp"
+      },
+      "defrost_defrost_tairdfrtemp": {
+        "name": "Evaporator Temp"
+      },
+      "service_defrost_defrhgcount": {
+        "name": "Defrost Hot Gas Count"
+      },
+      "service_defrost_defraircnt": {
+        "name": "Defrost Air Count"
+      },
+      "system_systemview": {
+        "name": "Software Version"
+      },
+      "user_time_year": {
+        "name": "Time Year"
+      },
+      "user_time_month": {
+        "name": "Time Month"
+      },
+      "user_time_day": {
+        "name": "Time Day"
+      },
+      "user_time_hour": {
+        "name": "Time Hour"
+      },
+      "user_time_minute": {
+        "name": "Time Minute"
       },
       "alarm_count": {
         "name": "Alarmantal"
@@ -244,9 +304,6 @@
      },
      "heating_setpoint_monitor": {
        "name": "Varmesættemp"
-     },
-     "compressor_speed_monitor": {
-       "name": "Kompressorhastighed Monitor"
      }
    },
    "switch": {

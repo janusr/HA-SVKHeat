@@ -547,10 +547,10 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                         continue
 
                 # Store the value
-                if entity_key == "heatpump_state":
+                if entity_key == "display_heatpump_state":
                     # Map enum value for heatpump state
                     data[entity_key] = self._map_heatpump_state(value)
-                elif entity_key == "season_mode":
+                elif entity_key == "user_parameters_seasonmode":
                     # Map enum value for season mode
                     data[entity_key] = self._map_season_mode(value)
                 else:
@@ -871,7 +871,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             
             # Log heat pump operational state if available
             if self.data:
-                heatpump_state = self.data.get("heatpump_state", "unknown")
+                heatpump_state = self.data.get("display_heatpump_state", "unknown")
                 alarm_active = self.data.get("alarm_active", False)
                 _LOGGER.debug(
                     "SET_PARAMETER: Heat pump state - State: %s, Alarm: %s",
@@ -945,7 +945,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             
             # Log heat pump state if available
             if self.data:
-                heatpump_state = self.data.get("heatpump_state", "unknown")
+                heatpump_state = self.data.get("display_heatpump_state", "unknown")
                 alarm_active = self.data.get("alarm_active", False)
                 _LOGGER.error(
                     "SET_PARAMETER: Heat pump context - State: %s, Alarm: %s",
@@ -1019,9 +1019,9 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             return None
 
         # Handle special cases
-        if entity_key == "hot_water_setpoint_control":
-            return self.data.get("hot_water_setpoint")
-        elif entity_key == "room_setpoint_control":
+        if entity_key == "user_hotwater_setpoint_control":
+            return self.data.get("user_hotwater_setpoint")
+        elif entity_key == "user_heatspctrl_troomset_control":
             # This might not be directly available, could be derived
             return self.data.get("room_setpoint")
 
@@ -1154,7 +1154,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         if not self.data:
             return {"status": "unknown", "state": "unknown"}
 
-        heatpump_state = self.data.get("heatpump_state", "unknown")
+        heatpump_state = self.data.get("display_heatpump_state", "unknown")
         alarm_active = self.data.get("alarm_active", False)
 
         # Determine overall status
@@ -1415,7 +1415,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             "entity_id": entity_id,
             "entity_name": entity_info.get("original_name", "unknown") if entity_info else "unknown",
             "entity_unit": entity_info.get("unit", "unknown") if entity_info else "unknown",
-            "heatpump_state": self.data.get("heatpump_state") if self.data else "unknown",
+            "heatpump_state": self.data.get("display_heatpump_state") if self.data else "unknown",
             "alarm_active": self.data.get("alarm_active", False) if self.data else False,
         }
         
@@ -1467,7 +1467,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         failure_contexts = {}
         for op in self.write_operations:
             if not op["success"]:
-                context_key = f"{op['heatpump_state']}_{'alarm' if op['alarm_active'] else 'no_alarm'}"
+                context_key = f"{op['display_heatpump_state']}_{'alarm' if op['alarm_active'] else 'no_alarm'}"
                 if context_key not in failure_contexts:
                     failure_contexts[context_key] = 0
                 failure_contexts[context_key] += 1

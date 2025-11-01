@@ -47,6 +47,7 @@ from .coordinator import SVKHeatpumpDataCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 
+
 class SVKHeatpumpBaseEntity(CoordinatorEntity):
     """Base entity for SVK Heatpump integration."""
 
@@ -137,7 +138,7 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
         # Create entity description
         self.entity_description = SensorEntityDescription(
             key=entity_key,
-            name=entity_key,  # Use entity_key for translation
+            name=entity_key,  # Use entity_key directly for translation
             device_class=device_class,
             native_unit_of_measurement=unit,
             state_class=state_class,
@@ -317,10 +318,10 @@ class SVKHeatpumpSensor(SVKHeatpumpBaseEntity, SensorEntity):
         ):
             entity_category = EntityCategory.DIAGNOSTIC
 
-        # Use entity_key for translation
+        # Use entity_key directly for friendly name
         self.entity_description = SensorEntityDescription(
             key=self._entity_key,
-            name=self._entity_key,  # Use entity_key for translation
+            name=self._entity_key,  # Use entity_key directly for translation
             device_class=device_class,
             native_unit_of_measurement=self._unit,
             state_class=state_class,
@@ -466,19 +467,19 @@ async def async_setup_entry(
 
         # Create essential entities as fallback to ensure basic functionality
         essential_entities = [
-            ("heating_supply_temp", 253),
-            ("heating_return_temp", 254),
-            ("water_tank_temp", 255),
-            ("ambient_temp", 256),
-            ("room_temp", 257),
-            ("heatpump_state", 297),
-            ("capacity_actual", 299),
-            ("capacity_requested", 300),
-            ("season_mode", 278),
-            ("hot_water_setpoint", 383),
-            ("heating_setpoint_actual", 420),
-            ("compressor_runtime", 447),
-            ("alarm_output", 228),
+            ("display_input_theatsupply", 253),
+            ("display_input_theatreturn", 254),
+            ("display_input_twatertank", 255),
+            ("display_input_tamb", 256),
+            ("display_input_troom", 257),
+            ("display_heatpump_state", 297),
+            ("display_heatpump_capacityact", 299),
+            ("display_heatpump_capacityreq", 300),
+            ("user_parameters_seasonmode", 278),
+            ("user_hotwater_setpoint", 383),
+            ("heating_heating_setpointact", 420),
+            ("service_compressor_compruntime", 447),
+            ("display_output_alarm", 228),
         ]
 
         for entity_key, entity_id in essential_entities:

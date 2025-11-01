@@ -717,7 +717,7 @@ async def async_setup_entry(
             _state_class = entity_data.get("state_class")
             _original_name = entity_data.get("original_name", "")
             # Only include select entities
-            if entity_key in ["season_mode", "heatpump_state"]:
+            if entity_key in ["user_parameters_seasonmode", "display_heatpump_state"]:
                 # Check if this entity should be enabled by default
                 enabled_by_default = coordinator.is_entity_enabled(entity_data["id"]) if entity_data["id"] else False
 

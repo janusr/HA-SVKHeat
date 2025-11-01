@@ -1228,42 +1228,6 @@ ENTITIES = {
         "state_class": None,
         "access_type": "readwrite",
     },
-    "service_info_appversion": {
-        "name": "Info.AppVersion",
-        "platform": "sensor",
-        "category": "Settings",
-        "group": "Service",
-        "page": "settings_service",
-        "data_type": "string",
-        "id": 37,
-        "device_class": None,
-        "state_class": None,
-        "access_type": "read",
-    },
-    "service_com_ipadr": {
-        "name": "Com.IpAdr",
-        "platform": "sensor",
-        "category": "Settings",
-        "group": "Service",
-        "page": "settings_service",
-        "data_type": "string",
-        "id": 53,
-        "device_class": None,
-        "state_class": None,
-        "access_type": "read",
-    },
-    "service_com_macadr": {
-        "name": "Com.MacAdr",
-        "platform": "sensor",
-        "category": "Settings",
-        "group": "Service",
-        "page": "settings_service",
-        "data_type": "string",
-        "id": 52,
-        "device_class": None,
-        "state_class": None,
-        "access_type": "read",
-    },
     "service_parameters_displaymode": {
         "name": "Parameters.DisplayMode",
         "platform": "select",
@@ -1995,6 +1959,42 @@ AVAILABLE_ENTITIES = {
         "state_class": None,
         "access_type": "read",
     },
+    "service_info_appversion": {
+        "name": "Info.AppVersion",
+        "platform": "sensor",
+        "category": "Settings",
+        "group": "Service",
+        "page": "settings_service",
+        "data_type": "string",
+        "id": 37,
+        "device_class": None,
+        "state_class": None,
+        "access_type": "read",
+    },
+    "service_com_ipadr": {
+        "name": "Com.IpAdr",
+        "platform": "sensor",
+        "category": "Settings",
+        "group": "Service",
+        "page": "settings_service",
+        "data_type": "string",
+        "id": 53,
+        "device_class": None,
+        "state_class": None,
+        "access_type": "read",
+    },
+    "service_com_macadr": {
+        "name": "Com.MacAdr",
+        "platform": "sensor",
+        "category": "Settings",
+        "group": "Service",
+        "page": "settings_service",
+        "data_type": "string",
+        "id": 52,
+        "device_class": None,
+        "state_class": None,
+        "access_type": "read",
+    },
     "user_time_month": {
         "name": "Time.Month",
         "platform": "sensor",
@@ -2529,36 +2529,36 @@ def get_id_map() -> dict[int, tuple[str, str, Any, Any, str]]:
 # Moved from const.py - DEFAULT_ENABLED_ENTITIES
 DEFAULT_ENABLED_ENTITIES = [
     # Operation/Display: Essential temperature sensors and heat pump state
-    253,  # heating_supply_temp
-    255,  # water_tank_temp
-    257,  # room_temp
-    297,  # heatpump_state
+    253,  # display_input_theatsupply
+    255,  # display_input_twatertank
+    257,  # display_input_troom
+    297,  # display_heatpump_state
     # Operation/User: Key user-configurable parameters
-    193,  # room_setpoint
-    383,  # hot_water_setpoint
-    278,  # season_mode
-    137,  # user_language
+    193,  # user_heatspctrl_troomset
+    383,  # user_hotwater_setpoint
+    278,  # user_parameters_seasonmode
+    137,  # user_user_language
     # Settings/Heatpump: Critical heat pump settings
-    299,  # capacity_actual
-    447,  # compressor_runtime
-    433,  # compressor_output
+    299,  # display_heatpump_capacityact
+    447,  # service_compressor_compruntime
+    433,  # display_compressor_output
     # Settings/Heating: Essential heating parameters
-    420,  # heating_setpoint_actual
-    403,  # heating_source
-    404,  # heating_control_mode
+    420,  # heating_heating_setpointact
+    403,  # heating_heating_source
+    404,  # heatpump_heating_ctrlmode
     # Settings/Hot water: Key hot water settings
-    380,  # hot_water_source
-    386,  # hot_water_setpoint_actual
-    220,  # hot_tap_water_output
+    380,  # hotwater_hotwater_source
+    386,  # display_hotwater_setpointact
+    220,  # display_output_hottapwater
     # Settings/Solar panel: Basic solar panel status
-    364,  # solar_panel_state
-    263,  # solar_water_temp
+    364,  # display_solarpanel_state
+    263,  # display_input_tsolarwater
     # Settings/Service: Essential diagnostic entities
-    228,  # alarm_output
-    301,  # heatpump_runtime
+    228,  # display_output_alarm
+    301,  # service_heatpump_runtime
     # Settings/Extended Display: Key extended display entities
-    296,  # heatpump_season_state
-    300,  # capacity_requested
+    296,  # display_heatpump_seasonstate
+    300,  # display_heatpump_capacityreq
 ]
 
 # Moved from const.py - BINARY_OUTPUT_IDS

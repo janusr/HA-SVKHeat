@@ -298,9 +298,9 @@ async def async_setup_entry(
         def is_on(self) -> bool:
             """Return true if the system is active."""
             if self.coordinator.data:
-                heatpump_state = self.coordinator.data.get("heatpump_state", "")
-                return heatpump_state in [
-                    "heating",
+                    heatpump_state = self.coordinator.data.get("display_heatpump_state", "")
+                    return heatpump_state in [
+                        "heating",
                     "hot_water",
                     "el_heating",
                     "defrost",

@@ -896,7 +896,7 @@ class LOMJsonClient:
             _LOGGER.info("Testing connection to heat pump at %s", self.host)
 
             # Try a minimal request with just one essential ID
-            test_ids = [253]  # heating_supply_temp - essential sensor
+            test_ids = [253]  # display_input_theatsupply - essential sensor
 
             # Start session if needed
             if not self._session:
