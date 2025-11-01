@@ -1,7 +1,7 @@
 {
   "domain": "svk_heatpump",
   "name": "SVK Heatpump",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "documentation": "https://github.com/janusr/HA-SVKHeat#readme",
   "issue_tracker": "https://github.com/janusr/HA-SVKHeat/issues",
   "codeowners": ["@janusr"],
@@ -10,5 +10,6 @@
   "requirements": [],
   "config_flow": true,
   "icon": "/custom_components/svk_heatpump/logo.png",
+  "translations": ["translations/en.json", "translations/da.json"],
   "homeassistant": "2023.1.0"
 }
