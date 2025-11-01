@@ -77,9 +77,6 @@
       "display_input_theatreturn": {
         "name": "Heating Return Temp"
       },
-      "Input.THeatReturn": {
-        "name": "Heating Return Temp"
-      },
       "display_input_twatertank": {
         "name": "Water Tank Temp"
       },

@@ -26,7 +26,8 @@ class SVKBaseEntity(Entity):
         # Look up the proper entity name from the ENTITIES dictionary
         from .catalog import ENTITIES
         entity_info = ENTITIES.get(entity_key, {})
-        self._attr_name = entity_info.get("name", entity_key)  # Fallback to entity_key if not found
+        # Use entity_key (identifier) as display name instead of name property
+        self._attr_name = entity_key
         
         self._attr_unique_id = f"{DOMAIN}_{group_key}_{unique_suffix}"
 
