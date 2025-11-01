@@ -93,9 +93,6 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
         self._entity_key = entity_key
         self._attr_entity_registry_enabled_default = enabled_by_default
         self._group_key = group_key  # For unique_id property
-        
-        # Initialize the name properly from ENTITIES dictionary
-        self._attr_name = entity_info.get("name", entity_key)  # Use proper name from catalog
 
         _LOGGER.debug(
             "Creating sensor entity: %s (group: %s, enabled_by_default: %s)",
@@ -526,7 +523,6 @@ async def async_setup_entry(
         def __init__(self, coordinator: SVKHeatpumpDataCoordinator, config_entry_id: str) -> None:
             # Initialize SVKHeatpumpBaseEntity (which inherits from CoordinatorEntity)
             super().__init__(coordinator, config_entry_id)
-            self._attr_name = "Alarm Count"
             self._attr_unique_id = f"{DOMAIN}_system_alarm_count"
             self.entity_description = alarm_count_desc
 
@@ -560,7 +556,6 @@ async def async_setup_entry(
         def __init__(self, coordinator, config_entry_id):
             # Initialize SVKHeatpumpBaseEntity (which inherits from CoordinatorEntity)
             super().__init__(coordinator, config_entry_id)
-            self._attr_name = "Last Update"
             self._attr_unique_id = f"{DOMAIN}_system_last_update_sensor"
             self.entity_description = last_update_desc
 

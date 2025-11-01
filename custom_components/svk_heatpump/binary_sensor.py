@@ -115,9 +115,6 @@ class SVKHeatpumpBinarySensor(SVKHeatpumpBaseEntity, BinarySensorEntity):
             self._device_class = None
             self._state_class = None
             self._original_name = ""
-            
-        # Initialize name properly from ENTITIES dictionary
-        self._attr_name = entity_info.get("original_name", entity_key) if entity_info else entity_key
 
         # Create entity description
         device_class = None

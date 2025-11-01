@@ -234,6 +234,69 @@
       },
       "online_status": {
         "name": "Online Status"
+      },
+      "display_heatpump_state": {
+        "name": "Varmepumpetilstand"
+      },
+      "display_solarpanel_state": {
+        "name": "Solpanel Tilstand"
+      },
+      "display_heatpump_seasonstate": {
+        "name": "Varmepumpesæson Tilstand"
+      },
+      "display_coldpump_state": {
+        "name": "Koldpumpe Tilstand"
+      },
+      "display_legionella_state": {
+        "name": "Legionella Tilstand"
+      },
+      "display_compressor_output": {
+        "name": "Kompressor Output"
+      },
+      "display_output_heater": {
+        "name": "Varmelegeme Output"
+      },
+      "display_output_hottapwater": {
+        "name": "Brugsvand Output"
+      },
+      "display_output_coldpump": {
+        "name": "Koldpumpe Output"
+      },
+      "display_output_coldpumplow": {
+        "name": "Koldpumpe Lav Output"
+      },
+      "display_output_hotsidepump": {
+        "name": "Varmesidepumpe Output"
+      },
+      "display_output_defrostvalve": {
+        "name": "Afisningsventil Output"
+      },
+      "display_output_solarpump": {
+        "name": "Solpumpe Output"
+      },
+      "display_output_auxpump": {
+        "name": "Hjælpepumpe Output"
+      },
+      "display_output_alarm": {
+        "name": "Alarm Output"
+      },
+      "display_input_hpswitch": {
+        "name": "HP Switch Input"
+      },
+      "display_input_lpswitch": {
+        "name": "LP Switch Input"
+      },
+      "display_input_bpswitch": {
+        "name": "BP Switch Input"
+      },
+      "display_input_dfstart": {
+        "name": "DF Start Input"
+      },
+      "display_input_fcswitch": {
+        "name": "FC Switch Input"
+      },
+      "solar_solarpanel_state": {
+        "name": "Solpanel Tilstand"
       }
     },
     "select": {
@@ -293,6 +356,30 @@
           "7": "Portugisisk",
           "8": "Italiensk"
         }
+      },
+      "heating_heating_source": {
+        "name": "Varmekilde"
+      },
+      "heating_heatspctrl_type": {
+        "name": "Varmekontrol Type"
+      },
+      "heatpump_heating_ctrlmode": {
+        "name": "Varmepumpe Kontrol Tilstand"
+      },
+      "heatpump_cprcontrol_cprmode": {
+        "name": "Kompressor Kontrol Tilstand"
+      },
+      "heatpump_coldpump_mode": {
+        "name": "Koldpumpe Tilstand"
+      },
+      "hotwater_hotwater_source": {
+        "name": "Varmtvand Kilde"
+      },
+      "service_parameters_displaymode": {
+        "name": "Display Tilstand"
+      },
+      "solar_solarpanel_sensorselect": {
+        "name": "Solpanel Sensor Valg"
       }
    },
    "number": {
@@ -304,6 +391,153 @@
      },
      "heating_setpoint_monitor": {
        "name": "Varmesættemp"
+     },
+     "display_manual_coldpumpvolt": {
+       "name": "Manuel Koldpumpe Spænding"
+     },
+     "heating_heating_setpointmin": {
+       "name": "Varme Sættemp Minimum"
+     },
+     "heating_heating_setpointmax": {
+       "name": "Varme Sættemp Maksimum"
+     },
+     "heating_heating_setpmincool": {
+       "name": "Varme Sættemp Minimum Køling"
+     },
+     "heating_heating_neutralzone": {
+       "name": "Varme Neutralzone"
+     },
+     "heating_heating_stopcap1": {
+       "name": "Varme Stopkapacitet 1"
+     },
+     "heating_heating_stopcap2": {
+       "name": "Varme Stopkapacitet 2"
+     },
+     "heating_heating_startdifcap": {
+       "name": "Varme Startdifferens Kapacitet"
+     },
+     "heating_compressor_minvoltage": {
+       "name": "Kompressor Min Spænding"
+     },
+     "heating_compressor_maxvoltage": {
+       "name": "Kompressor Max Spænding"
+     },
+     "heating_compressor_ustart": {
+       "name": "Kompressor U Start"
+     },
+     "heating_compressor_gain": {
+       "name": "Kompressor Forstærkning"
+     },
+     "heating_compressor_tn": {
+       "name": "Kompressor TN"
+     },
+     "heating_heating_tevapmin": {
+       "name": "Varme Fordamper Minimum Temp"
+     },
+     "heating_heating_minheattime": {
+       "name": "Varme Minimum Opvarmningstid"
+     },
+     "heating_heatspctrl_curve": {
+       "name": "Varmekontrol Kurve"
+     },
+     "heating_heatspctrl_curpnt1": {
+       "name": "Varmekontrol Kurvepunkt 1"
+     },
+     "heating_heatspctrl_curpnt2": {
+       "name": "Varmekontrol Kurvepunkt 2"
+     },
+     "heating_heatspctrl_curpnt3": {
+       "name": "Varmekontrol Kurvepunkt 3"
+     },
+     "heating_heatspctrl_curpnt4": {
+       "name": "Varmekontrol Kurvepunkt 4"
+     },
+     "heating_heatspctrl_curpnt5": {
+       "name": "Varmekontrol Kurvepunkt 5"
+     },
+     "heating_heatspctrl_curpnt6": {
+       "name": "Varmekontrol Kurvepunkt 6"
+     },
+     "heating_heatspctrl_curpnt7": {
+       "name": "Varmekontrol Kurvepunkt 7"
+     },
+     "heating_heatspctrl_ambcmpmax": {
+       "name": "Varme Omgivelses Kompressor Maks"
+     },
+     "heatpump_parameters_hpstops": {
+       "name": "Varmepumpe Stop"
+     },
+     "heatpump_parameters_totalstops": {
+       "name": "Total Stop"
+     },
+     "heatpump_parameters_hpstopt": {
+       "name": "Varmepumpe Stop Tid"
+     },
+     "heatpump_parameters_totalstopt": {
+       "name": "Total Stop Tid"
+     },
+     "heatpump_parameters_hpambstopt": {
+       "name": "Varmepumpe Omgivelses Stop Tid"
+     },
+     "heatpump_compressor_mincprstop": {
+       "name": "Kompressor Minimum Stop Tid"
+     },
+     "heatpump_heating_elecdelay": {
+       "name": "Varme Elektrisk Forsinkelse"
+     },
+     "heatpump_parameters_pumpexinter": {
+       "name": "Pumpeøvelsesinterval"
+     },
+     "heatpump_parameters_startuptime": {
+       "name": "Opstartstid"
+     },
+     "heatpump_coldpump_stopdelay": {
+       "name": "Koldpumpe Stop Forsinkelse"
+     },
+     "heatpump_coldpump_hspeedcap": {
+       "name": "Koldpumpe Høj Hastighed Kapacitet"
+     },
+     "heatpump_coldpump_hspeednz": {
+       "name": "Koldpumpe Høj Hastighed Neutralzone"
+     },
+     "heatpump_coldpump_hspeedvolt": {
+       "name": "Koldpumpe Høj Hastighed Spænding"
+     },
+     "heatpump_coldpump_lspeedvolt": {
+       "name": "Koldpumpe Lav Hastighed Spænding"
+     },
+     "hotwater_hotwater_setpoint": {
+       "name": "Varmtvand Sættemp"
+     },
+     "hotwater_hotwater_capacity": {
+       "name": "Varmtvand Kapacitet"
+     },
+     "hotwater_hotwater_teleclimit": {
+       "name": "Varmtvand Elektrisk Grænse"
+     },
+     "hotwater_legionella_waittime": {
+       "name": "Legionella Ventetid"
+     },
+     "hotwater_legionella_treattemp": {
+       "name": "Legionella Behandlingstemp"
+     },
+     "hotwater_legionella_timeout1": {
+       "name": "Legionella Timeout 1"
+     },
+     "solar_solarpanel_tstartdiff": {
+       "name": "Solpanel Startdifferens Temp"
+     },
+     "solar_solarpanel_tstopdiff": {
+       "name": "Solpanel Stopdifferens Temp"
+     },
+     "solar_solarpanel_tempmax": {
+       "name": "Solpanel Maks Temp"
+     },
+     "solar_solarpanel_watermt": {
+       "name": "Solpanel Vand Maks Temp"
+     },
+     "solar_solarpanel_starttemp": {
+       "name": "Solpanel Start Temp"
      }
    },
    "switch": {

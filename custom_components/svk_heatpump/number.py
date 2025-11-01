@@ -102,9 +102,6 @@ class SVKNumber(SVKHeatpumpBaseEntity, NumberEntity):
         self._entity_key = entity_key
         self._attr_entity_registry_enabled_default = enabled_by_default
         self._group_key = group_key  # For unique_id property
-        
-        # Initialize name properly from ENTITIES dictionary
-        self._attr_name = entity_info.get("name", entity_key)  # Use proper name from catalog
 
         _LOGGER.debug(
             "Creating number entity: %s (group: %s, min: %s, max: %s, step: %s, unit: %s)",
@@ -576,7 +573,6 @@ async def async_setup_entry(
         def __init__(self, coordinator, config_entry_id):
             # Initialize SVKHeatpumpBaseEntity (which inherits from CoordinatorEntity)
             super().__init__(coordinator, config_entry_id)
-            self._attr_name = "Heating Set Point Monitor"
             self._attr_unique_id = f"{DOMAIN}_system_heating_setpoint_monitor"
             self.entity_description = heating_setpoint_desc
 
