@@ -173,27 +173,6 @@
       "defrost_defrost_trelfrost": {
         "name": "Evaporator Temp"
       },
-      "defrost_defrost_ticemelt": {
-        "name": "Evaporator Temp"
-      },
-      "defrost_defrost_tmeltfast": {
-        "name": "Evaporator Temp"
-      },
-      "defrost_defrost_stoptemp": {
-        "name": "Evaporator Temp"
-      },
-      "defrost_defrost_fftambmin": {
-        "name": "Ambient Temp"
-      },
-      "defrost_defrost_fftambmax": {
-        "name": "Ambient Temp"
-      },
-      "defrost_defrost_fftevapstop": {
-        "name": "Evaporator Temp"
-      },
-      "defrost_defrost_tairdfrtemp": {
-        "name": "Evaporator Temp"
-      },
       "service_defrost_defrhgcount": {
         "name": "Defrost Hot Gas Count"
       },

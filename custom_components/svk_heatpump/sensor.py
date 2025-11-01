@@ -46,6 +46,25 @@ from .coordinator import SVKHeatpumpDataCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
+# System-level entities that should follow the alarm_count pattern
+SYSTEM_LEVEL_ENTITIES = {
+    "alarm_count",  # Existing
+    "last_update_sensor",  # Existing
+    "system_systemview",
+    "service_com_ipadr",
+    "service_com_macadr",
+    "service_info_appversion",
+    "service_misc_lup200swver",
+    "user_time_year",
+    "user_time_month",
+    "user_time_day",
+    "user_time_hour",
+    "user_time_minute",
+    "service_defrost_defrhgcount",
+    "service_defrost_defraircnt",
+    "service_heatpump_runtime",
+    "service_compressor_compruntime",
+}
 
 
 class SVKHeatpumpBaseEntity(CoordinatorEntity):
@@ -134,6 +153,8 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
             entity_category = EntityCategory.DIAGNOSTIC
         elif "runtime" in entity_key or "gain" in entity_key or "count" in entity_key:
             entity_category = EntityCategory.DIAGNOSTIC
+        elif entity_key in SYSTEM_LEVEL_ENTITIES:
+            entity_category = EntityCategory.DIAGNOSTIC
 
         # Create entity description
         self.entity_description = SensorEntityDescription(
@@ -148,6 +169,9 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
     @property
     def unique_id(self) -> str:
         """Return unique ID for sensor."""
+        # System-level entities use the "system" prefix instead of group key
+        if self._entity_key in SYSTEM_LEVEL_ENTITIES:
+            return f"{DOMAIN}_system_{self._entity_key}"
         return f"{DOMAIN}_{self._group_key}_{self._entity_key}"
 
     @property

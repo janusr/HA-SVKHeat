@@ -176,15 +176,6 @@
       "defrost_defrost_trelfrost": {
         "name": "Evaporator Temp"
       },
-      "defrost_defrost_ticemelt": {
-        "name": "Evaporator Temp"
-      },
-      "defrost_defrost_tmeltfast": {
-        "name": "Evaporator Temp"
-      },
-      "defrost_defrost_stoptemp": {
-        "name": "Evaporator Temp"
-      },
       "defrost_defrost_fftambmin": {
         "name": "Defrost Ambient Min Temperature"
       },
