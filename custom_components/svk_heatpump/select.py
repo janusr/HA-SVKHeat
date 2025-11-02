@@ -175,7 +175,7 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
         # Create entity description
         self.entity_description = SelectEntityDescription(
             key=entity_key,
-            name=None,  # Use None for translation
+            name=None,
             translation_key=self._entity_key,
             options=options,
             icon=icon,
@@ -472,7 +472,7 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
 
         self.entity_description = SelectEntityDescription(
             key=self._entity_key,
-            name=None,  # Use None for translation
+            name=None,
             translation_key=self._entity_key,
             options=options,
             entity_category=entity_category,
@@ -758,7 +758,7 @@ async def async_setup_entry(
     # Add additional select entities for system status
     system_status_desc = SelectEntityDescription(
         key="system_status",
-        name=None,  # Use None for translation
+        name=None,
         translation_key="system_status",
         options=["Off", "Standby", "Active", "Alarm", "Unknown"],
     )

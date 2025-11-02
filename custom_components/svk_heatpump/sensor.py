@@ -160,7 +160,7 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
         # Create entity description
         self.entity_description = SensorEntityDescription(
             key=entity_key,
-            name=None,  # Use None for translation
+            name=None,
             translation_key=self._entity_key,
             device_class=device_class,
             native_unit_of_measurement=unit,
@@ -347,7 +347,7 @@ class SVKHeatpumpSensor(SVKHeatpumpBaseEntity, SensorEntity):
         # Use entity_key directly for friendly name
         self.entity_description = SensorEntityDescription(
             key=self._entity_key,
-            name=None,  # Use None for translation
+            name=None,
             translation_key=self._entity_key,
             device_class=device_class,
             native_unit_of_measurement=self._unit,
@@ -535,7 +535,7 @@ async def async_setup_entry(
     # Add alarm count sensor
     alarm_count_desc = SensorEntityDescription(
         key="alarm_count",
-        name=None,  # Use None for translation
+        name=None,
         translation_key="alarm_count",
         device_class=None,
         native_unit_of_measurement="alarms",
@@ -569,7 +569,7 @@ async def async_setup_entry(
     # Add last update sensor
     last_update_desc = SensorEntityDescription(
         key="last_update_sensor",
-        name=None,  # Use None for translation
+        name=None,
         translation_key="last_update_sensor",
         device_class=SensorDeviceClass.TIMESTAMP,
         native_unit_of_measurement=None,

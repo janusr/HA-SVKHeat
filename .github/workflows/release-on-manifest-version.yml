@@ -42,7 +42,7 @@ jobs:
           else
             echo "release=true" >> $GITHUB_OUTPUT
           fi
-          
+
       - name: Configure git identity
         run: |
           git config user.name "${{ github.actor }}"
@@ -54,31 +54,46 @@ jobs:
           git tag "v${{ steps.manifest.outputs.version }}" -m "Release v${{ steps.manifest.outputs.version }}"
           git push origin "v${{ steps.manifest.outputs.version }}"
 
-      - name: Generate changelog
+      - name: Generate changelog (only changes since last release in svk_heatpump path)
         if: steps.should.outputs.release == 'true'
         id: changelog
         run: |
-          # Get the previous tag (if exists)
+          COMPONENT_PATH="custom_components/svk_heatpump"
+          CURR_TAG="v${{ steps.manifest.outputs.version }}"
+
+          # Find previous tag (second most recent v* tag)
           PREV_TAG=$(git tag --list 'v*' --sort=-v:refname | head -n 2 | tail -n 1)
-          
-          # Generate changelog
+
+          # Build commit list and changed files limited to component path
           if [ -z "$PREV_TAG" ]; then
-            # First release - get all commits
-            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+            # First release: include entire history of the component path up to the current tag
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges "$CURR_TAG" -- "$COMPONENT_PATH")
+            FILES=$(git ls-tree -r --name-only "$CURR_TAG" "$COMPONENT_PATH")
           else
-            # Get commits between previous tag and current
-            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges $PREV_TAG..HEAD)
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges "$PREV_TAG..$CURR_TAG" -- "$COMPONENT_PATH")
+            FILES=$(git diff --name-only "$PREV_TAG..$CURR_TAG" -- "$COMPONENT_PATH")
           fi
-          
-          # If no commits found, use a default message
-          if [ -z "$CHANGELOG" ]; then
-            CHANGELOG="- No changes since last release"
+
+          # Fallback messages if empty
+          if [ -z "$COMMITS" ]; then
+            COMMITS="- No commits affecting \`$COMPONENT_PATH\` since last release"
           fi
-          
-          # Save to file and output
-          echo "$CHANGELOG" > changelog.txt
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          if [ -z "$FILES" ]; then
+            FILES="(No files changed under \`$COMPONENT_PATH\`)"
+          fi
+
+          {
+            echo "## Changes since last release (in \`$COMPONENT_PATH\`)"
+            echo
+            echo "$COMMITS"
+            echo
+            echo "### Files changed"
+            echo
+            echo "$FILES" | sed 's/^/- /'
+          } > changelog.txt
+
+          echo "changelog<<'EOF'" >> $GITHUB_OUTPUT
+          cat changelog.txt >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
@@ -86,12 +101,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.manifest.outputs.version }}
-          body: |
-            ## Changes since last release
-            
-            ${{ steps.changelog.outputs.changelog }}
-            
-            ---
-            
-            *Release automatically created on version bump*
+          body: ${{ steps.changelog.outputs.changelog }}
           generate_release_notes: false
