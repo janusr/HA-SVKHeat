@@ -44,6 +44,7 @@ jobs:
           fi
 
       - name: Configure git identity
+        if: steps.should.outputs.release == 'true'
         run: |
           git config user.name "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
@@ -58,18 +59,19 @@ jobs:
         if: steps.should.outputs.release == 'true'
         id: changelog
         run: |
+          set -euo pipefail
           COMPONENT_PATH="custom_components/svk_heatpump"
           CURR_TAG="v${{ steps.manifest.outputs.version }}"
 
           # Find previous tag (second most recent v* tag)
-          PREV_TAG=$(git tag --list 'v*' --sort=-v:refname | head -n 2 | tail -n 1)
+          PREV_TAG=$(git tag --list 'v*' --sort=-v:refname | head -n 2 | tail -n 1 || true)
 
-          # Build commit list and changed files limited to component path
-          if [ -z "$PREV_TAG" ]; then
-            # First release: include entire history of the component path up to the current tag
+          if [ -z "${PREV_TAG:-}" ]; then
+            # First release: include entire history of the component path up to current tag
             COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges "$CURR_TAG" -- "$COMPONENT_PATH")
             FILES=$(git ls-tree -r --name-only "$CURR_TAG" "$COMPONENT_PATH")
           else
+            # Commits and files changed between previous and current tag, limited to the component path
             COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges "$PREV_TAG..$CURR_TAG" -- "$COMPONENT_PATH")
             FILES=$(git diff --name-only "$PREV_TAG..$CURR_TAG" -- "$COMPONENT_PATH")
           fi
@@ -92,7 +94,7 @@ jobs:
             echo "$FILES" | sed 's/^/- /'
           } > changelog.txt
 
-          echo "changelog<<'EOF'" >> $GITHUB_OUTPUT
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
           cat changelog.txt >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
