@@ -27,7 +27,7 @@ Features
 * **Energy Monitoring**: Track power consumption and efficiency metrics
 
 Compatibility
-------------
+-------------
 
 * **Heat Pump Models**: SVK LMC320 series
 * **Home Assistant**: 2023.1 or newer

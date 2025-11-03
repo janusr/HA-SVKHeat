@@ -33,23 +33,14 @@ class SVKTimeoutError(SVKConnectionError):
     pass
 
 
-class SVKParseError(Exception):
-    """HTML parsing failed."""
-
-    def __init__(self, page: str, message: str):
-        self.page = page
-        self.message = message
-        super().__init__(f"Failed to parse {page}: {message}")
-
-
-class SVKInvalidDataFormatError(SVKParseError):
+class SVKInvalidDataFormatError(Exception):
     """Invalid data format error."""
 
     def __init__(self, expected: str, received: str, details: str = ""):
         message = f"Expected {expected}, received {received}"
         if details:
             message += f": {details}"
-        super().__init__("json", message)
+        super().__init__(f"JSON parsing error: {message}")
 
 
 class SVKWriteError(Exception):
@@ -607,8 +598,8 @@ class LOMJsonClient:
                 _LOGGER.error(
                     "Raw response text (first 200 chars): %s", repr(response_text[:200])
                 )
-                raise SVKParseError(
-                    "json", f"JSON decode error in GET: {json_err}"
+                raise SVKInvalidDataFormatError(
+                    "valid JSON", f"JSON decode error in GET: {json_err}"
                 ) from json_err
 
             # Check for empty or blank response after parsing
@@ -639,8 +630,8 @@ class LOMJsonClient:
                 response_text[:500],
             )
 
-            raise SVKParseError(
-                "json", f"Invalid JSON response: {response_text[:100]}"
+            raise SVKInvalidDataFormatError(
+                "valid JSON", f"Invalid JSON response: {response_text[:100]}"
             ) from err
 
         finally:

@@ -27,7 +27,6 @@
       "invalid_auth": "Invalid username or password",
       "cannot_connect": "Failed to connect",
       "invalid_response": "Invalid response from device",
-      "invalid_id_list": "Invalid ID list format. Use semicolon-separated numbers (e.g., 299;255;256)",
       "unexpected_auth_scheme": "Unexpected auth scheme from device.",
       "unknown": "Unknown error",
       "timeout": "Connection timeout. The device is not responding.",
@@ -52,11 +51,10 @@
     "step": {
       "init": {
         "title": "SVK Heatpump Options",
-        "description": "Configure the SVK Heatpump integration settings. Entity management is now handled through the Home Assistant UI - go to Settings > Devices & Services > SVK Heatpump > Entities to enable/disable specific entities. {id_list_description}\n\nWarning: This option allows sending commands to your heat pump. Incorrect settings could potentially affect heat pump operation. Only enable this if you understand implications and accept the risks.",
+        "description": "Configure the SVK Heatpump integration settings. Entity management is handled through the Home Assistant UI - go to Settings > Devices & Services > SVK Heatpump > Entities to enable/disable specific entities.\n\nWarning: This option allows sending commands to your heat pump. Incorrect settings could potentially affect heat pump operation. Only enable this if you understand implications and accept the risks.",
         "data": {
           "scan_interval": "Scan Interval (seconds)",
-          "enable_writes": "Enable Write Controls (Advanced)",
-          "id_list": "ID List (Advanced)"
+          "enable_writes": "Enable Write Controls (Advanced)"
         },
         "data_description": {
           "enable_writes": "Warning: This option allows sending commands to your heat pump. Incorrect settings could potentially affect heat pump operation. Only enable this if you understand the implications and accept the risks."
@@ -65,7 +63,6 @@
     },
     "error": {
       "invalid_scan_interval": "Scan interval must be between 10 and 120 seconds",
-      "invalid_id_list": "Invalid ID list format. Use semicolon or comma-separated numbers (e.g., {id_list_example}). All IDs must be valid and exist in the device.",
       "reload_failed": "Failed to reload the configuration. Please check the logs for more details."
     }
   },

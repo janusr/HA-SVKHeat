@@ -209,7 +209,7 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow):
                     _LOGGER.error(
                         "Invalid data format from host %s: %s",
                         self._host,
-                        parse_err.message,
+                        str(parse_err),
                     )
                 else:
                     errors["base"] = "parse_error"
@@ -465,7 +465,7 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow):
                     _LOGGER.error(
                         "Invalid data format during reauth for host %s: %s",
                         host,
-                        parse_err.message,
+                        str(parse_err),
                     )
                 else:
                     errors["base"] = "parse_error"
@@ -516,7 +516,7 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
         config_entry = self.hass.config_entries.async_get_entry(self._entry_id)
         options = config_entry.options
 
-        # No legacy ID list support - always use default entities
+        # Always use default entities
         has_custom_id_list = False
 
         # Get the warning description for enable_writes
@@ -573,10 +573,7 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
                             step_id="init",
                             data_schema=self._get_options_schema(),
                             errors=errors,
-                            description_placeholders={
-                                "default_ids": get_default_ids(),
-                                "id_list_example": "299;255;256",
-                            },
+                            description_placeholders={},
                         )
 
                     return result

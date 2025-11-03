@@ -30,9 +30,9 @@ except ImportError:
         enabled_default: bool = True
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .catalog import ENTITIES, get_switch_entities
+from .entity_base import SVKBaseEntity
 
 # Import specific items from modules
 from .const import DOMAIN
@@ -41,25 +41,7 @@ from .coordinator import SVKHeatpumpDataCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 
-class SVKHeatpumpBaseEntity(CoordinatorEntity):
-    """Base entity for SVK Heatpump integration."""
-
-    def __init__(
-        self,
-        coordinator: SVKHeatpumpDataCoordinator,
-        config_entry_id: str,
-    ) -> None:
-        """Initialize base entity."""
-        super().__init__(coordinator)
-        self._config_entry_id = config_entry_id
-
-    @property
-    def device_info(self):
-        """Return device information from coordinator."""
-        return self.coordinator.device_info
-
-
-class SVKSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
+class SVKSwitch(SVKBaseEntity, SwitchEntity):
     """Representation of a SVK Heatpump switch entity."""
 
     def __init__(
@@ -70,26 +52,24 @@ class SVKSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
         enabled_by_default: bool = True,
     ) -> None:
         """Initialize switch entity."""
-        # Extract group key from entity key (first part before underscore)
-        group_key = entity_key.split("_")[0]
+        # Initialize SVKBaseEntity
+        super().__init__(
+            coordinator,
+            config_entry_id,
+            entity_key,
+            entity_key,
+            enabled_by_default=enabled_by_default
+        )
 
         # Get entity info from catalog
-        entity_info = ENTITIES.get(entity_key, {})
+        entity_info = self._get_entity_info()
         data_type = entity_info.get("data_type", "")
         category = entity_info.get("category", "")
-
-        # Initialize SVKHeatpumpBaseEntity (which inherits from CoordinatorEntity)
-        super().__init__(coordinator, config_entry_id)
-
-        # Initialize additional attributes
-        self._entity_key = entity_key
-        self._attr_entity_registry_enabled_default = enabled_by_default
-        self._group_key = group_key  # For unique_id property
 
         _LOGGER.debug(
             "Creating switch entity: %s (group: %s, enabled_by_default: %s)",
             entity_key,
-            group_key,
+            self._group_key,
             enabled_by_default,
         )
 
@@ -130,21 +110,12 @@ class SVKSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
             entity_category=entity_category,
         )
 
-    @property
-    def unique_id(self) -> str:
-        """Return unique ID for switch."""
-        return f"{DOMAIN}_{self._group_key}_{self._entity_key}"
 
     @property
     def is_on(self) -> bool | None:
         """Return True if entity is on."""
-        value = self.coordinator.get_entity_value(self._entity_key)
-
-        # Log value retrieval for debugging
-        if value is None:
-            _LOGGER.debug("Switch %s returned None value", self._entity_key)
-        else:
-            _LOGGER.debug("Switch %s returned value: %s", self._entity_key, value)
+        value = self._get_entity_value()
+        self._log_value_retrieval(value)
 
         # Convert value to boolean
         if value is None:
@@ -158,44 +129,10 @@ class SVKSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
 
         return False
 
-    @property
-    def available(self) -> bool:
-        """Return True if entity is available."""
-        # For JSON API, entities should be available even if data fetching fails initially
-        if self.coordinator.is_json_client:
-            is_available = self.coordinator.is_entity_available(self._entity_key)
-            value = self.coordinator.get_entity_value(self._entity_key)
-            _LOGGER.debug(
-                "JSON API Switch %s availability: %s (entity exists in mapping, current value: %s)",
-                self._entity_key,
-                is_available,
-                value,
-            )
-            # Removed excessive diagnostic logging to prevent log storms
-            return is_available
-        else:
-            # For HTML scraping, require successful update but NOT writes_enabled
-            last_update_success = self.coordinator.last_update_success
-            entity_available = self.coordinator.is_entity_available(self._entity_key)
-            is_available = last_update_success and entity_available
-
-            _LOGGER.debug(
-                "HTML API Switch %s availability: %s (last_update_success: %s, entity_available: %s)",
-                self._entity_key,
-                is_available,
-                last_update_success,
-                entity_available,
-            )
-            return is_available
-
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
-        if not self.coordinator.config_entry.options.get("enable_writes", False):
-            _LOGGER.warning("Write controls are disabled for %s", self._entity_key)
-            raise ValueError("Write controls are disabled in options")
-
         # Set the switch to True
-        success = await self.coordinator.async_set_parameter(self._entity_key, True)
+        success = await self._async_set_parameter(True)
 
         if not success:
             _LOGGER.error("Failed to turn on %s", self._entity_key)
@@ -205,12 +142,8 @@ class SVKSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
-        if not self.coordinator.config_entry.options.get("enable_writes", False):
-            _LOGGER.warning("Write controls are disabled for %s", self._entity_key)
-            raise ValueError("Write controls are disabled in options")
-
         # Set the switch to False
-        success = await self.coordinator.async_set_parameter(self._entity_key, False)
+        success = await self._async_set_parameter(False)
 
         if not success:
             _LOGGER.error("Failed to turn off %s", self._entity_key)
@@ -221,16 +154,10 @@ class SVKSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return additional state attributes."""
-        attributes = {}
-        
-        # Add write_enabled attribute to indicate if write controls are enabled
-        writes_enabled = self.coordinator.config_entry.options.get("enable_writes", False)
-        attributes["write_enabled"] = writes_enabled
-        
-        return attributes
+        return self._get_write_enabled_attribute()
 
 
-class SVKHeatpumpSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
+class SVKHeatpumpSwitch(SVKBaseEntity, SwitchEntity):
     """Representation of a SVK Heatpump switch entity."""
 
     def __init__(
@@ -242,10 +169,14 @@ class SVKHeatpumpSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
         enabled_by_default: bool = True,
     ) -> None:
         """Initialize switch entity."""
-        super().__init__(coordinator, config_entry_id)
-        self._entity_key = entity_key
-        self._entity_id = entity_id
-        self._attr_entity_registry_enabled_default = enabled_by_default
+        super().__init__(
+            coordinator,
+            config_entry_id,
+            entity_key,
+            entity_key,
+            entity_id=entity_id,
+            enabled_by_default=enabled_by_default
+        )
 
         _LOGGER.debug(
             "Creating switch entity: %s (enabled_by_default: %s)",
@@ -283,30 +214,12 @@ class SVKHeatpumpSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
             entity_category=entity_category,
         )
 
-    @property
-    def unique_id(self) -> str:
-        """Return unique ID for switch."""
-        return f"{DOMAIN}_{self._entity_key}_{self._entity_id}"
 
     @property
     def is_on(self) -> bool | None:
         """Return True if entity is on."""
-        value = self.coordinator.get_entity_value(self._entity_key)
-
-        # Log value retrieval for debugging
-        if value is None:
-            _LOGGER.debug(
-                "Switch %s (ID: %s) returned None value",
-                self._entity_key,
-                self._entity_id,
-            )
-        else:
-            _LOGGER.debug(
-                "Switch %s (ID: %s) returned value: %s",
-                self._entity_key,
-                self._entity_id,
-                value,
-            )
+        value = self._get_entity_value()
+        self._log_value_retrieval(value)
 
         # Convert value to boolean
         if value is None:
@@ -320,44 +233,10 @@ class SVKHeatpumpSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
 
         return False
 
-    @property
-    def available(self) -> bool:
-        """Return True if entity is available."""
-        # For JSON API, entities should be available even if data fetching fails initially
-        if self.coordinator.is_json_client:
-            is_available = self.coordinator.is_entity_available(self._entity_key)
-            value = self.coordinator.get_entity_value(self._entity_key)
-            _LOGGER.debug(
-                "JSON API Switch %s availability: %s (entity exists in mapping, current value: %s)",
-                self._entity_key,
-                is_available,
-                value,
-            )
-            # Removed excessive diagnostic logging to prevent log storms
-            return is_available
-        else:
-            # For HTML scraping, require successful update but NOT writes_enabled
-            last_update_success = self.coordinator.last_update_success
-            entity_available = self.coordinator.is_entity_available(self._entity_key)
-            is_available = last_update_success and entity_available
-
-            _LOGGER.debug(
-                "HTML API Switch %s availability: %s (last_update_success: %s, entity_available: %s)",
-                self._entity_key,
-                is_available,
-                last_update_success,
-                entity_available,
-            )
-            return is_available
-
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
-        if not self.coordinator.config_entry.options.get("enable_writes", False):
-            _LOGGER.warning("Write controls are disabled for %s", self._entity_key)
-            raise ValueError("Write controls are disabled in options")
-
         # Set the switch to True
-        success = await self.coordinator.async_set_parameter(self._entity_key, True)
+        success = await self._async_set_parameter(True)
 
         if not success:
             _LOGGER.error("Failed to turn on %s", self._entity_key)
@@ -367,12 +246,8 @@ class SVKHeatpumpSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
-        if not self.coordinator.config_entry.options.get("enable_writes", False):
-            _LOGGER.warning("Write controls are disabled for %s", self._entity_key)
-            raise ValueError("Write controls are disabled in options")
-
         # Set the switch to False
-        success = await self.coordinator.async_set_parameter(self._entity_key, False)
+        success = await self._async_set_parameter(False)
 
         if not success:
             _LOGGER.error("Failed to turn off %s", self._entity_key)
@@ -383,13 +258,7 @@ class SVKHeatpumpSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return additional state attributes."""
-        attributes = {}
-        
-        # Add write_enabled attribute to indicate if write controls are enabled
-        writes_enabled = self.coordinator.config_entry.options.get("enable_writes", False)
-        attributes["write_enabled"] = writes_enabled
-        
-        return attributes
+        return self._get_write_enabled_attribute()
 
 
 async def async_setup_entry(
@@ -401,83 +270,14 @@ async def async_setup_entry(
     _LOGGER.info(
         "Setting up SVK Heatpump switch entities for entry %s", config_entry.entry_id
     )
-    _LOGGER.info("Coordinator is_json_client: %s", coordinator.is_json_client)
 
-    switch_entities = []
-
-    # Create switch entities based on ENTITIES from catalog
-    if coordinator.is_json_client:
-        # Create all switch entities from catalog
-        for entity_key in get_switch_entities():
-            try:
-                # Get entity info from catalog
-                entity_info = ENTITIES.get(entity_key, {})
-                entity_info.get("category", "")
-                access_type = entity_info.get("access_type", "")
-
-                # Only include writable entities
-                if access_type != "readwrite":
-                    _LOGGER.debug("Skipping read-only entity %s", entity_key)
-                    continue
-
-                # Get entity ID to check against DEFAULT_ENABLED_ENTITIES
-                entity_info = ENTITIES.get(entity_key, {})
-                entity_id = entity_info.get("id")
-                enabled_by_default = coordinator.is_entity_enabled(entity_id) if entity_id else False
-
-                # Create switch using new SVKSwitch class
-                switch = SVKSwitch(
-                    coordinator,
-                    entity_key,
-                    config_entry.entry_id,
-                    enabled_by_default=enabled_by_default,
-                )
-
-                switch_entities.append(switch)
-                _LOGGER.debug(
-                    "Added switch entity: %s (enabled_by_default: %s)",
-                    entity_key,
-                    enabled_by_default,
-                )
-            except Exception as err:
-                _LOGGER.error("Failed to create switch entity %s: %s", entity_key, err)
-                # Continue with other entities even if one fails
-                continue
-    else:
-        # Fall back to HTML scraping entities for backward compatibility
-        # Create basic entities even if JSON client is not available
-        _LOGGER.warning(
-            "JSON client not available, creating essential fallback entities"
-        )
-
-        # For switch entities, we don't have a predefined list of essential entities
-        # So we'll create a minimal set based on manual controls
-        essential_entities = [
-            ("main_switch", 277),
-        ]
-
-        for entity_key, entity_id in essential_entities:
-            try:
-                switch = SVKHeatpumpSwitch(
-                    coordinator,
-                    entity_key,
-                    entity_id,
-                    config_entry.entry_id,
-                    enabled_by_default=coordinator.is_entity_enabled(entity_id) if entity_id else False,
-                )
-                switch_entities.append(switch)
-                _LOGGER.info(
-                    "Added fallback switch entity: %s (ID: %s)", entity_key, entity_id
-                )
-            except Exception as err:
-                _LOGGER.error(
-                    "Failed to create fallback switch entity %s (ID: %s): %s",
-                    entity_key,
-                    entity_id,
-                    err,
-                )
-                # Continue with other entities even if one fails
-                continue
+    # Use the entity factory to create all switch entities
+    from .entity_factory import create_entities_for_platform
+    switch_entities = create_entities_for_platform(
+        coordinator,
+        config_entry.entry_id,
+        "switch"
+    )
 
     _LOGGER.info("Created %d switch entities", len(switch_entities))
     if switch_entities:

@@ -35,17 +35,15 @@
     "step": {
       "init": {
         "title": "SVK Heatpump Options",
-        "description": "{id_list_description}",
+        "description": "Configure the SVK Heatpump integration settings. Entity management is handled through the Home Assistant UI.",
         "data": {
           "scan_interval": "Scan Interval (seconds)",
-          "enable_writes": "Enable Write Operations",
-          "id_list": "Custom ID List (semicolon separated)"
+          "enable_writes": "Enable Write Operations"
         }
       }
     },
     "error": {
       "invalid_scan_interval": "Scan interval must be between 10 and 120 seconds",
-      "invalid_id_list": "Invalid ID list format",
       "reload_failed": "Failed to reload configuration"
     }
   }

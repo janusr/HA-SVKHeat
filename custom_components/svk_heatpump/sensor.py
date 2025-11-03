@@ -37,9 +37,9 @@ from homeassistant.const import (
     EntityCategory,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .catalog import ENTITIES, get_sensor_entities, COUNTER_SENSORS, SYSTEM_COUNTER_SENSORS, SYSTEM_SENSORS
+from .entity_base import SVKBaseEntity
 
 # Import specific items from modules
 from .const import DOMAIN
@@ -68,25 +68,7 @@ SYSTEM_LEVEL_ENTITIES = {
 }
 
 
-class SVKHeatpumpBaseEntity(CoordinatorEntity):
-    """Base entity for SVK Heatpump integration."""
-
-    def __init__(
-        self,
-        coordinator: SVKHeatpumpDataCoordinator,
-        config_entry_id: str,
-    ) -> None:
-        """Initialize the base entity."""
-        super().__init__(coordinator)
-        self._config_entry_id = config_entry_id
-
-    @property
-    def device_info(self):
-        """Return device information from coordinator."""
-        return self.coordinator.device_info
-
-
-class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
+class SVKSensor(SVKBaseEntity, SensorEntity):
     """Representation of a SVK Heatpump sensor."""
 
     def __init__(
@@ -97,27 +79,25 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
         enabled_by_default: bool = True,
     ) -> None:
         """Initialize the sensor."""
-        # Extract group key from entity key (first part before underscore)
-        group_key = entity_key.split("_")[0]
+        # Initialize SVKBaseEntity
+        super().__init__(
+            coordinator,
+            config_entry_id,
+            entity_key,
+            entity_key,
+            enabled_by_default=enabled_by_default
+        )
 
         # Get entity info from catalog
-        entity_info = ENTITIES.get(entity_key, {})
+        entity_info = self._get_entity_info()
         data_type = entity_info.get("data_type", "")
         unit = entity_info.get("unit", "")
         category = entity_info.get("category", "")
 
-        # Initialize SVKHeatpumpBaseEntity (which inherits from CoordinatorEntity)
-        super().__init__(coordinator, config_entry_id)
-
-        # Initialize additional attributes
-        self._entity_key = entity_key
-        self._attr_entity_registry_enabled_default = enabled_by_default
-        self._group_key = group_key  # For unique_id property
-
         _LOGGER.debug(
             "Creating sensor entity: %s (group: %s, enabled_by_default: %s)",
             entity_key,
-            group_key,
+            self._group_key,
             enabled_by_default,
         )
 
@@ -168,99 +148,31 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
             entity_category=entity_category,
         )
 
-    @property
-    def unique_id(self) -> str:
-        """Return unique ID for sensor."""
-        # System-level entities use the "system" prefix instead of group key
-        if self._entity_key in SYSTEM_LEVEL_ENTITIES:
-            return f"{DOMAIN}_system_{self._entity_key}"
-        return f"{DOMAIN}_{self._group_key}_{self._entity_key}"
 
     @property
     def native_value(self) -> Any:
         """Return the state of the sensor."""
-        value = self.coordinator.get_entity_value(self._entity_key)
-
-        # Log value retrieval for debugging (reduced frequency to prevent log storms)
-        if value is None:
-            _LOGGER.debug("Sensor %s returned None value", self._entity_key)
-        else:
-            _LOGGER.debug("Sensor %s returned value: %s", self._entity_key, value)
+        value = self._get_entity_value()
+        self._log_value_retrieval(value)
 
         # Get entity info from catalog for data type
-        entity_info = ENTITIES.get(self._entity_key, {})
+        entity_info = self._get_entity_info()
         data_type = entity_info.get("data_type", "")
         unit = entity_info.get("unit", "")
 
         # Apply special handling for temperature sentinel rule
-        if data_type == "temperature" and value is not None:
-            if isinstance(value, (int, float)) and value <= -80.0:
-                # Temperature sentinel rule: ≤ -80.0°C marks entity unavailable
-                _LOGGER.debug(
-                    "Sensor %s temperature %s°C is below sentinel threshold, marking unavailable",
-                    self._entity_key,
-                    value,
-                )
-                return None
+        if data_type == "temperature":
+            value = self._apply_temperature_sentinel_rule(value)
 
         # Apply percentage clamping for percentage values
-        if unit == "%" and value is not None:
-            try:
-                if isinstance(value, (int, float)):
-                    clamped_value = max(0, min(100, float(value)))
-                    if clamped_value != float(value):
-                        _LOGGER.debug(
-                            "Sensor %s percentage value clamped from %s to %s",
-                            self._entity_key,
-                            value,
-                            clamped_value,
-                        )
-                    return clamped_value
-            except (ValueError, TypeError):
-                _LOGGER.debug(
-                    "Sensor %s failed to clamp percentage value %s",
-                    self._entity_key,
-                    value,
-                )
-                pass
+        value = self._apply_percentage_clamping(value, unit)
 
         # Always return the value, even if None, to ensure entities update properly
         # The availability property will handle None values appropriately
         return value
 
-    @property
-    def available(self) -> bool:
-        """Return True if entity is available."""
-        # For JSON API, entities should be available even if data fetching fails initially
-        if self.coordinator.is_json_client:
-            is_available = self.coordinator.is_entity_available(self._entity_key)
-            value = self.coordinator.get_entity_value(self._entity_key)
-            _LOGGER.debug(
-                "JSON API Sensor %s availability: %s (entity exists in mapping, current value: %s)",
-                self._entity_key,
-                is_available,
-                value,
-            )
-            # Removed excessive diagnostic logging to prevent log storms
-            return is_available
-        else:
-            # For HTML scraping, require successful update
-            is_available = (
-                self.coordinator.last_update_success
-                and self.coordinator.is_entity_available(self._entity_key)
-            )
-            value = self.coordinator.get_entity_value(self._entity_key)
-            _LOGGER.debug(
-                "HTML API Sensor %s availability: %s (last_update_success: %s, current value: %s)",
-                self._entity_key,
-                is_available,
-                self.coordinator.last_update_success,
-                value,
-            )
-            return is_available
 
-
-class SVKHeatpumpSensor(SVKHeatpumpBaseEntity, SensorEntity):
+class SVKHeatpumpSensor(SVKBaseEntity, SensorEntity):
     """Representation of a SVK Heatpump sensor."""
 
     def __init__(
@@ -272,10 +184,14 @@ class SVKHeatpumpSensor(SVKHeatpumpBaseEntity, SensorEntity):
         enabled_by_default: bool = True,
     ) -> None:
         """Initialize the sensor."""
-        super().__init__(coordinator, config_entry_id)
-        self._entity_key = entity_key
-        self._entity_id = entity_id
-        self._attr_entity_registry_enabled_default = enabled_by_default
+        super().__init__(
+            coordinator,
+            config_entry_id,
+            entity_key,
+            entity_key,
+            entity_id=entity_id,
+            enabled_by_default=enabled_by_default
+        )
 
         _LOGGER.debug(
             "Creating sensor entity: %s (ID: %s, enabled_by_default: %s)",
@@ -284,32 +200,12 @@ class SVKHeatpumpSensor(SVKHeatpumpBaseEntity, SensorEntity):
             enabled_by_default,
         )
 
-        # Find entity by ID in ENTITIES
-        entity_info = None
-        for entity_key, entity_data in ENTITIES.items():
-            if "id" in entity_data and entity_data["id"] == entity_id:
-                entity_info = {
-                    "entity_key": entity_key,
-                    "unit": entity_data.get("unit", ""),
-                    "device_class": entity_data.get("device_class"),
-                    "state_class": entity_data.get("state_class"),
-                    "original_name": entity_data.get("original_name", ""),
-                }
-                break
-        
-        if entity_info:
-            self._entity_key = entity_info["entity_key"]
-            self._unit = entity_info["unit"]
-            self._device_class = entity_info["device_class"]
-            self._state_class = entity_info["state_class"]
-            self._original_name = entity_info["original_name"]
-        else:
-            # Fallback to empty values if not found
-            self._entity_key = ""
-            self._unit = ""
-            self._device_class = None
-            self._state_class = None
-            self._original_name = ""
+        # Get entity info from catalog
+        entity_info = self._get_entity_info()
+        self._unit = entity_info.get("unit", "")
+        self._device_class = entity_info.get("device_class")
+        self._state_class = entity_info.get("state_class")
+        self._original_name = entity_info.get("original_name", "")
 
         # Create entity description
         device_class = None
@@ -355,95 +251,21 @@ class SVKHeatpumpSensor(SVKHeatpumpBaseEntity, SensorEntity):
             entity_category=entity_category,
         )
 
-    @property
-    def unique_id(self) -> str:
-        """Return unique ID for sensor."""
-        return f"{self._config_entry_id}_{self._entity_id}"
 
     @property
     def native_value(self) -> Any:
         """Return the state of the sensor."""
-        value = self.coordinator.get_entity_value(self._entity_key)
-
-        # Log value retrieval for debugging
-        if value is None:
-            _LOGGER.debug(
-                "Sensor %s (ID: %s) returned None value",
-                self._entity_key,
-                self._entity_id,
-            )
-        else:
-            _LOGGER.debug(
-                "Sensor %s (ID: %s) returned value: %s",
-                self._entity_key,
-                self._entity_id,
-                value,
-            )
+        value = self._get_entity_value()
+        self._log_value_retrieval(value)
 
         # Apply special handling for temperature sentinel rule
-        if self._device_class == "temperature" and value is not None:
-            if isinstance(value, (int, float)) and value <= -80.0:
-                # Temperature sentinel rule: ≤ -80.0°C marks entity unavailable
-                _LOGGER.debug(
-                    "Sensor %s temperature %s°C is below sentinel threshold, marking unavailable",
-                    self._entity_key,
-                    value,
-                )
-                return None
+        if self._device_class == "temperature":
+            value = self._apply_temperature_sentinel_rule(value)
 
         # Apply percentage clamping for percentage values
-        if self._unit == "%" and value is not None:
-            try:
-                if isinstance(value, (int, float)):
-                    clamped_value = max(0, min(100, float(value)))
-                    if clamped_value != float(value):
-                        _LOGGER.debug(
-                            "Sensor %s percentage value clamped from %s to %s",
-                            self._entity_key,
-                            value,
-                            clamped_value,
-                        )
-                    return clamped_value
-            except (ValueError, TypeError):
-                _LOGGER.debug(
-                    "Sensor %s failed to clamp percentage value %s",
-                    self._entity_key,
-                    value,
-                )
-                pass
+        value = self._apply_percentage_clamping(value, self._unit)
 
         return value
-
-    @property
-    def available(self) -> bool:
-        """Return True if entity is available."""
-        # For JSON API, entities should be available even if data fetching fails initially
-        if self.coordinator.is_json_client:
-            is_available = self.coordinator.is_entity_available(self._entity_key)
-            value = self.coordinator.get_entity_value(self._entity_key)
-            _LOGGER.debug(
-                "JSON API Sensor %s availability: %s (entity exists in mapping, current value: %s)",
-                self._entity_key,
-                is_available,
-                value,
-            )
-            # Removed excessive diagnostic logging to prevent log storms
-            return is_available
-        else:
-            # For HTML scraping, require successful update
-            is_available = (
-                self.coordinator.last_update_success
-                and self.coordinator.is_entity_available(self._entity_key)
-            )
-            value = self.coordinator.get_entity_value(self._entity_key)
-            _LOGGER.debug(
-                "HTML API Sensor %s availability: %s (last_update_success: %s, current value: %s)",
-                self._entity_key,
-                is_available,
-                self.coordinator.last_update_success,
-                value,
-            )
-            return is_available
 
 
 async def async_setup_entry(
@@ -453,84 +275,14 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][config_entry.entry_id]["coordinator"]
 
     _LOGGER.info("Setting up SVK Heatpump sensors for entry %s", config_entry.entry_id)
-    _LOGGER.info("Coordinator is_json_client: %s", coordinator.is_json_client)
 
-    sensors = []
-
-    # Create sensors based on sensor entities from catalog
-    if coordinator.is_json_client:
-        # Create all sensor entities from the catalog
-        for entity_key in get_sensor_entities():
-            try:
-                # Get entity info from catalog
-                entity_info = ENTITIES.get(entity_key, {})
-                entity_id = entity_info.get("id")
-                enabled_by_default = coordinator.is_entity_enabled(entity_id) if entity_id else False
-
-                # Create the sensor using the new SVKSensor class
-                sensor = SVKSensor(
-                    coordinator,
-                    entity_key,
-                    config_entry.entry_id,
-                    enabled_by_default=enabled_by_default,
-                )
-
-                sensors.append(sensor)
-                _LOGGER.debug(
-                    "Added sensor entity: %s (enabled_by_default: %s)",
-                    entity_key,
-                    enabled_by_default,
-                )
-            except Exception as err:
-                _LOGGER.error("Failed to create sensor entity %s: %s", entity_key, err)
-                # Continue with other entities even if one fails
-                continue
-    else:
-        # Fall back to HTML scraping entities for backward compatibility
-        # Create basic entities even if JSON client is not available
-        _LOGGER.warning(
-            "JSON client not available, creating essential fallback entities"
-        )
-
-        # Create essential entities as fallback to ensure basic functionality
-        essential_entities = [
-            ("display_input_theatsupply", 253),
-            ("display_input_theatreturn", 254),
-            ("display_input_twatertank", 255),
-            ("display_input_tamb", 256),
-            ("display_input_troom", 257),
-            ("display_heatpump_state", 297),
-            ("display_heatpump_capacityact", 299),
-            ("display_heatpump_capacityreq", 300),
-            ("user_parameters_seasonmode", 278),
-            ("user_hotwater_setpoint", 383),
-            ("heating_heating_setpointact", 420),
-            ("service_compressor_compruntime", 447),
-            ("display_output_alarm", 228),
-        ]
-
-        for entity_key, entity_id in essential_entities:
-            try:
-                sensor = SVKHeatpumpSensor(
-                    coordinator,
-                    entity_key,
-                    entity_id,
-                    config_entry.entry_id,
-                    enabled_by_default=True,
-                )
-                sensors.append(sensor)
-                _LOGGER.info(
-                    "Added fallback sensor entity: %s (ID: %s)", entity_key, entity_id
-                )
-            except Exception as err:
-                _LOGGER.error(
-                    "Failed to create fallback sensor entity %s (ID: %s): %s",
-                    entity_key,
-                    entity_id,
-                    err,
-                )
-                # Continue with other entities even if one fails
-                continue
+    # Use the entity factory to create all sensor entities
+    from .entity_factory import create_entities_for_platform
+    sensors = create_entities_for_platform(
+        coordinator,
+        config_entry.entry_id,
+        "sensor"
+    )
 
     # Add alarm count sensor
     alarm_count_desc = SensorEntityDescription(
@@ -543,15 +295,19 @@ async def async_setup_entry(
         entity_category=EntityCategory.DIAGNOSTIC,
     )
 
-    class AlarmCountSensor(SVKHeatpumpBaseEntity, SensorEntity):
+    class AlarmCountSensor(SVKBaseEntity, SensorEntity):
         """Sensor for alarm count."""
 
         _attr_entity_registry_enabled_default = True
 
         def __init__(self, coordinator: SVKHeatpumpDataCoordinator, config_entry_id: str) -> None:
-            # Initialize SVKHeatpumpBaseEntity (which inherits from CoordinatorEntity)
-            super().__init__(coordinator, config_entry_id)
-            self._attr_unique_id = f"{DOMAIN}_system_alarm_count"
+            # Initialize SVKBaseEntity
+            super().__init__(
+                coordinator,
+                config_entry_id,
+                "alarm_count",
+                "system_alarm_count"
+            )
             self.entity_description = alarm_count_desc
 
         @property
@@ -577,15 +333,19 @@ async def async_setup_entry(
         entity_category=EntityCategory.DIAGNOSTIC,
     )
 
-    class LastUpdateSensor(SVKHeatpumpBaseEntity, SensorEntity):
+    class LastUpdateSensor(SVKBaseEntity, SensorEntity):
         """Sensor for last update timestamp."""
 
         _attr_entity_registry_enabled_default = True
 
         def __init__(self, coordinator, config_entry_id):
-            # Initialize SVKHeatpumpBaseEntity (which inherits from CoordinatorEntity)
-            super().__init__(coordinator, config_entry_id)
-            self._attr_unique_id = f"{DOMAIN}_system_last_update_sensor"
+            # Initialize SVKBaseEntity
+            super().__init__(
+                coordinator,
+                config_entry_id,
+                "last_update_sensor",
+                "system_last_update_sensor"
+            )
             self.entity_description = last_update_desc
 
         @property

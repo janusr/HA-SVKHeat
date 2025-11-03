@@ -23,10 +23,9 @@ except ImportError:
         enabled_default: bool = True
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import Entity
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .catalog import ENTITIES, get_select_entities, SELECT_ENTITIES
+from .entity_base import SVKBaseEntity
 
 # Import specific items from modules
 from .const import DOMAIN
@@ -44,25 +43,7 @@ def _get_constants() -> tuple[dict[str, dict[str, Any]], dict[str, str], list[in
 _LOGGER = logging.getLogger(__name__)
 
 
-class SVKHeatpumpBaseEntity(CoordinatorEntity):
-    """Base entity for SVK Heatpump integration."""
-
-    def __init__(
-        self,
-        coordinator: SVKHeatpumpDataCoordinator,
-        config_entry_id: str,
-    ) -> None:
-        """Initialize the base entity."""
-        super().__init__(coordinator)
-        self._config_entry_id = config_entry_id
-
-    @property
-    def device_info(self):
-        """Return device information from coordinator."""
-        return self.coordinator.device_info
-
-
-class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
+class SVKSelect(SVKBaseEntity, SelectEntity):
     """Representation of a SVK Heatpump select entity."""
 
     def __init__(
@@ -74,27 +55,25 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
         enabled_by_default: bool = True,
     ) -> None:
         """Initialize select entity."""
-        # Extract group key from entity key (first part before underscore)
-        group_key = entity_key.split("_")[0]
+        # Initialize SVKBaseEntity
+        super().__init__(
+            coordinator,
+            config_entry_id,
+            entity_key,
+            entity_key,
+            enabled_by_default=enabled_by_default
+        )
+        self._hass = hass  # Store hass for translation
 
         # Get entity info from catalog
-        entity_info = ENTITIES.get(entity_key, {})
+        entity_info = self._get_entity_info()
         data_type = entity_info.get("data_type", "")
         category = entity_info.get("category", "")
-
-        # Initialize SVKHeatpumpBaseEntity (which inherits from CoordinatorEntity)
-        super().__init__(coordinator, config_entry_id)
-
-        # Initialize additional attributes
-        self._entity_key = entity_key
-        self._attr_entity_registry_enabled_default = enabled_by_default
-        self._group_key = group_key  # For unique_id property
-        self._hass = hass  # Store hass for translation
 
         _LOGGER.debug(
             "Creating select entity: %s (group: %s, enabled_by_default: %s)",
             entity_key,
-            group_key,
+            self._group_key,
             enabled_by_default,
         )
 
@@ -188,15 +167,11 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
         # Store mappings for reverse lookup
         self._mappings = mappings
 
-    @property
-    def unique_id(self) -> str:
-        """Return unique ID for select entity."""
-        return f"{DOMAIN}_{self._group_key}_{self._entity_key}"
 
     @property
     def current_option(self) -> str | None:
         """Return the current selected option."""
-        value = self.coordinator.get_entity_value(self._entity_key)
+        value = self._get_entity_value()
         if value is not None:
             _LOGGER.debug(
                 "Select %s: raw value from API: %s (type: %s)",
@@ -288,42 +263,9 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
             # Fallback to numeric keys if translation fails
             return translation_keys
 
-    @property
-    def available(self) -> bool:
-        """Return True if entity is available."""
-        # For JSON API, entities should be available even if data fetching fails initially
-        if self.coordinator.is_json_client:
-            is_available = self.coordinator.is_entity_available(self._entity_key)
-            value = self.coordinator.get_entity_value(self._entity_key)
-            _LOGGER.debug(
-                "JSON API Select %s availability: %s (entity exists in mapping, current value: %s)",
-                self._entity_key,
-                is_available,
-                value,
-            )
-            # Removed excessive diagnostic logging to prevent log storms
-            return is_available
-        else:
-            # For HTML scraping, require successful update but NOT writes_enabled
-            last_update_success = self.coordinator.last_update_success
-            entity_available = self.coordinator.is_entity_available(self._entity_key)
-            is_available = last_update_success and entity_available
-
-            _LOGGER.debug(
-                "HTML API Select %s availability: %s (last_update_success: %s, entity_available: %s)",
-                self._entity_key,
-                is_available,
-                last_update_success,
-                entity_available,
-            )
-            return is_available
 
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
-        if not self.coordinator.config_entry.options.get("enable_writes", False):
-            _LOGGER.warning("Write controls are disabled for %s", self._entity_key)
-            raise ValueError("Write controls are disabled in options")
-
         _LOGGER.debug(
             "Select %s: attempting to set option %s",
             self._entity_key,
@@ -352,9 +294,7 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
                 )
 
         # Set the new value
-        success = await self.coordinator.async_set_parameter(
-            self._entity_key, internal_value
-        )
+        success = await self._async_set_parameter(internal_value)
 
         if not success:
             _LOGGER.error("Failed to set %s to %s (internal value: %s)", self._entity_key, option, internal_value)
@@ -365,16 +305,10 @@ class SVKSelect(SVKHeatpumpBaseEntity, SelectEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return additional state attributes."""
-        attributes = {}
-        
-        # Add write_enabled attribute to indicate if write controls are enabled
-        writes_enabled = self.coordinator.config_entry.options.get("enable_writes", False)
-        attributes["write_enabled"] = writes_enabled
-        
-        return attributes
+        return self._get_write_enabled_attribute()
 
 
-class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
+class SVKHeatpumpSelect(SVKBaseEntity, SelectEntity):
     """Representation of a SVK Heatpump select entity."""
 
     def __init__(
@@ -387,11 +321,15 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
         enabled_by_default: bool = True,
     ) -> None:
         """Initialize the select entity."""
-        super().__init__(coordinator, config_entry_id)
-        self._entity_key = entity_key
-        self._entity_id = entity_id
+        super().__init__(
+            coordinator,
+            config_entry_id,
+            entity_key,
+            entity_key,
+            entity_id=entity_id,
+            enabled_by_default=enabled_by_default
+        )
         self._writable = writable
-        self._attr_entity_registry_enabled_default = enabled_by_default
 
         _LOGGER.debug(
             "Creating select entity: %s (ID: %s, writable: %s, enabled_by_default: %s)",
@@ -401,37 +339,12 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
             enabled_by_default,
         )
 
-        # Get entity info from ENTITIES structure
-        entities_local, _, _ = _get_constants()
-        # Find entity by ID in ENTITIES
-        entity_info = None
-        for entity_key, entity_data in entities_local.items():
-            if "id" in entity_data and entity_data["id"] == entity_id:
-                entity_info = {
-                    "entity_key": entity_key,
-                    "unit": entity_data.get("unit", ""),
-                    "device_class": entity_data.get("device_class"),
-                    "state_class": entity_data.get("state_class"),
-                    "original_name": entity_data.get("original_name", ""),
-                }
-                break
-        
-        if not entity_info:
-            _LOGGER.error("Entity ID %s not found in ENTITIES", entity_id)
-            # Fallback to empty values if not found
-            entity_info = {
-                "entity_key": "",
-                "unit": "",
-                "device_class": None,
-                "state_class": None,
-                "original_name": "",
-            }
-        
-        self._entity_key = entity_info["entity_key"]
-        self._unit = entity_info["unit"]
-        self._device_class = entity_info["device_class"]
-        self._state_class = entity_info["state_class"]
-        self._original_name = entity_info["original_name"]
+        # Get entity info from catalog
+        entity_info = self._get_entity_info()
+        self._unit = entity_info.get("unit", "")
+        self._device_class = entity_info.get("device_class")
+        self._state_class = entity_info.get("state_class")
+        self._original_name = entity_info.get("original_name", "")
 
         # Set options based on entity type
         options = []
@@ -459,16 +372,14 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
             ]
 
         # Set entity category based on entity definition
+        entity_info = self._get_entity_info()
         entity_category = None
 
-        # Get entity info from ENTITIES dictionary instead of SELECT_ENTITIES list
-        if self._entity_key in entities_local:
-            entity_data = entities_local.get(self._entity_key, {})
-            if entity_data.get("category"):
-                entity_category = getattr(
-                    EntityCategory,
-                    entity_data["category"].upper(),
-                )
+        if entity_info.get("category"):
+            entity_category = getattr(
+                EntityCategory,
+                entity_info["category"].upper(),
+            )
 
         self.entity_description = SelectEntityDescription(
             key=self._entity_key,
@@ -481,15 +392,11 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
         # Store mappings for reverse lookup
         self._mappings = mappings
 
-    @property
-    def unique_id(self) -> str:
-        """Return unique ID for select entity."""
-        return f"{self._config_entry_id}_{self._entity_id}"
 
     @property
     def current_option(self) -> str | None:
         """Return the current selected option."""
-        value = self.coordinator.get_entity_value(self._entity_key)
+        value = self._get_entity_value()
         if value is not None:
             _LOGGER.debug(
                 "Legacy Select %s: raw value from API: %s (type: %s)",
@@ -546,26 +453,6 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
             return str_value
         return None
 
-    @property
-    def available(self) -> bool:
-        """Return True if entity is available."""
-        if not self.coordinator.last_update_success:
-            _LOGGER.debug(
-                "Select %s availability: False (last_update_success: False)",
-                self._entity_key,
-            )
-            return False
-
-        # Entity availability should not depend on writes_enabled
-        entity_available = self.coordinator.is_entity_available(self._entity_key)
-        _LOGGER.debug(
-            "Select %s availability: %s (writable: %s, entity_available: %s)",
-            self._entity_key,
-            entity_available,
-            self._writable,
-            entity_available,
-        )
-        return entity_available
 
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
@@ -574,10 +461,6 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
                 "Attempted to write to read-only select entity: %s", self._entity_key
             )
             raise ValueError("This select entity is read-only")
-
-        if not self.coordinator.config_entry.options.get("enable_writes", False):
-            _LOGGER.warning("Write controls are disabled for %s", self._entity_key)
-            raise ValueError("Write controls are disabled in options")
 
         _LOGGER.debug(
             "Legacy Select %s: attempting to set option %s",
@@ -607,9 +490,7 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
                 )
 
         # Set the new value
-        success = await self.coordinator.async_set_parameter(
-            self._entity_key, internal_value
-        )
+        success = await self._async_set_parameter(internal_value)
 
         if not success:
             _LOGGER.error("Failed to set %s to %s (internal value: %s)", self._entity_key, option, internal_value)
@@ -620,13 +501,7 @@ class SVKHeatpumpSelect(SVKHeatpumpBaseEntity, SelectEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return additional state attributes."""
-        attributes = {}
-        
-        # Add write_enabled attribute to indicate if write controls are enabled
-        writes_enabled = self.coordinator.config_entry.options.get("enable_writes", False)
-        attributes["write_enabled"] = writes_enabled
-        
-        return attributes
+        return self._get_write_enabled_attribute()
 
 
 class SVKHeatpumpHeatpumpStateSelect(SVKHeatpumpSelect):
@@ -663,97 +538,15 @@ async def async_setup_entry(
     _LOGGER.info(
         "Setting up SVK Heatpump select entities for entry %s", config_entry.entry_id
     )
-    _LOGGER.info("Coordinator is_json_client: %s", coordinator.is_json_client)
 
-    select_entities = []
-
-    # Create select entities based on SELECT_ENTITIES from catalog
-    if coordinator.is_json_client:
-        # Create all select entities from catalog
-        for entity_key in SELECT_ENTITIES:
-            try:
-                # Get entity info from catalog
-                entity_info = ENTITIES.get(entity_key, {})
-                access_type = entity_info.get("access_type", "")
-
-                # Only include writable entities
-                if access_type != "readwrite":
-                    _LOGGER.debug("Skipping read-only entity %s", entity_key)
-                    continue
-
-                # Get entity ID to check against DEFAULT_ENABLED_ENTITIES
-                entity_id = entity_info.get("id")
-                enabled_by_default = coordinator.is_entity_enabled(entity_id) if entity_id else False
-
-                # Create select using new SVKSelect class
-                select = SVKSelect(
-                    coordinator,
-                    entity_key,
-                    config_entry.entry_id,
-                    hass,  # Pass hass for translation support
-                    enabled_by_default=enabled_by_default,
-                )
-
-                select_entities.append(select)
-                _LOGGER.debug(
-                    "Added select entity: %s (enabled_by_default: %s)",
-                    entity_key,
-                    enabled_by_default,
-                )
-            except Exception as err:
-                _LOGGER.error("Failed to create select entity %s: %s", entity_key, err)
-                # Continue with other entities even if one fails
-                continue
-    else:
-        # Fall back to HTML scraping entities for backward compatibility
-        # Get constants using lazy import
-        entities_local, _, default_enabled_entities = _get_constants()
-
-        # Create all possible entities from entities_local
-        for entity_key, entity_data in entities_local.items():
-            # Only process entities that have an ID
-            if "id" not in entity_data or entity_data["id"] is None:
-                continue
-                
-            _unit = entity_data.get("unit", "")
-            _device_class = entity_data.get("device_class")
-            _state_class = entity_data.get("state_class")
-            _original_name = entity_data.get("original_name", "")
-            # Only include select entities
-            if entity_key in ["user_parameters_seasonmode", "display_heatpump_state"]:
-                # Check if this entity should be enabled by default
-                enabled_by_default = coordinator.is_entity_enabled(entity_data["id"]) if entity_data["id"] else False
-
-                # Determine if writable
-                writable = (
-                    entity_key == "season_mode"
-                    and coordinator.config_entry.options.get("enable_writes", False)
-                )
-
-                # Choose the appropriate class based on the entity type
-                if entity_key == "heatpump_state":
-                    sensor_class = SVKHeatpumpHeatpumpStateSelect
-                elif entity_key == "season_mode":
-                    sensor_class = SVKHeatpumpSeasonModeSelect
-                else:
-                    sensor_class = SVKHeatpumpSelect
-
-                select_entity = sensor_class(
-                    coordinator,
-                    entity_key,
-                    entity_data["id"],
-                    config_entry.entry_id,
-                    writable,
-                    enabled_by_default=enabled_by_default,
-                )
-
-                select_entities.append(select_entity)
-                _LOGGER.debug(
-                    "Added select entity: %s (ID: %s, enabled_by_default: %s)",
-                    entity_key,
-                    entity_data["id"],
-                    enabled_by_default,
-                )
+    # Use the entity factory to create all select entities
+    from .entity_factory import create_entities_for_platform
+    select_entities = create_entities_for_platform(
+        coordinator,
+        config_entry.entry_id,
+        "select",
+        hass  # Pass hass for translation support
+    )
 
     # Add additional select entities for system status
     system_status_desc = SelectEntityDescription(
@@ -763,19 +556,19 @@ async def async_setup_entry(
         options=["Off", "Standby", "Active", "Alarm", "Unknown"],
     )
 
-    class SystemStatusSelect(SVKHeatpumpBaseEntity, SelectEntity):
+    class SystemStatusSelect(SVKBaseEntity, SelectEntity):
         """Select entity for overall system status."""
 
         _attr_entity_registry_enabled_default = True
 
         def __init__(self, coordinator, config_entry_id):
-            super().__init__(coordinator, config_entry_id)
+            super().__init__(
+                coordinator,
+                config_entry_id,
+                "system_status",
+                "system_status"
+            )
             self.entity_description = system_status_desc
-
-        @property
-        def unique_id(self) -> str:
-            """Return unique ID for select entity."""
-            return f"{self._config_entry_id}_system_status"
 
         @property
         def current_option(self) -> str:

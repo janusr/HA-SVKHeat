@@ -27,7 +27,6 @@
       "invalid_auth": "Ugyldigt brugernavn eller adgangskode",
       "cannot_connect": "Kunne ikke forbinde",
       "invalid_response": "Ugyldigt svar fra enhed",
-      "invalid_id_list": "Ugyldigt ID-liste format. Brug semikolon-separerede tal (f.eks. 299;255;256)",
       "unexpected_auth_scheme": "Uventet auth-skema fra enhed.",
       "unknown": "Ukendt fejl",
       "timeout": "Forbindelsestimeout. Enheden svarer ikke.",
@@ -52,11 +51,10 @@
     "step": {
       "init": {
         "title": "SVK Varmepumpe Indstillinger",
-        "description": "Konfigurer indstillinger for SVK Varmepumpe integrationen. Enhedshåndtering håndteres nu via Home Assistant brugerfladen - gå til Indstillinger > Enheder & Services > SVK Varmepumpe > Enheder for at aktivere/deaktivere specifikke enheder. {id_list_description}\n\nAdvarsel: Denne indstilling tillader afsendelse af kommandoer til din varmepumpe. Forkerte indstillinger kan potentielt påvirke varmepumpens drift. Aktiver kun denne funktion, hvis du forstår implikationerne og accepterer risiciene.",
+        "description": "Konfigurer indstillinger for SVK Varmepumpe integrationen. Enhedshåndtering håndteres via Home Assistant brugerfladen - gå til Indstillinger > Enheder & Services > SVK Varmepumpe > Enheder for at aktivere/deaktivere specifikke enheder.\n\nAdvarsel: Denne indstilling tillader afsendelse af kommandoer til din varmepumpe. Forkerte indstillinger kan potentielt påvirke varmepumpens drift. Aktiver kun denne funktion, hvis du forstår implikationerne og accepterer risiciene.",
         "data": {
           "scan_interval": "Scanningsinterval (sekunder)",
-          "enable_writes": "Aktiver Skrivekontrol (Avanceret)",
-          "id_list": "ID-liste (Avanceret)"
+          "enable_writes": "Aktiver Skrivekontrol (Avanceret)"
         },
         "data_description": {
           "enable_writes": "Advarsel: Denne indstilling tillader afsendelse af kommandoer til din varmepumpe. Forkerte indstillinger kan potentielt påvirke varmepumpens drift. Aktiver kun denne funktion, hvis du forstår implikationerne og accepterer risiciene."
@@ -65,7 +63,6 @@
     },
     "error": {
       "invalid_scan_interval": "Scanningsinterval skal være mellem 10 og 120 sekunder",
-      "invalid_id_list": "Ugyldigt ID-liste format. Brug semikolon- eller komma-separerede tal (f.eks. {id_list_example}). Alle ID'er skal være gyldige og eksistere på enheden.",
       "reload_failed": "Kunne ikke genindlæse konfigurationen. Tjek venligst logfilerne for flere detaljer."
     }
   },

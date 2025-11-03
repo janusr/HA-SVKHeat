@@ -48,48 +48,45 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         """Initialize."""
         self.client = client
         self.config_entry = config_entry
-        self.is_json_client = True  # Always using LOMJsonClient
 
-        # Initialize ID list for JSON API
-        if self.is_json_client:
-            # Always use get_default_ids() for fetching all available entities
-            # This ensures we have access to all entities for dynamic enabling/disabling
-            from .catalog import get_default_ids
-            self.id_list = parse_id_list(get_default_ids())
+        # Always use get_default_ids() for fetching all available entities
+        # This ensures we have access to all entities for dynamic enabling/disabling
+        from .catalog import get_default_ids
+        self.id_list = parse_id_list(get_default_ids())
 
-            # No user-configured ID list support - always use default entities
-            self.user_configured_ids = None
+        # No user-configured ID list support - always use default entities
+        self.user_configured_ids = None
 
-            # Create reverse mapping for efficient lookups using get_id_map function
-            entities_local, default_enabled_entities = _get_constants()
-            id_map = get_id_map()
-            self.id_to_entity_map = {}
-            for entity_id, (entity_key, unit, device_class, state_class, original_name) in id_map.items():
-                self.id_to_entity_map[entity_id] = {
-                    "key": entity_key,
-                    "unit": unit,
-                    "device_class": device_class,
-                    "state_class": state_class,
-                    "original_name": original_name,
-                }
+        # Create reverse mapping for efficient lookups using get_id_map function
+        entities_local, default_enabled_entities = _get_constants()
+        id_map = get_id_map()
+        self.id_to_entity_map = {}
+        for entity_id, (entity_key, unit, device_class, state_class, original_name) in id_map.items():
+            self.id_to_entity_map[entity_id] = {
+                "key": entity_key,
+                "unit": unit,
+                "device_class": device_class,
+                "state_class": state_class,
+                "original_name": original_name,
+            }
 
-            # Store last-good values
-            self.last_good_values: dict[str, Any] = {}
+        # Store last-good values
+        self.last_good_values: dict[str, Any] = {}
 
-            # Store raw JSON data for diagnostics
-            self.last_raw_json = None
-            self.last_json_timestamp = None
-            self.parsing_errors: list[str] = []
-            self.parsing_warnings: list[str] = []
+        # Store raw JSON data for diagnostics
+        self.last_raw_json = None
+        self.last_json_timestamp = None
+        self.parsing_errors: list[str] = []
+        self.parsing_warnings: list[str] = []
 
-            # Track if this is the first refresh for progressive loading
-            self.is_first_refresh = True
-            # Track if first refresh has been attempted to avoid duplicate attempts
-            self.first_refresh_attempted = False
-            
-            # Track write operation diagnostics
-            self.write_operations: list[dict[str, Any]] = []
-            self.max_write_operations = 50  # Keep last 50 write operations
+        # Track if this is the first refresh for progressive loading
+        self.is_first_refresh = True
+        # Track if first refresh has been attempted to avoid duplicate attempts
+        self.first_refresh_attempted = False
+        
+        # Track write operation diagnostics
+        self.write_operations: list[dict[str, Any]] = []
+        self.max_write_operations = 50  # Keep last 50 write operations
 
         super().__init__(
             hass,
@@ -128,27 +125,26 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             )
 
             # Add detailed timing diagnostics
-            if self.is_json_client:
-                id_count = len(self.id_list)
-                _LOGGER.info(
-                    "PERFORMANCE: Requesting %d IDs via JSON API (%s refresh)",
-                    id_count,
-                    "first" if self.is_first_refresh else "subsequent",
-                )
+            id_count = len(self.id_list)
+            _LOGGER.info(
+                "PERFORMANCE: Requesting %d IDs via JSON API (%s refresh)",
+                id_count,
+                "first" if self.is_first_refresh else "subsequent",
+            )
 
-                # Log chunking configuration
-                if hasattr(self.client, "_enable_chunking"):
-                    chunk_size = getattr(self.client, "_chunk_size", 50)
-                    chunks_needed = (id_count + chunk_size - 1) // chunk_size
-                    _LOGGER.info(
-                        "PERFORMANCE: Chunking enabled - size=%d, chunks_needed=%d",
-                        chunk_size,
-                        chunks_needed,
-                    )
-                else:
-                    _LOGGER.info(
-                        "PERFORMANCE: Chunking disabled - single request for all IDs"
-                    )
+            # Log chunking configuration
+            if hasattr(self.client, "_enable_chunking"):
+                chunk_size = getattr(self.client, "_chunk_size", 50)
+                chunks_needed = (id_count + chunk_size - 1) // chunk_size
+                _LOGGER.info(
+                    "PERFORMANCE: Chunking enabled - size=%d, chunks_needed=%d",
+                    chunk_size,
+                    chunks_needed,
+                )
+            else:
+                _LOGGER.info(
+                    "PERFORMANCE: Chunking disabled - single request for all IDs"
+                )
 
             result = await asyncio.wait_for(
                 self._async_update_data_internal(), timeout=timeout
@@ -187,33 +183,32 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             )
 
             # Add timeout diagnostics
-            if self.is_json_client:
-                _LOGGER.error(
-                    "TIMEOUT: JSON API request timed out after %.1f seconds", timeout
-                )
-                _LOGGER.error("TIMEOUT: This may be caused by:")
-                _LOGGER.error("TIMEOUT: 1) Network latency to heat pump")
-                _LOGGER.error(
-                    "TIMEOUT: 2) Heat pump processing too many IDs in single request"
-                )
-                _LOGGER.error(
-                    "TIMEOUT: 3) Authentication delays (multiple round-trips)"
-                )
-                _LOGGER.error(
-                    "TIMEOUT: 4) Chunking inefficiency (too many small requests)"
-                )
+            _LOGGER.error(
+                "TIMEOUT: JSON API request timed out after %.1f seconds", timeout
+            )
+            _LOGGER.error("TIMEOUT: This may be caused by:")
+            _LOGGER.error("TIMEOUT: 1) Network latency to heat pump")
+            _LOGGER.error(
+                "TIMEOUT: 2) Heat pump processing too many IDs in single request"
+            )
+            _LOGGER.error(
+                "TIMEOUT: 3) Authentication delays (multiple round-trips)"
+            )
+            _LOGGER.error(
+                "TIMEOUT: 4) Chunking inefficiency (too many small requests)"
+            )
 
-                # Log current configuration for debugging
-                if hasattr(self.client, "_enable_chunking"):
-                    _LOGGER.error(
-                        "TIMEOUT: Chunking: enabled=%s, chunk_size=%d",
-                        getattr(self.client, "_enable_chunking", False),
-                        getattr(self.client, "_chunk_size", 50),
-                    )
+            # Log current configuration for debugging
+            if hasattr(self.client, "_enable_chunking"):
                 _LOGGER.error(
-                    "TIMEOUT: Total IDs requested: %d",
-                    len(self.id_list),
+                    "TIMEOUT: Chunking: enabled=%s, chunk_size=%d",
+                    getattr(self.client, "_enable_chunking", False),
+                    getattr(self.client, "_chunk_size", 50),
                 )
+            _LOGGER.error(
+                "TIMEOUT: Total IDs requested: %d",
+                len(self.id_list),
+            )
 
             raise UpdateFailed(
                 f"Data update timeout after {timeout:.1f} seconds - heat pump may be unreachable"
@@ -1237,9 +1232,6 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
 
     def get_json_diagnostics(self) -> dict[str, Any]:
         """Get comprehensive JSON diagnostics data."""
-        if not self.is_json_client:
-            return {"error": "Not using JSON API"}
-
         diagnostics = {
             "json_api_enabled": True,
             "last_json_timestamp": self.last_json_timestamp,
@@ -1512,6 +1504,11 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
             "oldest_operation": self.write_operations[0]["timestamp"],
             "newest_operation": self.write_operations[-1]["timestamp"],
         }
+
+    @property
+    def is_json_client(self) -> bool:
+        """Return True since we only support JSON API."""
+        return True
 
     @property
     def device_info(self) -> DeviceInfo:

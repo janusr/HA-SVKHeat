@@ -27,8 +27,6 @@ classifiers = [
 
 dependencies = [
     "aiohttp>=3.8.0",
-    "beautifulsoup4>=4.9.0",
-    "lxml>=4.6.0",
     "voluptuous>=0.13.0",
     "yarl>=1.6.0",
 ]
