@@ -37,19 +37,31 @@ except ImportError:
 from homeassistant.const import EntityCategory, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 
-from .catalog import ENTITIES, get_number_entities
 from .entity_base import SVKBaseEntity
 
 # Import specific items from modules
 from .const import DOMAIN
 from .coordinator import SVKHeatpumpDataCoordinator
 
+_LOGGER = logging.getLogger(__name__)
+
+# Lazy loading of catalog functions to avoid blocking imports
+def _lazy_import_catalog():
+    """Lazy import catalog functions to avoid blocking imports."""
+    global ENTITIES, get_number_entities, DEFAULT_ENABLED_ENTITIES
+    if 'ENTITIES' not in globals():
+        from .catalog import (
+            ENTITIES,
+            get_number_entities,
+            DEFAULT_ENABLED_ENTITIES,
+        )
 
 def _get_constants() -> tuple[dict[str, dict[str, Any]], list[int]]:
     """Lazy import of constants to prevent blocking during async setup."""
-    from .catalog import DEFAULT_ENABLED_ENTITIES, ENTITIES
-
+    _lazy_import_catalog()
     return ENTITIES, DEFAULT_ENABLED_ENTITIES
+
+_LOGGER = logging.getLogger(__name__)
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -358,6 +370,10 @@ async def async_setup_entry(
 
     # Use the entity factory to create all number entities
     from .entity_factory import create_entities_for_platform
+    
+    # Lazy load catalog functions before creating entities
+    _lazy_import_catalog()
+    
     number_entities = create_entities_for_platform(
         coordinator,
         config_entry.entry_id,

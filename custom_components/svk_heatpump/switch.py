@@ -31,7 +31,6 @@ except ImportError:
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 
-from .catalog import ENTITIES, get_switch_entities
 from .entity_base import SVKBaseEntity
 
 # Import specific items from modules
@@ -39,6 +38,16 @@ from .const import DOMAIN
 from .coordinator import SVKHeatpumpDataCoordinator
 
 _LOGGER = logging.getLogger(__name__)
+
+# Lazy loading of catalog functions to avoid blocking imports
+def _lazy_import_catalog():
+    """Lazy import catalog functions to avoid blocking imports."""
+    global ENTITIES, get_switch_entities
+    if 'ENTITIES' not in globals():
+        from .catalog import (
+            ENTITIES,
+            get_switch_entities,
+        )
 
 
 class SVKSwitch(SVKBaseEntity, SwitchEntity):
@@ -273,6 +282,10 @@ async def async_setup_entry(
 
     # Use the entity factory to create all switch entities
     from .entity_factory import create_entities_for_platform
+    
+    # Lazy load catalog functions before creating entities
+    _lazy_import_catalog()
+    
     switch_entities = create_entities_for_platform(
         coordinator,
         config_entry.entry_id,

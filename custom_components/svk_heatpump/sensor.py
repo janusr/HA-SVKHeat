@@ -38,7 +38,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 
-from .catalog import ENTITIES, get_sensor_entities, COUNTER_SENSORS, SYSTEM_COUNTER_SENSORS, SYSTEM_SENSORS
+# Import from catalog will be done lazily to avoid blocking imports
 from .entity_base import SVKBaseEntity
 
 # Import specific items from modules
@@ -46,6 +46,19 @@ from .const import DOMAIN
 from .coordinator import SVKHeatpumpDataCoordinator
 
 _LOGGER = logging.getLogger(__name__)
+
+# Lazy loading of catalog functions to avoid blocking imports
+def _lazy_import_catalog():
+    """Lazy import catalog functions to avoid blocking imports."""
+    global ENTITIES, get_sensor_entities, COUNTER_SENSORS, SYSTEM_COUNTER_SENSORS, SYSTEM_SENSORS
+    if 'ENTITIES' not in globals():
+        from .catalog import (
+            ENTITIES,
+            get_sensor_entities,
+            COUNTER_SENSORS,
+            SYSTEM_COUNTER_SENSORS,
+            SYSTEM_SENSORS,
+        )
 
 # System-level entities that should follow the alarm_count pattern
 SYSTEM_LEVEL_ENTITIES = {
@@ -226,6 +239,9 @@ class SVKHeatpumpSensor(SVKBaseEntity, SensorEntity):
 
         # Set entity category based on entity definition dictionaries
         entity_category = None
+        
+        # Lazy load catalog functions
+        _lazy_import_catalog()
 
         if self._entity_key in COUNTER_SENSORS:
             entity_category = EntityCategory.DIAGNOSTIC
@@ -278,6 +294,10 @@ async def async_setup_entry(
 
     # Use the entity factory to create all sensor entities
     from .entity_factory import create_entities_for_platform
+    
+    # Lazy load catalog functions before creating entities
+    _lazy_import_catalog()
+    
     sensors = create_entities_for_platform(
         coordinator,
         config_entry.entry_id,

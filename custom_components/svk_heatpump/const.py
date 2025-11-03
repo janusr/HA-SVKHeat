@@ -464,96 +464,133 @@ def _parse_value(value):
 
 # Import entity-related functions from catalog.py to maintain compatibility
 # These imports allow existing code that imports from const.py to continue working
-try:
-    from .catalog import (
-        # Entity definitions
-        ENTITIES,
-        TEMP_SENSORS,
-        SETPOINT_SENSORS,
-        PERFORMANCE_SENSORS,
-        COUNTER_SENSORS,
-        SYSTEM_SENSORS,
-        SYSTEM_COUNTER_SENSORS,
-        BINARY_SENSORS,
+# Using lazy imports to prevent blocking during module loading
+
+# Entity definitions - lazy loaded
+ENTITIES = None
+TEMP_SENSORS = None
+SETPOINT_SENSORS = None
+PERFORMANCE_SENSORS = None
+COUNTER_SENSORS = None
+SYSTEM_SENSORS = None
+SYSTEM_COUNTER_SENSORS = None
+BINARY_SENSORS = None
+DEFAULT_ENABLED_ENTITIES = None
+
+# Entity mappings and lists - lazy loaded
+get_default_ids = None
+
+# Entity helper functions - lazy loaded
+get_entity_info = None
+get_original_name = None
+get_entity_group_info = None
+get_entity_ids_by_group = None
+get_entity_by_id = None
+
+# Platform-specific entity lists - lazy loaded
+SENSOR_ENTITIES = None
+BINARY_SENSOR_ENTITIES = None
+NUMBER_ENTITIES = None
+SELECT_ENTITIES = None
+SWITCH_ENTITIES = None
+
+# Additional catalog functions - lazy loaded
+get_all_entities = None
+get_entities_by_platform = None
+get_entities_by_category = None
+get_entities_by_group = None
+
+def _lazy_import_catalog():
+    """Lazy import catalog functions to prevent blocking during module loading."""
+    global ENTITIES, TEMP_SENSORS, SETPOINT_SENSORS, PERFORMANCE_SENSORS
+    global COUNTER_SENSORS, SYSTEM_SENSORS, SYSTEM_COUNTER_SENSORS, BINARY_SENSORS
+    global DEFAULT_ENABLED_ENTITIES, get_default_ids
+    global get_entity_info, get_original_name, get_entity_group_info
+    global get_entity_ids_by_group, get_entity_by_id
+    global SENSOR_ENTITIES, BINARY_SENSOR_ENTITIES, NUMBER_ENTITIES
+    global SELECT_ENTITIES, SWITCH_ENTITIES
+    global get_all_entities, get_entities_by_platform
+    global get_entities_by_category, get_entities_by_group
+    
+    # Only import once
+    if ENTITIES is not None:
+        return
         
-        # Entity mappings and lists
-        get_default_ids,
-        DEFAULT_ENABLED_ENTITIES,
+    try:
+        from .catalog import (
+            # Entity definitions
+            ENTITIES as catalog_entities,
+            TEMP_SENSORS as catalog_temp_sensors,
+            SETPOINT_SENSORS as catalog_setpoint_sensors,
+            PERFORMANCE_SENSORS as catalog_performance_sensors,
+            COUNTER_SENSORS as catalog_counter_sensors,
+            SYSTEM_SENSORS as catalog_system_sensors,
+            SYSTEM_COUNTER_SENSORS as catalog_system_counter_sensors,
+            BINARY_SENSORS as catalog_binary_sensors,
+            
+            # Entity mappings and lists
+            get_default_ids as catalog_get_default_ids,
+            DEFAULT_ENABLED_ENTITIES as catalog_default_enabled_entities,
+            
+            # Entity helper functions
+            get_entity_info as catalog_get_entity_info,
+            get_original_name as catalog_get_original_name,
+            get_entity_group_info as catalog_get_entity_group_info,
+            get_entity_ids_by_group as catalog_get_entity_ids_by_group,
+            get_entity_by_id as catalog_get_entity_by_id,
+            
+            # Platform-specific entity lists
+            SENSOR_ENTITIES as catalog_sensor_entities,
+            BINARY_SENSOR_ENTITIES as catalog_binary_sensor_entities,
+            NUMBER_ENTITIES as catalog_number_entities,
+            SELECT_ENTITIES as catalog_select_entities,
+            SWITCH_ENTITIES as catalog_switch_entities,
+            
+            # Additional catalog functions
+            get_all_entities as catalog_get_all_entities,
+            get_entities_by_platform as catalog_get_entities_by_platform,
+            get_entities_by_category as catalog_get_entities_by_category,
+            get_entities_by_group as catalog_get_entities_by_group,
+        )
         
-        # Entity helper functions
-        get_entity_info,
-        get_original_name,
-        get_entity_group_info,
-        get_entity_ids_by_group,
-        get_entity_by_id,  # type: ignore
+        # Assign to global variables
+        ENTITIES = catalog_entities
+        TEMP_SENSORS = catalog_temp_sensors
+        SETPOINT_SENSORS = catalog_setpoint_sensors
+        PERFORMANCE_SENSORS = catalog_performance_sensors
+        COUNTER_SENSORS = catalog_counter_sensors
+        SYSTEM_SENSORS = catalog_system_sensors
+        SYSTEM_COUNTER_SENSORS = catalog_system_counter_sensors
+        BINARY_SENSORS = catalog_binary_sensors
+        DEFAULT_ENABLED_ENTITIES = catalog_default_enabled_entities
+        get_default_ids = catalog_get_default_ids
+        get_entity_info = catalog_get_entity_info
+        get_original_name = catalog_get_original_name
+        get_entity_group_info = catalog_get_entity_group_info
+        get_entity_ids_by_group = catalog_get_entity_ids_by_group
+        get_entity_by_id = catalog_get_entity_by_id
+        SENSOR_ENTITIES = catalog_sensor_entities
+        BINARY_SENSOR_ENTITIES = catalog_binary_sensor_entities
+        NUMBER_ENTITIES = catalog_number_entities
+        SELECT_ENTITIES = catalog_select_entities
+        SWITCH_ENTITIES = catalog_switch_entities
+        get_all_entities = catalog_get_all_entities
+        get_entities_by_platform = catalog_get_entities_by_platform
+        get_entities_by_category = catalog_get_entities_by_category
+        get_entities_by_group = catalog_get_entities_by_group
         
-        # Platform-specific entity lists
-        SENSOR_ENTITIES,
-        BINARY_SENSOR_ENTITIES,
-        NUMBER_ENTITIES,
-        SELECT_ENTITIES,
-        SWITCH_ENTITIES,
+    except ImportError:
+        # If catalog.py is not available, define placeholders to prevent errors
+        _LOGGER.warning("Could not import entity definitions from catalog.py")
+        ENTITIES = {}
+        TEMP_SENSORS = {}
+        SETPOINT_SENSORS = {}
+        PERFORMANCE_SENSORS = {}
+        COUNTER_SENSORS = {}
+        SYSTEM_SENSORS = {}
+        SYSTEM_COUNTER_SENSORS = {}
+        BINARY_SENSORS = {}
+        DEFAULT_ENABLED_ENTITIES = []
         
-        # Additional catalog functions
-        get_all_entities,
-        get_entities_by_platform,
-        get_entities_by_category,
-        get_entities_by_group,
-    )
-except ImportError:
-    # If catalog.py is not available, define placeholders to prevent errors
-    _LOGGER.warning("Could not import entity definitions from catalog.py")
-    ENTITIES = {}
-    TEMP_SENSORS = {}
-    SETPOINT_SENSORS = {}
-    PERFORMANCE_SENSORS = {}
-    COUNTER_SENSORS = {}
-    SYSTEM_SENSORS = {}
-    SYSTEM_COUNTER_SENSORS = {}
-    BINARY_SENSORS = {}
-    DEFAULT_ENABLED_ENTITIES = []
-    
-    def get_default_ids():
-        """Generate default IDs from ENTITIES.
-        
-        Returns:
-            str: Semicolon-separated string of entity IDs from ENTITIES
-        """
-        try:
-            from .catalog import get_default_ids
-            return get_default_ids()
-        except ImportError:
-            return ""
-    
-    SENSOR_ENTITIES = []
-    BINARY_SENSOR_ENTITIES = []
-    NUMBER_ENTITIES = []
-    SELECT_ENTITIES = []
-    SWITCH_ENTITIES = []
-    
-    def get_entity_info(entity_id: int) -> tuple[str, Any, Any, Any, str] | None:
-        return None
-    
-    def get_original_name(entity_id: int) -> str | None:
-        return None
-    
-    def get_entity_group_info(entity_id: int) -> dict[str, Any] | None:
-        return None
-    
-    def get_entity_ids_by_group(category, group):
-        return []
-    
-    def get_entity_by_id(entity_id: int):
-        return None
-    
-    def get_all_entities():
-        return {}
-    
-    def get_entities_by_platform(platform: str):
-        return []
-    
-    def get_entities_by_category(category: str):
-        return []
-    
-    def get_entities_by_group(category: str, group: str):
-        return []
+        # These functions will be assigned by _lazy_import_catalog() when needed
+        # No function declarations here to avoid type conflicts

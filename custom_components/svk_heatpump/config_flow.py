@@ -14,10 +14,9 @@ from .client import (
     SVKAuthenticationError,
     SVKConnectionError,
     SVKInvalidDataFormatError,
-    SVKParseError,
     SVKTimeoutError,
 )
-from .catalog import get_default_ids, ENTITIES
+from .const import get_default_ids
 from .const import (
     CONF_ENABLE_WRITES,
     CONF_SCAN_INTERVAL,

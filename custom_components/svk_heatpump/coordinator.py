@@ -13,6 +13,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from .client import (
     SVKAuthenticationError,
     SVKConnectionError,
+    SVKWriteError,
 )
 from .const import (
     DEFAULT_SCAN_INTERVAL,
@@ -22,13 +23,25 @@ from .const import (
     parse_id_list,
     parse_items,
 )
-from .catalog import get_id_map
 
+# Import lazy loading function
+from .const import _lazy_import_catalog
+
+# Lazy loading of catalog functions to avoid blocking imports
+def _lazy_import_catalog():
+    """Lazy import catalog functions to avoid blocking imports."""
+    global get_id_map, get_default_ids, DEFAULT_ENABLED_ENTITIES, ENTITIES
+    if 'get_id_map' not in globals():
+        from .catalog import (
+            get_id_map,
+            get_default_ids,
+            DEFAULT_ENABLED_ENTITIES,
+            ENTITIES,
+        )
 
 def _get_constants() -> tuple[dict[str, dict[str, Any]], list[int]]:
     """Lazy import of constants to prevent blocking during async setup."""
-    from .catalog import DEFAULT_ENABLED_ENTITIES, ENTITIES
-
+    _lazy_import_catalog()
     return ENTITIES, DEFAULT_ENABLED_ENTITIES
 
 
@@ -49,9 +62,11 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
         self.client = client
         self.config_entry = config_entry
 
+        # Ensure catalog functions are loaded before using them
+        _lazy_import_catalog()
+
         # Always use get_default_ids() for fetching all available entities
         # This ensures we have access to all entities for dynamic enabling/disabling
-        from .catalog import get_default_ids
         self.id_list = parse_id_list(get_default_ids())
 
         # No user-configured ID list support - always use default entities
@@ -977,7 +992,7 @@ class SVKHeatpumpDataCoordinator(DataUpdateCoordinator):
                 )
             
             # Re-raise SVKWriteError to preserve specific error details
-            from .client import SVKWriteError
+            # Import will be handled by lazy loading
             if isinstance(err, SVKWriteError):
                 _LOGGER.error(
                     "SET_PARAMETER: Heat pump specific error - Parameter: %s, Value: %s, Reason: %s",

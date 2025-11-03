@@ -8,11 +8,24 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .catalog import ENTITIES, get_sensor_entities, get_binary_sensor_entities, get_number_entities, get_select_entities, get_switch_entities
 from .const import DOMAIN
 from .coordinator import SVKHeatpumpDataCoordinator
 
 _LOGGER = logging.getLogger(__name__)
+
+# Lazy loading of catalog functions to avoid blocking imports
+def _lazy_import_catalog():
+    """Lazy import catalog functions to avoid blocking imports."""
+    global ENTITIES, get_sensor_entities, get_binary_sensor_entities, get_number_entities, get_select_entities, get_switch_entities
+    if 'ENTITIES' not in globals():
+        from .catalog import (
+            ENTITIES,
+            get_sensor_entities,
+            get_binary_sensor_entities,
+            get_number_entities,
+            get_select_entities,
+            get_switch_entities,
+        )
 
 # System-level entities that should follow the alarm_count pattern
 SYSTEM_LEVEL_ENTITIES = {
@@ -103,6 +116,9 @@ class SVKEntityFactory:
         """Create all sensor entities."""
         entities = []
         
+        # Lazy load catalog functions before using them
+        _lazy_import_catalog()
+        
         # Create all sensor entities from the catalog
         for entity_key in get_sensor_entities():
             try:
@@ -118,6 +134,9 @@ class SVKEntityFactory:
     def _create_binary_sensor_entities(self) -> List[Any]:
         """Create all binary sensor entities."""
         entities = []
+        
+        # Lazy load catalog functions before using them
+        _lazy_import_catalog()
         
         # Create all possible entities from ENTITIES
         for entity_key, entity_data in ENTITIES.items():
@@ -143,6 +162,9 @@ class SVKEntityFactory:
         """Create all number entities."""
         entities = []
         
+        # Lazy load catalog functions before using them
+        _lazy_import_catalog()
+        
         # Create all number entities from catalog
         for entity_key in get_number_entities():
             try:
@@ -167,6 +189,9 @@ class SVKEntityFactory:
         """Create all select entities."""
         entities = []
         
+        # Lazy load catalog functions before using them
+        _lazy_import_catalog()
+        
         # Create all select entities from catalog
         for entity_key in get_select_entities():
             try:
@@ -190,6 +215,9 @@ class SVKEntityFactory:
     def _create_switch_entities(self) -> List[Any]:
         """Create all switch entities."""
         entities = []
+        
+        # Lazy load catalog functions before using them
+        _lazy_import_catalog()
         
         # Create all switch entities from catalog
         for entity_key in get_switch_entities():
@@ -230,6 +258,9 @@ class SVKEntityFactory:
             The created entity or None if creation failed
         """
         try:
+            # Lazy load catalog functions before using them
+            _lazy_import_catalog()
+            
             # Get entity info from catalog
             entity_info = ENTITIES.get(entity_key, {})
             

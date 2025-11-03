@@ -33,18 +33,27 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 
 # Import specific items from modules
-from .catalog import BINARY_SENSORS, get_binary_sensor_entities
 from .const import DOMAIN
 from .coordinator import SVKHeatpumpDataCoordinator
 from .entity_base import SVKBaseEntity
 
 _LOGGER = logging.getLogger(__name__)
 
+# Lazy loading of catalog functions to avoid blocking imports
+def _lazy_import_catalog():
+    """Lazy import catalog functions to avoid blocking imports."""
+    global BINARY_SENSORS, get_binary_sensor_entities, ENTITIES, DEFAULT_ENABLED_ENTITIES
+    if 'BINARY_SENSORS' not in globals():
+        from .catalog import (
+            BINARY_SENSORS,
+            get_binary_sensor_entities,
+            ENTITIES,
+            DEFAULT_ENABLED_ENTITIES,
+        )
 
 def _get_constants():
     """Lazy import of constants to prevent blocking during async setup."""
-    from .catalog import DEFAULT_ENABLED_ENTITIES, ENTITIES
-
+    _lazy_import_catalog()
     return ENTITIES, DEFAULT_ENABLED_ENTITIES
 
 
@@ -93,6 +102,9 @@ class SVKHeatpumpBinarySensor(SVKBaseEntity, BinarySensorEntity):
             device_class = BinarySensorDeviceClass.RUNNING
 
         # Set entity category based on entity definition
+        
+        # Lazy load catalog functions
+        _lazy_import_catalog()
 
         if self._entity_key in BINARY_SENSORS and BINARY_SENSORS[self._entity_key].get(
             "entity_category"
@@ -161,6 +173,10 @@ async def async_setup_entry(
 
     # Use the entity factory to create all binary sensor entities
     from .entity_factory import create_entities_for_platform
+    
+    # Lazy load catalog functions before creating entities
+    _lazy_import_catalog()
+    
     binary_sensors = create_entities_for_platform(
         coordinator,
         config_entry.entry_id,
