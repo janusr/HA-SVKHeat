@@ -128,14 +128,14 @@ class SVKNumber(SVKHeatpumpBaseEntity, NumberEntity):
 
         # Create entity description
         self.entity_description = NumberEntityDescription(
-            key=entity_key,
-            name=None,
+            key=self._entity_key,
             translation_key=self._entity_key,
+            name=None,
+            device_class=device_class,
             native_min_value=min_value,
             native_max_value=max_value,
             native_step=step,
             native_unit_of_measurement=unit,
-            device_class=device_class,
             entity_category=entity_category,
         )
 
@@ -290,13 +290,13 @@ class SVKHeatpumpNumber(SVKHeatpumpBaseEntity, NumberEntity):
 
         self.entity_description = NumberEntityDescription(
             key=self._entity_key,
-            name=None,
             translation_key=self._entity_key,
+            name=None,
+            device_class=device_class,
             native_min_value=self._min_value,
             native_max_value=self._max_value,
             native_step=self._step,
             native_unit_of_measurement=self._unit,
-            device_class=device_class,
             entity_category=entity_category,
         )
 
@@ -560,13 +560,13 @@ async def async_setup_entry(
     # Add additional number entities for monitoring (read-only)
     heating_setpoint_desc = NumberEntityDescription(
         key="heating_setpoint_monitor",
-        name=None,
         translation_key="heating_setpoint_monitor",
+        name=None,
+        device_class=NumberDeviceClass.TEMPERATURE,
         native_min_value=10,
         native_max_value=35,
         native_step=1,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-        device_class=NumberDeviceClass.TEMPERATURE,
     )
 
     class HeatingSetpointMonitor(SVKHeatpumpBaseEntity, NumberEntity):

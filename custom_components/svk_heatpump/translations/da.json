@@ -91,10 +91,10 @@
           "name": "Varmetanktemperatur"
         },
         "display_input_tcoldsupply": {
-          "name": "Kold side fremløb"
+          "name": "Kold fremløb"
         },
         "display_input_tcoldreturn": {
-          "name": "Kold side retur"
+          "name": "Kold retur"
         },
         "display_input_tevap": {
           "name": "Fordampertemperatur"
@@ -109,7 +109,7 @@
           "name": "Varmesættemp"
         },
         "display_hotwater_setpointact": {
-          "name": "Varmtvand Sættemp Faktisk"
+          "name": "Varmtvand Sættemp"
         },
         "display_heatpump_capacityreq": {
           "name": "Anmodet Kapacitet"
@@ -169,7 +169,7 @@
           "name": "Hot Water Set Point"
         },
         "heating_heating_setpointact": {
-          "name": "Heating Set Point Actual"
+          "name": "Heating Set Point"
         },
         "defrost_defrost_tfrosting": {
           "name": "Evaporator Temp"
@@ -178,40 +178,40 @@
           "name": "Evaporator Temp"
         },
         "defrost_defrost_fftambmin": {
-          "name": "Afisning Omgivelses Min Temperatur"
+          "name": "Omgivelses Min Temp"
         },
         "defrost_defrost_fftambmax": {
-          "name": "Afisning Omgivelses Maks Temperatur"
+          "name": "Omgivelses Maks Temp"
         },
         "defrost_defrost_fftevapstop": {
-          "name": "Afisning Fordamper Stop Temperatur"
+          "name": "Fordamper Stop Temp"
         },
         "defrost_defrost_tairdfrtemp": {
-          "name": "Afisning Luft Temperatur"
+          "name": "Afisning Luft Temp"
         },
         "service_defrost_defrhgcount": {
-          "name": "Defrost Hot Gas Count"
+          "name": "Hot Gas Count"
         },
         "service_defrost_defraircnt": {
-          "name": "Defrost Air Count"
+          "name": "Air Count"
         },
         "system_systemview": {
           "name": "Software Version"
         },
         "user_time_year": {
-          "name": "Time Year"
+          "name": "Year"
         },
         "user_time_month": {
-          "name": "Time Month"
+          "name": "Month"
         },
         "user_time_day": {
-          "name": "Time Day"
+          "name": "Day"
         },
         "user_time_hour": {
-          "name": "Time Hour"
+          "name": "Hour"
         },
         "user_time_minute": {
-          "name": "Time Minute"
+          "name": "Minute"
         },
         "defrost_defrost_mode": {
           "name": "Afisning Tilstand"
@@ -223,25 +223,25 @@
           "name": "Afisningstid Ind"
         },
         "defrost_defrost_mininterval": {
-          "name": "Afisning Minimum Interval"
+          "name": "Afisning Min Interval"
         },
         "defrost_defrost_maxtime": {
-          "name": "Afisning Maksimum Tid"
+          "name": "Afisning Maks Tid"
         },
         "defrost_defrost_defrostcap": {
           "name": "Afisningskapacitet"
         },
         "defrost_defrost_dripdowndel1": {
-          "name": "Afisning Dryp Ned Forsinkelse 1"
+          "name": "Dryp Ned Forsinkelse 1"
         },
         "defrost_defrost_ticemelt": {
-          "name": "Afisning Is Smelte Temperatur"
+          "name": "Is Smelte Temp"
         },
         "defrost_defrost_tmeltfast": {
-          "name": "Afisning Hurtig Smelte Temperatur"
+          "name": "Hurtig Smelte Temp"
         },
         "defrost_defrost_stoptemp": {
-          "name": "Afisning Stop Temperatur"
+          "name": "Stop Temp"
         },
         "alarm_count": {
           "name": "Alarmantal"
@@ -269,7 +269,7 @@
           "name": "Solpanel Tilstand"
         },
         "display_heatpump_seasonstate": {
-          "name": "Varmepumpesæson Tilstand"
+          "name": "Sæson Tilstand"
         },
         "display_coldpump_state": {
           "name": "Koldpumpe Tilstand"
@@ -486,16 +486,16 @@
           "name": "Solpanel Start Temp"
         },
         "defrost_defrost_dripdowndel1": {
-          "name": "Afisning Dryp Ned Forsinkelse 1"
+          "name": "Dryp Ned Forsinkelse 1"
         },
         "defrost_defrost_ticemelt": {
-          "name": "Afisning Is Smelte Temperatur"
+          "name": "Is Smelte Temp"
         },
         "defrost_defrost_tmeltfast": {
-          "name": "Afisning Hurtig Smelte Temperatur"
+          "name": "Hurtig Smelte Temp"
         },
         "defrost_defrost_stoptemp": {
-          "name": "Afisning Stop Temperatur"
+          "name": "Stop Temp"
         }
       }
     },

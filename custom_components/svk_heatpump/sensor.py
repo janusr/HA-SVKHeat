@@ -159,12 +159,12 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
 
         # Create entity description
         self.entity_description = SensorEntityDescription(
-            key=entity_key,
-            name=None,
+            key=self._entity_key,
             translation_key=self._entity_key,
+            name=None,
             device_class=device_class,
-            native_unit_of_measurement=unit,
             state_class=state_class,
+            native_unit_of_measurement=unit,
             entity_category=entity_category,
         )
 
@@ -347,11 +347,11 @@ class SVKHeatpumpSensor(SVKHeatpumpBaseEntity, SensorEntity):
         # Use entity_key directly for friendly name
         self.entity_description = SensorEntityDescription(
             key=self._entity_key,
-            name=None,
             translation_key=self._entity_key,
+            name=None,
             device_class=device_class,
-            native_unit_of_measurement=self._unit,
             state_class=state_class,
+            native_unit_of_measurement=self._unit,
             entity_category=entity_category,
         )
 
@@ -535,11 +535,11 @@ async def async_setup_entry(
     # Add alarm count sensor
     alarm_count_desc = SensorEntityDescription(
         key="alarm_count",
-        name=None,
         translation_key="alarm_count",
+        name=None,
         device_class=None,
-        native_unit_of_measurement="alarms",
         state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="alarms",
         entity_category=EntityCategory.DIAGNOSTIC,
     )
 
@@ -569,11 +569,11 @@ async def async_setup_entry(
     # Add last update sensor
     last_update_desc = SensorEntityDescription(
         key="last_update_sensor",
-        name=None,
         translation_key="last_update_sensor",
+        name=None,
         device_class=SensorDeviceClass.TIMESTAMP,
-        native_unit_of_measurement=None,
         state_class=None,
+        native_unit_of_measurement=None,
         entity_category=EntityCategory.DIAGNOSTIC,
     )
 

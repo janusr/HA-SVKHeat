@@ -55,7 +55,7 @@ jobs:
           git tag "v${{ steps.manifest.outputs.version }}" -m "Release v${{ steps.manifest.outputs.version }}"
           git push origin "v${{ steps.manifest.outputs.version }}"
 
-      - name: Generate changelog (only changes since last release in svk_heatpump path)
+      - name: Generate changelog (only changes since last reachable tag in svk_heatpump path)
         if: steps.should.outputs.release == 'true'
         id: changelog
         run: |
@@ -63,17 +63,37 @@ jobs:
           COMPONENT_PATH="custom_components/svk_heatpump"
           CURR_TAG="v${{ steps.manifest.outputs.version }}"
 
-          # Find previous tag (second most recent v* tag)
-          PREV_TAG=$(git tag --list 'v*' --sort=-v:refname | head -n 2 | tail -n 1 || true)
+          # Find nearest previous tag that is an ancestor of CURR_TAG
+          PREV_TAG=""
+          if git describe --tags --abbrev=0 "${CURR_TAG}^" >/dev/null 2>&1; then
+            PREV_TAG=$(git describe --tags --abbrev=0 "${CURR_TAG}^")
+          fi
+
+          # Fallback: latest v* tag that is merged into CURR_TAG (reachable in history), excluding CURR_TAG itself
+          if [ -z "$PREV_TAG" ]; then
+            PREV_TAG=$(git tag --merged "$CURR_TAG" | grep -E '^v[0-9]' | grep -v "^${CURR_TAG}$" | sort -V | tail -n 1 || true)
+          fi
+
+          # Extra safety: ensure PREV_TAG is actually an ancestor; otherwise ignore it
+          if [ -n "${PREV_TAG:-}" ] && ! git merge-base --is-ancestor "$PREV_TAG" "$CURR_TAG"; then
+            PREV_TAG=""
+          fi
 
           if [ -z "${PREV_TAG:-}" ]; then
-            # First release: include entire history of the component path up to current tag
-            COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges "$CURR_TAG" -- "$COMPONENT_PATH")
-            FILES=$(git ls-tree -r --name-only "$CURR_TAG" "$COMPONENT_PATH")
+            # No previous reachable tag: show only commits affecting the component since it first appeared
+            FIRST_TOUCH=$(git log --reverse --format=%H -- "$COMPONENT_PATH" | head -n 1 || true)
+            if [ -n "${FIRST_TOUCH:-}" ]; then
+              RANGE="${FIRST_TOUCH}..${CURR_TAG}"
+              COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges "$RANGE" -- "$COMPONENT_PATH")
+              FILES=$(git diff --name-only "$RANGE" -- "$COMPONENT_PATH")
+            else
+              COMMITS=""
+              FILES=""
+            fi
           else
-            # Commits and files changed between previous and current tag, limited to the component path
-            COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges "$PREV_TAG..$CURR_TAG" -- "$COMPONENT_PATH")
-            FILES=$(git diff --name-only "$PREV_TAG..$CURR_TAG" -- "$COMPONENT_PATH")
+            RANGE="${PREV_TAG}..${CURR_TAG}"
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges "$RANGE" -- "$COMPONENT_PATH")
+            FILES=$(git diff --name-only "$RANGE" -- "$COMPONENT_PATH")
           fi
 
           # Fallback messages if empty
@@ -86,6 +106,10 @@ jobs:
 
           {
             echo "## Changes since last release (in \`$COMPONENT_PATH\`)"
+            if [ -n "${PREV_TAG:-}" ]; then
+              echo
+              echo "_Range: ${PREV_TAG} → ${CURR_TAG}_"
+            fi
             echo
             echo "$COMMITS"
             echo

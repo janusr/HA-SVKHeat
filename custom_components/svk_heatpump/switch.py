@@ -122,9 +122,9 @@ class SVKSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
 
         # Create entity description
         self.entity_description = SwitchEntityDescription(
-            key=entity_key,
-            name=None,
+            key=self._entity_key,
             translation_key=self._entity_key,
+            name=None,
             device_class=device_class,
             icon=icon,
             entity_category=entity_category,
@@ -276,8 +276,8 @@ class SVKHeatpumpSwitch(SVKHeatpumpBaseEntity, SwitchEntity):
 
         self.entity_description = SwitchEntityDescription(
             key=self._entity_key,
-            name=None,
             translation_key=self._entity_key,
+            name=None,
             device_class=device_class,
             icon=icon,
             entity_category=entity_category,
