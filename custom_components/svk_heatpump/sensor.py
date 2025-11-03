@@ -161,7 +161,7 @@ class SVKSensor(SVKHeatpumpBaseEntity, SensorEntity):
         self.entity_description = SensorEntityDescription(
             key=entity_key,
             name=None,
-            translation_key=self._entity_key,
+            translation_key=entity_key,
             device_class=device_class,
             native_unit_of_measurement=unit,
             state_class=state_class,
