@@ -122,7 +122,7 @@ class SVKNumber(SVKBaseEntity, NumberEntity):
         self.entity_description = NumberEntityDescription(
             key=self._entity_key,
             translation_key=self._entity_key,
-            name=None,
+            name=None,  # Let translation system handle the name
             device_class=device_class,
             native_min_value=min_value,
             native_max_value=max_value,
@@ -234,7 +234,7 @@ class SVKHeatpumpNumber(SVKBaseEntity, NumberEntity):
         self.entity_description = NumberEntityDescription(
             key=self._entity_key,
             translation_key=self._entity_key,
-            name=None,
+            name=None,  # Let translation system handle the name
             device_class=device_class,
             native_min_value=self._min_value,
             native_max_value=self._max_value,
@@ -384,7 +384,7 @@ async def async_setup_entry(
     heating_setpoint_desc = NumberEntityDescription(
         key="heating_setpoint_monitor",
         translation_key="heating_setpoint_monitor",
-        name=None,
+        name=None,  # Let translation system handle the name
         device_class=NumberDeviceClass.TEMPERATURE,
         native_min_value=10,
         native_max_value=35,

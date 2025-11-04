@@ -58,8 +58,12 @@ class SVKBaseEntity(CoordinatorEntity):
             # Use only DOMAIN and entity_key for cleaner unique IDs
             # This avoids duplication and keeps unique IDs concise
             self._attr_unique_id = f"{DOMAIN}_{entity_key}"
-        
-        self._attr_translation_key = entity_key
+            
+            # Set translation key for friendly name lookup
+            self._attr_translation_key = entity_key
+            
+            # Set name to None to allow translation system to handle it
+            self._attr_name = None
 
         # --- Suggested object_id to avoid duplicated prefixes in entity_id ---
         # Use only the entity key without adding group prefixes to avoid duplication

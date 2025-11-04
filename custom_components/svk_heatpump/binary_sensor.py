@@ -118,7 +118,7 @@ class SVKHeatpumpBinarySensor(SVKBaseEntity, BinarySensorEntity):
         self.entity_description = BinarySensorEntityDescription(
             key=self._entity_key,
             translation_key=self._entity_key,
-            name=None,
+            name=None,  # Let translation system handle the name
             device_class=device_class,
             entity_category=entity_category,
         )
@@ -187,7 +187,7 @@ async def async_setup_entry(
     system_state_desc = BinarySensorEntityDescription(
         key="system_active",
         translation_key="system_active",
-        name=None,
+        name=None,  # Let translation system handle the name
         device_class=BinarySensorDeviceClass.RUNNING,
     )
 
@@ -227,7 +227,7 @@ async def async_setup_entry(
     online_desc = BinarySensorEntityDescription(
         key="online_status",
         translation_key="online_status",
-        name=None,
+        name=None,  # Let translation system handle the name
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
     )
 
