@@ -26,6 +26,7 @@ DEVICE_GROUPS = {
     "hotwater": {"name": "Hot Water"},
     "service": {"name": "Service"},
     "solar_panel": {"name": "Solar Panel"},
+    "solar": {"name": "Solar Panel"},  # Add this line
     "user": {"name": "User"},
     "firmwareupgrade": {"name": "Firmwareupgrade"},
     "groups": {"name": "Groups"},
