@@ -1686,7 +1686,7 @@ ENTITIES = {
         "name": "System View",
         "platform": "sensor",
         "category": "Configuration",
-        "group": "System",
+        "group": "system",
         "page": "systemview",
         "data_type": "string",
         "id": 1670,

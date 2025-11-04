@@ -55,43 +55,44 @@ class SVKBaseEntity(CoordinatorEntity):
         if entity_id is not None:
             self._attr_unique_id = f"{config_entry_id}_{entity_id}"
         else:
-            self._attr_unique_id = f"{DOMAIN}_{self._group_key}_{unique_suffix}"
+            # Use only DOMAIN and entity_key for cleaner unique IDs
+            # This avoids duplication and keeps unique IDs concise
+            self._attr_unique_id = f"{DOMAIN}_{entity_key}"
         
         self._attr_translation_key = entity_key
 
         # --- Suggested object_id to avoid duplicated prefixes in entity_id ---
-        # Start from the catalog key but strip redundant prefixes like "svk_heatpump_"
-        # and duplicated group markers like "service_service_".
+        # Use only the entity key without adding group prefixes to avoid duplication
+        # The entity keys in the catalog are already well-structured
         key = entity_key
-        key = re.sub(r"^svk[_-]?heatpump[_-]?", "", key)            # drop integration prefix
-        key = re.sub(r"^(service_)+", "service_", key)              # collapse repeated "service_"
-        key = re.sub(r"^(display_)+", "display_", key)              # collapse repeated "display_"
-        key = re.sub(r"__", "_", key)                               # collapse accidental doubles
+        
+        # Only clean up integration prefix if present
+        key = re.sub(r"^svk[_-]?heatpump[_-]?", "", key)
+        
+        # Clean up duplicated group prefixes (e.g., "heating_heating_" -> "heating_")
+        # This handles cases where the catalog already has duplicated group keys
+        if self._group_key and key.startswith(f"{self._group_key}_{self._group_key}_"):
+            key = re.sub(rf"^{self._group_key}_{self._group_key}_", f"{self._group_key}_", key)
+        
+        # Clean up accidental double underscores
+        key = re.sub(r"__", "_", key)
         key = key.strip("_")
-
-        # Optional: if your group_key is meaningful, you can prepend it only when not duplicated
-        if self._group_key and not key.startswith(f"{self._group_key}_"):
-            candidate = f"{self._group_key}_{key}"
-        else:
-            candidate = key
-
-        # Slugify for safety
-        self._attr_suggested_object_id = slugify(candidate)
+        
+        # Use the cleaned entity key directly without adding group prefix
+        # This prevents duplication like "hotwater_hotwater_legionella_treattemp"
+        self._attr_suggested_object_id = slugify(key)
 
     @property
     def device_info(self) -> dict[str, Any]:
         """Return device information for this entity."""
+        # Use a single device identifier for all entities
         device_info = {
-            "identifiers": {(DOMAIN, self._group_key)},
-            "name": DEVICE_GROUPS[self._group_key]["name"],
+            "identifiers": {(DOMAIN, self._config_entry_id)},
+            "name": "Heatpump",
             "manufacturer": MANUFACTURER,
             "model": MODEL,
             "sw_version": SW_VERSION,
         }
-
-        # Add via_device if the group has a "via" parameter
-        if "via" in DEVICE_GROUPS[self._group_key]:
-            device_info["via_device"] = (DOMAIN, DEVICE_GROUPS[self._group_key]["via"])
 
         return device_info
 

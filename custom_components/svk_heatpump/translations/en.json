@@ -245,6 +245,117 @@
         },
         "last_update_sensor": {
           "name": "Last Update"
+        },
+        "actual_capacity": {
+          "name": "Actual Capacity"
+        },
+        "ambient_temp": {
+          "name": "Ambient Temperature"
+        },
+        "app_version": {
+          "name": "App Version"
+        },
+        "by_category": {
+          "name": "By Category"
+        },
+        "by_platform": {
+          "name": "By Platform"
+        },
+        "cold_pump_runtime": {
+          "name": "Cold Pump Runtime"
+        },
+        "cold_pump_speed": {
+          "name": "Cold Pump Speed"
+        },
+        "cold_side_return_temp": {
+          "name": "Cold Side Return Temperature"
+        },
+        "cold_side_supply_temp": {
+          "name": "Cold Side Supply Temperature"
+        },
+        "compressor_runtime": {
+          "name": "Compressor Runtime"
+        },
+        "compressor_speed_percent": {
+          "name": "Compressor Speed Percent"
+        },
+        "compressor_speed_v": {
+          "name": "Compressor Speed Voltage"
+        },
+        "defrost_air_count": {
+          "name": "Defrost Air Count"
+        },
+        "defrost_hot_gas_count": {
+          "name": "Defrost Hot Gas Count"
+        },
+        "evaporator_temp": {
+          "name": "Evaporator Temperature"
+        },
+        "heater_runtime": {
+          "name": "Heater Runtime"
+        },
+        "heating_electric_runtime": {
+          "name": "Heating Electric Runtime"
+        },
+        "heating_return_temp": {
+          "name": "Heating Return Temperature"
+        },
+        "heating_setpoint": {
+          "name": "Heating Setpoint"
+        },
+        "heating_supply_temp": {
+          "name": "Heating Supply Temperature"
+        },
+        "heating_tank_temp": {
+          "name": "Heating Tank Temperature"
+        },
+        "heatpump_ap_runtime": {
+          "name": "Heat Pump AP Runtime"
+        },
+        "heatpump_hsp_runtime": {
+          "name": "Heat Pump HSP Runtime"
+        },
+        "heatpump_runtime": {
+          "name": "Heat Pump Runtime"
+        },
+        "hot_water_runtime": {
+          "name": "Hot Water Runtime"
+        },
+        "ip_address": {
+          "name": "IP Address"
+        },
+        "log_interval": {
+          "name": "Log Interval"
+        },
+        "lup200_software_version": {
+          "name": "LUP200 Software Version"
+        },
+        "mac_address": {
+          "name": "MAC Address"
+        },
+        "pump_runtime": {
+          "name": "Pump Runtime"
+        },
+        "requested_capacity": {
+          "name": "Requested Capacity"
+        },
+        "room_temp": {
+          "name": "Room Temperature"
+        },
+        "software_version": {
+          "name": "Software Version"
+        },
+        "solar_collector_temp": {
+          "name": "Solar Collector Temperature"
+        },
+        "solar_panel_runtime": {
+          "name": "Solar Panel Runtime"
+        },
+        "solar_water_temp": {
+          "name": "Solar Water Temperature"
+        },
+        "water_tank_temp": {
+          "name": "Water Tank Temperature"
         }
       }
     },
