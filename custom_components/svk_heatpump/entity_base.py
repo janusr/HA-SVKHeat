@@ -51,19 +51,17 @@ class SVKBaseEntity(CoordinatorEntity):
         if unique_suffix is None:
             unique_suffix = entity_key
         
-        # For entities with entity_id, use config_entry_id + entity_id pattern
-        if entity_id is not None:
-            self._attr_unique_id = f"{config_entry_id}_{entity_id}"
-        else:
-            # Use only DOMAIN and entity_key for cleaner unique IDs
-            # This avoids duplication and keeps unique IDs concise
-            self._attr_unique_id = f"{DOMAIN}_{entity_key}"
-            
-            # Set translation key for friendly name lookup
-            self._attr_translation_key = entity_key
-            
-            # Set name to None to allow translation system to handle it
-            self._attr_name = None
+        # Always use DOMAIN and entity_key for cleaner unique IDs
+        # This avoids duplication and keeps unique IDs consistent
+        # The entity_id is used for data lookup but not for unique_id generation
+        self._attr_unique_id = f"{DOMAIN}_{entity_key}"
+        
+        # Always set translation key for friendly name lookup using entity_key
+        # This ensures entities use their keys (like "display_input_theatsupply") for translation
+        self._attr_translation_key = entity_key
+        
+        # Set name to None to allow translation system to handle it
+        self._attr_name = None
 
         # --- Suggested object_id to avoid duplicated prefixes in entity_id ---
         # Use only the entity key without adding group prefixes to avoid duplication

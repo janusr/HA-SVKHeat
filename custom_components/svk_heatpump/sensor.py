@@ -97,7 +97,7 @@ class SVKSensor(SVKBaseEntity, SensorEntity):
             coordinator,
             config_entry_id,
             entity_key,
-            entity_key,
+            None,  # unique_suffix should be None to use entity_key for translation
             enabled_by_default=enabled_by_default
         )
 
@@ -153,7 +153,7 @@ class SVKSensor(SVKBaseEntity, SensorEntity):
         # Create entity description
         self.entity_description = SensorEntityDescription(
             key=self._entity_key,
-            translation_key=self._entity_key,
+            translation_key=self._entity_key,  # Use entity_key for translation lookup
             name=None,  # Let translation system handle the name
             device_class=device_class,
             state_class=state_class,

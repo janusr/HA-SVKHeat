@@ -73,7 +73,7 @@ class SVKHeatpumpBinarySensor(SVKBaseEntity, BinarySensorEntity):
             coordinator,
             config_entry_id,
             entity_key,
-            entity_key,
+            None,  # unique_suffix should be None to use entity_key for translation
             entity_id=entity_id,
             enabled_by_default=enabled_by_default
         )
@@ -117,7 +117,7 @@ class SVKHeatpumpBinarySensor(SVKBaseEntity, BinarySensorEntity):
         # Use entity_key for translation
         self.entity_description = BinarySensorEntityDescription(
             key=self._entity_key,
-            translation_key=self._entity_key,
+            translation_key=self._entity_key,  # Use entity_key for translation lookup
             name=None,  # Let translation system handle the name
             device_class=device_class,
             entity_category=entity_category,

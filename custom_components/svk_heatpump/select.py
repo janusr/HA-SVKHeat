@@ -71,7 +71,7 @@ class SVKSelect(SVKBaseEntity, SelectEntity):
             coordinator,
             config_entry_id,
             entity_key,
-            entity_key,
+            None,  # unique_suffix should be None to use entity_key for translation
             enabled_by_default=enabled_by_default
         )
         self._hass = hass  # Store hass for translation
@@ -165,7 +165,7 @@ class SVKSelect(SVKBaseEntity, SelectEntity):
         # Create entity description
         self.entity_description = SelectEntityDescription(
             key=self._entity_key,
-            translation_key=self._entity_key,
+            translation_key=self._entity_key,  # Use entity_key for translation lookup
             name=None,  # Let translation system handle the name
             options=options,
             icon=icon,
@@ -336,7 +336,7 @@ class SVKHeatpumpSelect(SVKBaseEntity, SelectEntity):
             coordinator,
             config_entry_id,
             entity_key,
-            entity_key,
+            None,  # unique_suffix should be None to use entity_key for translation
             entity_id=entity_id,
             enabled_by_default=enabled_by_default
         )
@@ -394,7 +394,7 @@ class SVKHeatpumpSelect(SVKBaseEntity, SelectEntity):
 
         self.entity_description = SelectEntityDescription(
             key=self._entity_key,
-            translation_key=self._entity_key,
+            translation_key=self._entity_key,  # Use entity_key for translation lookup
             name=None,  # Let translation system handle the name
             options=options,
             entity_category=entity_category,
@@ -581,7 +581,7 @@ async def async_setup_entry(
                 coordinator,
                 config_entry_id,
                 "system_status",
-                "system_status"
+                None  # unique_suffix should be None to use entity_key for translation
             )
             self.entity_description = system_status_desc
 

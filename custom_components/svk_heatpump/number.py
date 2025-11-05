@@ -83,7 +83,7 @@ class SVKNumber(SVKBaseEntity, NumberEntity):
             coordinator,
             config_entry_id,
             entity_key,
-            entity_key,
+            None,  # unique_suffix should be None to use entity_key for translation
             enabled_by_default=enabled_by_default
         )
 
@@ -121,7 +121,7 @@ class SVKNumber(SVKBaseEntity, NumberEntity):
         # Create entity description
         self.entity_description = NumberEntityDescription(
             key=self._entity_key,
-            translation_key=self._entity_key,
+            translation_key=self._entity_key,  # Use entity_key for translation lookup
             name=None,  # Let translation system handle the name
             device_class=device_class,
             native_min_value=min_value,
@@ -191,7 +191,7 @@ class SVKHeatpumpNumber(SVKBaseEntity, NumberEntity):
             coordinator,
             config_entry_id,
             entity_key,
-            entity_key,
+            None,  # unique_suffix should be None to use entity_key for translation
             entity_id=entity_id,
             enabled_by_default=enabled_by_default
         )
@@ -233,7 +233,7 @@ class SVKHeatpumpNumber(SVKBaseEntity, NumberEntity):
 
         self.entity_description = NumberEntityDescription(
             key=self._entity_key,
-            translation_key=self._entity_key,
+            translation_key=self._entity_key,  # Use entity_key for translation lookup
             name=None,  # Let translation system handle the name
             device_class=device_class,
             native_min_value=self._min_value,
@@ -403,7 +403,7 @@ async def async_setup_entry(
                 coordinator,
                 config_entry_id,
                 "heating_setpoint_monitor",
-                "system_heating_setpoint_monitor",
+                None,  # unique_suffix should be None to use entity_key for translation
                 enabled_by_default=False
             )
             self.entity_description = heating_setpoint_desc
