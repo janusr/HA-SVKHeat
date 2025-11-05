@@ -1,0 +1,133 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "SVK Heatpump",
+        "description": "Configure your SVK heat pump connection",
+        "data": {
+          "host": "Host/IP",
+          "username": "Username",
+          "password": "Password"
+        }
+      },
+      "options": {
+        "title": "SVK Heatpump Options",
+        "description": "Configure options for your SVK heat pump",
+        "data": {
+          "write_access": "Enable Write Access",
+          "fetch_interval": "Fetch Interval (seconds)"
+        }
+      },
+      "reauth": {
+        "title": "Reauthenticate SVK Heatpump",
+        "description": "Please re-enter your credentials for the SVK heat pump"
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid authentication",
+      "cannot_connect": "Cannot connect to heat pump",
+      "timeout": "Connection timeout",
+      "invalid_fetch_interval": "Fetch interval must be between 10 and 300 seconds",
+      "unknown": "Unknown error"
+    },
+    "abort": {
+      "reauth_successful": "Reauthentication successful"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "SVK Heatpump Options",
+        "description": "Configure options for your SVK heat pump",
+        "data": {
+          "write_access": "Enable Write Access",
+          "fetch_interval": "Fetch Interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "invalid_fetch_interval": "Fetch interval must be between 10 and 300 seconds"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "heatpump_state": {
+        "name": "Heat Pump State",
+        "state": {
+          "off": "Off",
+          "ready": "Ready",
+          "startup": "Startup",
+          "heating": "Heating",
+          "defrost": "Defrost"
+        }
+      },
+      "theat_supply": {
+        "name": "Heat Supply Temperature"
+      },
+      "theat_return": {
+        "name": "Heat Return Temperature"
+      },
+      "twater_tank": {
+        "name": "Water Tank Temperature"
+      },
+      "tamb": {
+        "name": "Ambient Temperature"
+      },
+      "troom": {
+        "name": "Room Temperature"
+      },
+      "theat_tank": {
+        "name": "Heat Tank Temperature"
+      },
+      "tcold_supply": {
+        "name": "Cold Supply Temperature"
+      },
+      "tcold_return": {
+        "name": "Cold Return Temperature"
+      },
+      "tevap": {
+        "name": "Evaporator Temperature"
+      },
+      "heating_setpoint_act": {
+        "name": "Heating Setpoint"
+      },
+      "hotwater_setpoint_act": {
+        "name": "Hot Water Setpoint"
+      },
+      "solarpanel_state": {
+        "name": "Solar Panel State",
+        "state": {
+          "off": "Off",
+          "on": "On",
+          "standby": "Standby"
+        }
+      },
+      "tsolar_panel": {
+        "name": "Solar Panel Temperature"
+      },
+      "tsolar_water": {
+        "name": "Solar Water Temperature"
+      }
+    }
+  },
+  "services": {
+    "set_value": {
+      "name": "Set value",
+      "description": "Set a value on the heat pump",
+      "fields": {
+        "entity_id": {
+          "name": "Entity ID",
+          "description": "Entity ID to set value for (alternative to id parameter)"
+        },
+        "id": {
+          "name": "ID",
+          "description": "Direct entity ID from catalog (alternative to entity_id parameter)"
+        },
+        "value": {
+          "name": "Value",
+          "description": "Value to set"
+        }
+      }
+    }
+  }
+}

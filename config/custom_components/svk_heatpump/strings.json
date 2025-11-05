@@ -1,0 +1,56 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "SVK Heatpump",
+        "description": "Configure your SVK heat pump connection",
+        "data": {
+          "host": "Host/IP",
+          "username": "Username",
+          "password": "Password"
+        }
+      },
+      "options": {
+        "title": "SVK Heatpump Options",
+        "description": "Configure options for your SVK heat pump",
+        "data": {
+          "write_access": "Enable Write Access",
+          "fetch_interval": "Fetch Interval (seconds)"
+        }
+      },
+      "reauth": {
+        "title": "Reauthenticate SVK Heatpump",
+        "description": "Please re-enter your credentials for the SVK heat pump",
+        "data": {
+          "username": "Username",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid authentication",
+      "cannot_connect": "Cannot connect to heat pump",
+      "timeout": "Connection timeout",
+      "invalid_fetch_interval": "Fetch interval must be between 10 and 300 seconds",
+      "unknown": "Unknown error"
+    },
+    "abort": {
+      "reauth_successful": "Reauthentication successful"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "SVK Heatpump Options",
+        "description": "Configure options for your SVK heat pump",
+        "data": {
+          "write_access": "Enable Write Access",
+          "fetch_interval": "Fetch Interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "invalid_fetch_interval": "Fetch interval must be between 10 and 300 seconds"
+    }
+  }
+}
