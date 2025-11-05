@@ -1,0 +1,36 @@
+{
+  "name": "SVK Heatpump Dev",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "remoteUser": "vscode",
+  "runArgs": [
+    "--init"
+  ],
+  "forwardPorts": [
+    8123
+  ],
+  "containerEnv": {
+    "PIP_DISABLE_PIP_VERSION_CHECK": "1",
+    "PIP_NO_CACHE_DIR": "off"
+  },
+  "postCreateCommand": "pip install --upgrade pip && pip install -e '.[dev]'",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "ms-azuretools.vscode-docker"
+      ],
+      "settings": {
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": [
+          "tests"
+        ],
+        "python.analysis.typeCheckingMode": "standard",
+        "python.formatting.provider": "black"
+      }
+    }
+  }
+}

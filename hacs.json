@@ -1,7 +1,0 @@
-{
-  "name": "SVK Heatpump",
-  "render_readme": true,
-  "homeassistant": "2023.1.0",
-  "hacs": "0.24.0",
-  "country": "DK"
-}
