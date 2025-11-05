@@ -1,0 +1,12 @@
+{
+  "domain": "svk_heatpump",
+  "name": "SVK Heatpump",
+  "version": "1.0.0",
+  "documentation": "https://github.com/your-repo/svk-heatpump",
+  "issue_tracker": "https://github.com/your-repo/svk-heatpump/issues",
+  "dependencies": [],
+  "codeowners": ["@your-username"],
+  "requirements": ["httpx>=0.27.0"],
+  "config_flow": true,
+  "iot_class": "local_polling"
+}

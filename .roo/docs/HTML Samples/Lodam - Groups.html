@@ -1,0 +1,93 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!-- saved from url=(0036)http://192.168.50.9/cgi-bin/gset.cgi -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>Lodam - Groups</title>
+		<link rel="STYLESHEET" href="./Lodam - Groups_files/style.css" type="text/css">
+	</head>
+	<shadow-host><template shadowrootmode="closed"><style>:host *,:host :before,:host :after{box-sizing:border-box}:host *{margin:0}:host body{-webkit-font-smoothing:antialiased;line-height:1.5;font-size:inherit}:host img,:host picture,:host video,:host canvas,:host svg{max-width:100%;display:block}:host input,:host button,:host textarea,:host select{font:inherit}:host p,:host h1,:host h2,:host h3,:host h4,:host h5,:host h6{overflow-wrap:break-word}:host #root,:host #__next{isolation:isolate}</style><link rel="stylesheet" type="text/css" href="chrome-extension://dimkjjladgaekdlfebknbaooicmfalke/index.css"><div id="DndDescribedBy-0" style="display: none;">
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  </div><div id="DndLiveRegion-0" role="status" aria-live="assertive" aria-atomic="true" style="position: fixed; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); clip-path: inset(100%); white-space: nowrap;"></div></template></shadow-host><body>
+    <div id="header"><img id="logo" src="./Lodam - Groups_files/Lodam_logo_web.png" alt="Lodam logo"></div>
+    <div class="colmask leftmenu">
+      <div class="colleft">
+        <div class="maincontainer">
+				  <form action="http://192.168.50.9/cgi-bin/gset.cgi" method="GET">
+		  			<h2>User / group administration</h2>
+			  		<table class="usertable">
+  <tbody><tr>
+    <td class="userdelete">&nbsp;</td>
+    <th class="userheadingrow">Name</th>
+    <th class="userheadingrow">admin</th>
+    <th class="userheadingrow">installer</th>
+    <th class="userheadingrow">user</th>
+  </tr>
+  <tr>
+    <td class="userdelete"><input type="submit" class="button-standard" name="Del_admin" value="Delete" tabindex="1"> </td>
+    <td class="username">admin</td>
+    <td class="usercheck"> <input type="checkbox" name="grp_admin" value="admin" checked=""></td>
+    <td class="usercheck"> <input type="checkbox" name="grp_admin" value="installer" checked=""></td>
+    <td class="usercheck"> <input type="checkbox" name="grp_admin" value="user" checked=""></td>
+  </tr>
+  <tr>
+    <td class="userdelete"><input type="submit" class="button-standard" name="Del_ha-user" value="Delete" tabindex="2"> </td>
+    <td class="username">ha-user</td>
+    <td class="usercheck"> <input type="checkbox" name="grp_ha-user" value="admin"></td>
+    <td class="usercheck"> <input type="checkbox" name="grp_ha-user" value="installer" checked=""></td>
+    <td class="usercheck"> <input type="checkbox" name="grp_ha-user" value="user" checked=""></td>
+  </tr>
+  <tr>
+    <td class="userdelete"><input type="submit" class="button-standard" name="Add_0" value="Add" tabindex="3"> </td>
+    <td class="usercheck"> <input type="text" maxlength="8" size="8" name="name_0"></td>
+    <td class="usercheck"> <input type="checkbox" name="grp_0" value="admin"></td>
+    <td class="usercheck"> <input type="checkbox" name="grp_0" value="installer"></td>
+    <td class="usercheck"> <input type="checkbox" name="grp_0" value="user"></td>
+  </tr>
+</tbody></table>
+
+            
+				  	<br>
+            <input type="submit" class="button-standard" name="OK" value="OK" tabindex="4">
+
+				  </form>
+        </div><!-- end maincontainer -->
+        <div id="menucontainer">
+  <h2>Heatpump</h2>
+  <div id="navcontainer">
+    <ul class="navlist"> 
+      <li><a href="http://192.168.50.9/cgi-bin/overview.cgi">Overview</a></li><li><a href="http://192.168.50.9/cgi-bin/alarmlist_display.cgi">Alarmlist</a></li><li><a href="http://192.168.50.9/cgi-bin/datalog_display.cgi">Datalog</a></li><li class="groupheader">Configuration</li><ul class="navlist">  <li><a href="http://192.168.50.9/cgi-bin/firmware.cgi">Firmware</a></li>  <li><a href="http://192.168.50.9/cgi-bin/pset.cgi">Change password</a></li>  <li><a href="http://192.168.50.9/cgi-bin/gset.cgi">Users</a></li>  </ul>
+<li class="groupheader">Operation</li>
+<ul class="navlist">
+<li><a href="http://192.168.50.9/cgi-bin/dataset_display.cgi?dataset=/Operation/User.dst">User</a></li>
+<li><a href="http://192.168.50.9/cgi-bin/dataset_display.cgi?dataset=/Operation/Display.dst">Display</a></li>
+</ul>
+<li class="groupheader">Settings</li>
+<ul class="navlist">
+<li><a href="http://192.168.50.9/cgi-bin/dataset_display.cgi?dataset=/Settings/Heatpump.dst">Heatpump</a></li>
+<li><a href="http://192.168.50.9/cgi-bin/dataset_display.cgi?dataset=/Settings/Extended%20Display.dst">Extended Display</a></li>
+<li><a href="http://192.168.50.9/cgi-bin/dataset_display.cgi?dataset=/Settings/Heating.dst">Heating</a></li>
+<li><a href="http://192.168.50.9/cgi-bin/dataset_display.cgi?dataset=/Settings/Defrost.dst">Defrost</a></li>
+<li><a href="http://192.168.50.9/cgi-bin/dataset_display.cgi?dataset=/Settings/Service.dst">Service</a></li>
+<li><a href="http://192.168.50.9/cgi-bin/dataset_display.cgi?dataset=/Settings/Solar%20panel.dst">Solar panel</a></li>
+<li><a href="http://192.168.50.9/cgi-bin/dataset_display.cgi?dataset=/Settings/Hot%20water.dst">Hot water</a></li>
+</ul>
+
+    </ul>
+  </div> <!-- end navcontainer div -->
+</div> <!-- end menucontainer div -->
+	      
+      </div> <!-- end colleft div -->
+    </div> <!-- end colmask leftmenu div -->
+    <div id="footer">
+  <p>
+    <a target="top" href="http://www.lodam.com/">
+      Copyright 2010 Lodam
+      <br>
+    </a>
+  </p>
+</div>
+ 
+	
+
+	<div class="tp-extension"></div></body></html>

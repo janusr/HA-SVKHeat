@@ -1,0 +1,181 @@
+# SVK Heatpump Entity Catalog
+# This file defines all available entities for the SVK heat pump
+# Only entities with enabled: true will be polled and created
+
+sensors:
+  # Heat Pump Status
+  - id: "297"
+    key: heatpump_state
+    enabled: true
+    platform: sensor
+    device_class: enum
+    unit_of_measurement: ""
+    state_class: ""
+    icon: "mdi:heat-pump"
+    value_map:
+      "0": "off"
+      "1": "ready"
+      "2": "startup"
+      "5": "heating"
+      "7": "defrost"
+    precision: 0
+    translation_key: heatpump_state
+
+  # Temperature Sensors
+  - id: "253"
+    key: theat_supply
+    enabled: true
+    platform: sensor
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    icon: "mdi:thermometer"
+    precision: 1
+    translation_key: theat_supply
+
+  - id: "254"
+    key: theat_return
+    enabled: true
+    platform: sensor
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    icon: "mdi:thermometer"
+    precision: 1
+    translation_key: theat_return
+
+  - id: "255"
+    key: twater_tank
+    enabled: true
+    platform: sensor
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    icon: "mdi:water-thermometer"
+    precision: 1
+    translation_key: twater_tank
+
+  - id: "256"
+    key: tamb
+    enabled: true
+    platform: sensor
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    icon: "mdi:thermometer"
+    precision: 1
+    translation_key: tamb
+
+  - id: "257"
+    key: troom
+    enabled: true
+    platform: sensor
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    icon: "mdi:home-thermometer"
+    precision: 1
+    translation_key: troom
+
+  - id: "259"
+    key: theat_tank
+    enabled: true
+    platform: sensor
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    icon: "mdi:thermometer"
+    precision: 1
+    translation_key: theat_tank
+
+  - id: "260"
+    key: tcold_supply
+    enabled: true
+    platform: sensor
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    icon: "mdi:thermometer"
+    precision: 1
+    translation_key: tcold_supply
+
+  - id: "261"
+    key: tcold_return
+    enabled: true
+    platform: sensor
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    icon: "mdi:thermometer"
+    precision: 1
+    translation_key: tcold_return
+
+  - id: "262"
+    key: tevap
+    enabled: true
+    platform: sensor
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    icon: "mdi:thermometer"
+    precision: 1
+    translation_key: tevap
+
+  - id: "420"
+    key: heating_setpoint_act
+    enabled: true
+    platform: sensor
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    icon: "mdi:thermometer-chevron-up"
+    precision: 1
+    translation_key: heating_setpoint_act
+
+  - id: "386"
+    key: hotwater_setpoint_act
+    enabled: true
+    platform: sensor
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    icon: "mdi:water-boiler"
+    precision: 1
+    translation_key: hotwater_setpoint_act
+
+  - id: "364"
+    key: solarpanel_state
+    enabled: true
+    platform: sensor
+    device_class: enum
+    unit_of_measurement: ""
+    state_class: ""
+    icon: "mdi:solar-power"
+    value_map:
+      "0": "off"
+      "1": "on"
+      "2": "standby"
+    precision: 0
+    translation_key: solarpanel_state
+
+  - id: "264"
+    key: tsolar_panel
+    enabled: true
+    platform: sensor
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    icon: "mdi:solar-power"
+    precision: 1
+    translation_key: tsolar_panel
+
+  - id: "263"
+    key: tsolar_water
+    enabled: true
+    platform: sensor
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    icon: "mdi:water-thermometer"
+    precision: 1
+    translation_key: tsolar_water

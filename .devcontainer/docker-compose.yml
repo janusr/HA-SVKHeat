@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  svk-heatpump-dev:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    container_name: svk-heatpump-dev
+    volumes:
+      - ..:/workspace:cached
+    command: sleep infinity
+    environment:
+      - PIP_DISABLE_PIP_VERSION_CHECK=1
+      - PIP_NO_CACHE_DIR=off
+    ports:
+      - "8123:8123"
+    init: true
+    user: vscode
+    working_dir: /workspace

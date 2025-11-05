@@ -1,0 +1,184 @@
+function edit(rdbid, jid, retadr)
+{
+  var oldval = document.getElementById(jid).innerHTML;
+  var browserCheck = (document.all) ? 1 : 0; // ternary operator statements to check if IE. set 1 if is, set 0 if not.
+  if (((browserCheck) && (oldval.search("<FORM") == -1)) || ((!browserCheck) && (oldval.search("<form") == -1)))
+  {
+    document.getElementById(jid).innerHTML = "<FORM action='rdb_edit.cgi' method='get' name='edit'><input type='text' size='15' onFocus='this.select()' name='itemval' value='" + oldval + "' /><input type='hidden' name='itemno' value='" + rdbid + "'><input type='hidden' name='retadr' value='" + retadr + "'><input type='submit' value='Submit'></FORM>";
+    document.edit.itemval.focus();          
+    document.getElementById("OptCol"+id).innerHTML = "";
+  }  
+}
+
+if (!Array.indexOf) 
+{
+  Array.prototype.indexOf = function (obj, start) 
+  {
+    for (var i = (start || 0); i < this.length; i++) 
+    {
+      if (this[i] == obj) 
+      {
+        return i;
+      }
+    }
+    return -1;
+  } 
+}
+
+	 
+  
+
+function myPageFormatter(name,value)
+{
+  var HeatPumpState = ["Off ","Ready","Startup", "Hot Water", "Startup", "Heating","HP Stop", "Heating", "Hot Water", "Wait","Wait","Defrost","Defrost","Defrost","Defrost","HotWater","Heating","Stop","Heating","HotWater","Pump Run","Forced Run","Forced Run","Forced Run", "Forced Run", "Manual", "Cooling start up", "Cooling", "External stop"];
+    var DigOut = ["Output.Compressor","Output.Heater","Output.HotTapWater","Output.HotSidePump","Output.DefrostValve","Output.SolarPump","Output.AuxPump","Output.Alarm","Output.ColdPump","Output.ColdPumpLow"];
+  var CprCtrlMode = ["0 - Off","1 - Single Ext FC", "2 - Single ON/OFF", "3 - Dual ON/OFF", "4 - FC and ON/OFF", "5 - Dual FC", "6 - Single Bus FC", "7 - Single ON/OFF w. Unloader", "8 - Dual ON/OFF w. Unloader", "9 - Dual ON/OFF w. SCR", "Count"];
+  var SolarState = ["Off", "Running", "Forced Stop", "Heat Reject"];
+  var ConcreteMode = ["Off", "Deck", "Screed", "Tiles"];
+  var names = ["Input.THeatSupply","Input.THeatReturn","Input.TWaterTank","Input.Tamb","Input.Troom","Input.THeatTank","Input.TColdSupply","Input.TColdReturn","Input.Tevap","Input.TSolarPanel","Input.TSolarWater"]; 
+  var InputSw = ["Input.HPSwitch","Input.LPSwitch","Input.BPSwitch","Input.FCSwitch"];
+  var minvals = [-40,-40,-40,-40,-40,-40,-40,-40,-40,-40,-40]; 
+  var maxvals = [140,140,140,140,140,140,140,140,140,140,140];
+  var mintexts = "--"; 
+  var swValue =  Number(value);
+
+  
+  
+  if (InputSw.indexOf(name) >= 0)
+  {
+    switch(swValue)
+    {
+      case 0:
+        return "Ok";
+      case 1:
+        return "Fail";
+      default:
+        return value;   
+    }
+  }
+  
+  else if (name == "Concrete.Mode")
+  {
+    return ConcreteMode[swValue];
+  }
+  
+  else if (name == "SolarPanel.State")
+  {
+    return SolarState[swValue];
+  }
+  
+  else if (name == "CprControl.CprMode")
+  {
+    return CprCtrlMode[swValue];
+  }
+    
+  else if (name == "HeatPump.State")
+  {
+    return HeatPumpState[swValue];
+  }
+
+  else if (name == "Input.DFStart")
+  {
+    if (swValue < 1)
+    {
+      return "Off";
+    }
+    else
+    {
+      return "On";
+    }
+  }
+  
+  else if (name == "Legionella.State")
+  {
+    switch(swValue)
+    {
+      case 0:
+        return "Off";
+      case 1:
+        return "Wait";
+      case 2:
+        return "Treat";
+      default:
+        return value;   
+    }
+  }
+  
+  else if (name == "SolarPanel.State")
+  {
+    switch(swValue)
+    {
+      case 0:
+        return "Off";
+      case 1:
+        return "Heating";
+      case 2:
+        return "Forced stop";
+      default:
+        return value;        
+    }
+  }
+  
+  else if (name == "HeatPump.SeasonState")
+  {
+    switch(Number(swValue))
+    {
+      case 0:
+        return "Summer";
+      case 1:
+        return "Winter";
+      default:
+        return value;
+    }
+  }
+
+  else if (name == "ColdPump.State")
+  {
+    switch(swValue)
+    {
+      case 1:
+        return "Low";
+      case 2:
+        return "High";
+      default:
+        return "Off";
+    }
+  }
+
+  else if (DigOut.indexOf(name) >= 0)
+  {
+    if (swValue < 1)
+    {
+      return "Off";
+    }
+    else
+    {
+      return "On";
+    }
+  }
+ 
+  else
+  {
+    var idx = names.indexOf(name);
+    if (idx >= 0)
+    {
+      if (swValue < minvals[idx])
+      {
+        return mintexts;
+      } 
+      else if (swValue > maxvals[idx])
+      {
+        return mintexts;
+      } 
+      else 
+      {
+        return value; 
+      }
+    }
+    else
+    {
+      return value;
+    }
+  }
+  
+}
