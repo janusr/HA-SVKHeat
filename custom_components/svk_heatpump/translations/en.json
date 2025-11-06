@@ -152,6 +152,52 @@
       },
       "tsolar_water": {
         "name": "Solar Water Temperature"
+      },
+      "user_language": {
+        "name": "User Language",
+        "state": {
+          "english": "English",
+          "german": "German",
+          "francais": "French",
+          "suomi": "Finnish",
+          "espanol": "Spanish",
+          "dansk": "Danish",
+          "nederlands": "Dutch",
+          "portugues": "Portuguese",
+          "italiano": "Italian"
+        }
+      },
+      "heat_sp_ctrl_troom_set": {
+        "name": "Room Temperature Setpoint"
+      },
+      "hot_water_set_point": {
+        "name": "Hot Water Setpoint"
+      },
+      "heat_sp_ctrl_toff_set": {
+        "name": "Temperature Offset"
+      },
+      "parameters_season_mode": {
+        "name": "Season Mode",
+        "state": {
+          "winter": "Winter",
+          "summer": "Summer",
+          "auto": "Auto"
+        }
+      },
+      "time_year": {
+        "name": "Year"
+      },
+      "time_month": {
+        "name": "Month"
+      },
+      "time_day": {
+        "name": "Day"
+      },
+      "time_hour": {
+        "name": "Hour"
+      },
+      "time_minute": {
+        "name": "Minute"
       }
     }
   },
