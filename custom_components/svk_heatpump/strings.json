@@ -20,11 +20,7 @@
       },
       "reauth": {
         "title": "Reauthenticate SVK Heatpump",
-        "description": "Please re-enter your credentials for the SVK heat pump",
-        "data": {
-          "username": "Username",
-          "password": "Password"
-        }
+        "description": "Please re-enter your credentials for the SVK heat pump"
       }
     },
     "error": {

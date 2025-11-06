@@ -4,9 +4,10 @@
   "key": "core.device_registry",
   "data": {
     "devices": [
-      {"area_id":null,"config_entries":["01K9AV3G5E5KQW467TTXBV0X3E"],"configuration_url":null,"connections":[],"created_at":"2025-11-05T20:25:03.947968+00:00","disabled_by":null,"entry_type":"service","hw_version":null,"id":"a63c303ba9f771592ce0e212c60f35b0","identifiers":[["sun","01K9AV3G5E5KQW467TTXBV0X3E"]],"labels":[],"manufacturer":null,"model":null,"model_id":null,"modified_at":"2025-11-05T20:25:03.947996+00:00","name_by_user":null,"name":"Sun","primary_config_entry":"01K9AV3G5E5KQW467TTXBV0X3E","serial_number":null,"sw_version":null,"via_device_id":null},
-      {"area_id":null,"config_entries":["01K9AW9482RJ2AT9RVEKY87HXT"],"configuration_url":null,"connections":[],"created_at":"2025-11-05T20:45:37.261093+00:00","disabled_by":null,"entry_type":null,"hw_version":null,"id":"754b029491e97a5159584a7f15362a37","identifiers":[["svk_heatpump","01K9AW9482RJ2AT9RVEKY87HXT"]],"labels":[],"manufacturer":"SVK","model":"Heat Pump","model_id":null,"modified_at":"2025-11-05T20:45:37.261123+00:00","name_by_user":null,"name":"SVK Heatpump","primary_config_entry":"01K9AW9482RJ2AT9RVEKY87HXT","serial_number":null,"sw_version":null,"via_device_id":null}
+      {"area_id":null,"config_entries":["01K9AV3G5E5KQW467TTXBV0X3E"],"configuration_url":null,"connections":[],"created_at":"2025-11-05T20:25:03.947968+00:00","disabled_by":null,"entry_type":"service","hw_version":null,"id":"a63c303ba9f771592ce0e212c60f35b0","identifiers":[["sun","01K9AV3G5E5KQW467TTXBV0X3E"]],"labels":[],"manufacturer":null,"model":null,"model_id":null,"modified_at":"2025-11-05T20:25:03.947996+00:00","name_by_user":null,"name":"Sun","primary_config_entry":"01K9AV3G5E5KQW467TTXBV0X3E","serial_number":null,"sw_version":null,"via_device_id":null}
     ],
-    "deleted_devices": []
+    "deleted_devices": [
+      {"config_entries":[],"connections":[],"created_at":"2025-11-05T20:45:37.261093+00:00","identifiers":[["svk_heatpump","01K9AW9482RJ2AT9RVEKY87HXT"]],"id":"754b029491e97a5159584a7f15362a37","orphaned_timestamp":1762378019.961105,"modified_at":"2025-11-05T21:26:59.961135+00:00"}
+    ]
   }
 }

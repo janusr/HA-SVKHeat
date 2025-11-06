@@ -83,9 +83,9 @@ class SVKSensor(CoordinatorEntity, SensorEntity):
         if "energy" in key or "power" in key or "cop" in key:
             return EntityCategory.DIAGNOSTIC if "consumption" in key else EntityCategory.MEASUREMENT
         
-        # Control and settings - sensors can't have CONFIG category, use None instead
+        # Control and settings
         if "setpoint" in key or "mode" in key or "curve" in key:
-            return None
+            return EntityCategory.CONFIG
         
         # Runtime and maintenance
         if "runtime" in key or "error" in key or "warning" in key:

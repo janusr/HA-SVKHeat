@@ -1,10 +1,10 @@
-set_value:
+.svk_heatpump.set_value:
   name: Set value
   description: Set a value on the heat pump
   fields:
     entity_id:
       name: Entity ID
-      description: Entity ID to set value for (alternative to id parameter)
+      description: Entity ID to set value for (alternative to id parameter). Can be a single entity ID or a list of entity IDs.
       required: false
       selector:
         entity:
@@ -17,7 +17,7 @@ set_value:
         text:
     value:
       name: Value
-      description: Value to set
+      description: Value to set on the heat pump entity
       required: true
       selector:
         text:

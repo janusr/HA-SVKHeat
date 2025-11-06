@@ -131,36 +131,6 @@ class Catalog:
         return catalog
 
 
-import asyncio
-import aiofiles
-
-async def async_load_catalog() -> Catalog:
-    """Load the catalog from the YAML file asynchronously.
-    
-    Returns:
-        Catalog: The loaded catalog.
-        
-    Raises:
-        FileNotFoundError: If the catalog file is not found.
-        yaml.YAMLError: If the catalog file cannot be parsed.
-    """
-    try:
-        async with aiofiles.open(CATALOG_FILE_PATH, "r", encoding="utf-8") as file:
-            content = await file.read()
-            data = yaml.safe_load(content)
-            if not data:
-                LOGGER.error("Catalog file is empty")
-                return Catalog()
-            
-            return Catalog.from_dict(data)
-    except FileNotFoundError:
-        LOGGER.error("Catalog file not found at %s", CATALOG_FILE_PATH)
-        raise
-    except yaml.YAMLError as error:
-        LOGGER.error("Error parsing catalog file: %s", error)
-        raise
-
-
 def load_catalog() -> Catalog:
     """Load the catalog from the YAML file.
     

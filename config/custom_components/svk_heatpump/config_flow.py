@@ -103,9 +103,9 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_HOST): str,
-                    vol.Required(CONF_USERNAME): str,
-                    vol.Required(CONF_PASSWORD): str,
+                    vol.Required(CONF_HOST): vol.Coerce(str),
+                    vol.Required(CONF_USERNAME): vol.Coerce(str),
+                    vol.Required(CONF_PASSWORD): vol.Coerce(str),
                 }
             ),
             errors=errors,
@@ -127,10 +127,10 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         {
                             vol.Optional(
                                 CONF_WRITE_ACCESS, default=DEFAULT_WRITE_ACCESS
-                            ): bool,
+                            ): vol.Coerce(bool),
                             vol.Optional(
                                 CONF_FETCH_INTERVAL, default=DEFAULT_FETCH_INTERVAL
-                            ): vol.All(int, vol.Range(min=10, max=300)),
+                            ): vol.All(vol.Coerce(int), vol.Range(min=10, max=300)),
                         }
                     ),
                     errors={"base": "invalid_fetch_interval"},
@@ -166,10 +166,10 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         {
                             vol.Optional(
                                 CONF_WRITE_ACCESS, default=DEFAULT_WRITE_ACCESS
-                            ): bool,
+                            ): vol.Coerce(bool),
                             vol.Optional(
                                 CONF_FETCH_INTERVAL, default=DEFAULT_FETCH_INTERVAL
-                            ): vol.All(int, vol.Range(min=10, max=300)),
+                            ): vol.All(vol.Coerce(int), vol.Range(min=10, max=300)),
                         }
                     ),
                     errors={"base": "unknown"},
@@ -181,10 +181,10 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 {
                     vol.Optional(
                         CONF_WRITE_ACCESS, default=DEFAULT_WRITE_ACCESS
-                    ): bool,
+                    ): vol.Coerce(bool),
                     vol.Optional(
                         CONF_FETCH_INTERVAL, default=DEFAULT_FETCH_INTERVAL
-                    ): vol.All(int, vol.Range(min=10, max=300)),
+                    ): vol.All(vol.Coerce(int), vol.Range(min=10, max=300)),
                 }
             ),
         )
@@ -303,8 +303,8 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="reauth",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_USERNAME): str,
-                    vol.Required(CONF_PASSWORD): str,
+                    vol.Required(CONF_USERNAME): vol.Coerce(str),
+                    vol.Required(CONF_PASSWORD): vol.Coerce(str),
                 }
             ),
             errors=errors,
@@ -378,10 +378,10 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
                 {
                     vol.Optional(
                         CONF_WRITE_ACCESS, default=current_write_access
-                    ): bool,
+                    ): vol.Coerce(bool),
                     vol.Optional(
                         CONF_FETCH_INTERVAL, default=current_fetch_interval
-                    ): vol.All(int, vol.Range(min=10, max=300)),
+                    ): vol.All(vol.Coerce(int), vol.Range(min=10, max=300)),
                 }
             ),
             errors=errors,

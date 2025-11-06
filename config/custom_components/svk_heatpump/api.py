@@ -67,12 +67,10 @@ class SVKHeatpumpAPI:
         self._auth = httpx.DigestAuth(username, password)
         
         # Configure client with reasonable defaults
-        # Note: We disable SSL verification to avoid blocking calls
         self._client_config = {
             "auth": self._auth,
             "timeout": httpx.Timeout(timeout, connect=5.0),
             "follow_redirects": True,
-            "verify": False,  # Disable SSL verification to avoid blocking calls
             "headers": {
                 "User-Agent": "HomeAssistant-SVKHeatpump/1.0",
                 "Accept": "application/json, application/xml, text/plain",
