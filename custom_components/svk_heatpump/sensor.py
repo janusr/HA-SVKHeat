@@ -300,12 +300,12 @@ async def async_setup_entry(
             )
             return
         
-        # Create sensor entities only for enabled entities with platform "sensor"
+        # Create sensor entities for ALL entities with platform "sensor" regardless of enabled status
         sensors: List[SVKSensor] = []
         for entity in all_entities:
             try:
-                # Only create sensors for entities with platform "sensor" AND enabled: true
-                if entity.platform == "sensor" and entity.enabled:
+                # Create sensors for ALL entities with platform "sensor"
+                if entity.platform == "sensor":
                     sensor = SVKSensor(coordinator, entry.entry_id, entity)
                     
                     # Initialize the disabled status tracking
@@ -318,11 +318,6 @@ async def async_setup_entry(
                         "Created sensor for entity %s (%s) - catalog_enabled: %s, user_disabled: %s",
                         entity.key, entity.id, entity.enabled, sensor._was_disabled
                     )
-                elif entity.platform == "sensor" and not entity.enabled:
-                    _LOGGER.debug(
-                        "Skipping disabled entity %s (%s) - catalog_enabled: %s",
-                        entity.key, entity.id, entity.enabled
-                    )
             except Exception as ex:
                 _LOGGER.error(
                     "Error creating sensor for entity %s: %s",
@@ -331,9 +326,11 @@ async def async_setup_entry(
         
         # Add all sensors to Home Assistant
         if sensors:
+            enabled_count = sum(1 for s in sensors if s._attr_entity_registry_enabled_default)
+            disabled_count = len(sensors) - enabled_count
             _LOGGER.info(
-                "Adding %d sensors for entry %s",
-                len(sensors), entry.entry_id
+                "Adding %d sensors for entry %s (%d enabled by default, %d disabled by default)",
+                len(sensors), entry.entry_id, enabled_count, disabled_count
             )
             async_add_entities(sensors, True)
         else:

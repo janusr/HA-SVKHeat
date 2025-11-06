@@ -185,11 +185,13 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
                             )
                         else:
                             # User has enabled the entity (entity_entry.disabled is False)
-                            # Always fetch if the user has enabled it, regardless of catalog status
-                            should_fetch = True
+                            # Fetch if either:
+                            # 1. Entity is catalog-enabled (default behavior)
+                            # 2. Entity is catalog-disabled but user has explicitly enabled it
+                            should_fetch = entity.enabled or entity_entry.disabled_by is None
                             _LOGGER.debug(
-                                "Entity %s is enabled by user, catalog_enabled=%s, will_fetch=%s",
-                                entity_id, entity.enabled, should_fetch
+                                "Entity %s is enabled by user, catalog_enabled=%s, disabled_by=%s, will_fetch=%s",
+                                entity_id, entity.enabled, entity_entry.disabled_by, should_fetch
                             )
                     
                     if should_fetch:
