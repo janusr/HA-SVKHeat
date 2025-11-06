@@ -120,8 +120,9 @@ class SVKHeatpumpAPI:
             return None
             
         if self._verify_ssl:
-            # Use default SSL context with verification
-            return None  # httpx will use default verification
+            # Create a default SSL context with verification
+            # This will be called in a thread executor to avoid blocking
+            return ssl.create_default_context()
         else:
             # Create unverified SSL context for local connections
             context = ssl.create_default_context()
@@ -136,11 +137,6 @@ class SVKHeatpumpAPI:
             The configured AsyncClient instance
         """
         if not self._client_initialized or self._client is None:
-            # Create SSL context if needed - run in executor to avoid blocking
-            ssl_context = None
-            if self.use_ssl:
-                ssl_context = await asyncio.to_thread(self._create_ssl_context)
-            
             # Configure client with SSL settings
             client_config = {
                 "auth": self._auth,
@@ -155,10 +151,14 @@ class SVKHeatpumpAPI:
             
             # Add SSL configuration
             if self.use_ssl:
+                # Always create an explicit SSL context in a thread executor to avoid blocking
+                ssl_context = await asyncio.to_thread(self._create_ssl_context)
                 if ssl_context:
                     client_config["verify"] = ssl_context
                 else:
-                    client_config["verify"] = self._verify_ssl
+                    # This should not happen with our updated _create_ssl_context,
+                    # but keep as a fallback
+                    client_config["verify"] = False
             
             # Create the persistent client
             self._client = httpx.AsyncClient(**client_config)
@@ -518,13 +518,17 @@ class SVKHeatpumpAPI:
         )
         
         try:
-            if "application/json" in content_type:
+            # SVK heat pump returns JSON data as text/html, so we need to try JSON parsing first
+            # regardless of the content type
+            try:
                 return self._parse_json_response(response)
-            elif "application/xml" in content_type or "text/xml" in content_type:
-                return self._parse_xml_response(response)
-            else:
-                # Default to text parsing
-                return self._parse_text_response(response)
+            except (json.JSONDecodeError, SVKInvalidResponseError):
+                # If JSON parsing fails, try other formats based on content type
+                if "application/xml" in content_type or "text/xml" in content_type:
+                    return self._parse_xml_response(response)
+                else:
+                    # Default to text parsing
+                    return self._parse_text_response(response)
         except Exception as ex:
             LOGGER.error(
                 "Failed to parse response (content-type: %s): %s",
@@ -542,7 +546,26 @@ class SVKHeatpumpAPI:
             Dictionary mapping entity IDs to their values
         """
         try:
-            data = response.json()
+            # SVK heat pump returns JSON data as text/html, so we need to parse the text
+            # content_type might be text/html but contain valid JSON
+            text_content = response.text
+            
+            # Check for malformed SVK JSON format: {obj},{obj},{obj} (missing array brackets)
+            # This is a common issue with SVK heat pumps where they return comma-separated
+            # JSON objects without the outer array brackets
+            if text_content.strip().startswith('{') and not text_content.strip().startswith('['):
+                # Check if it looks like comma-separated JSON objects
+                if '},{ ' in text_content or '},{' in text_content:
+                    # Pre-process by adding array brackets
+                    LOGGER.debug("Detected malformed SVK JSON format, adding array brackets")
+                    text_content = f'[{text_content}]'
+            
+            # Try to parse as JSON directly first
+            try:
+                data = response.json()
+            except json.JSONDecodeError:
+                # If that fails, try to parse the text content
+                data = json.loads(text_content)
             
             # Handle different JSON response formats
             if isinstance(data, dict):
@@ -559,6 +582,15 @@ class SVKHeatpumpAPI:
                             result[str(item["id"])] = item["value"]
                     LOGGER.debug("Parsed JSON response with %d values in list format", len(result))
                     return result
+                    
+            elif isinstance(data, list):
+                # Format 3: SVK heat pump format: [{"id": "id1", "name": "name1", "value": "value1"}, ...]
+                result = {}
+                for item in data:
+                    if isinstance(item, dict) and "id" in item and "value" in item:
+                        result[str(item["id"])] = item["value"]
+                LOGGER.debug("Successfully parsed SVK JSON response with %d values in array format", len(result))
+                return result
                     
             # If we can't parse the format, return empty dict
             LOGGER.warning("Unexpected JSON response format: %s", data)
