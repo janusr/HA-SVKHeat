@@ -31,7 +31,8 @@
       "unknown": "Unknown error"
     },
     "abort": {
-      "reauth_successful": "Reauthentication successful"
+      "reauth_successful": "Reauthentication successful",
+      "single_instance_allowed": "Only a single instance of SVK Heatpump integration is allowed."
     }
   },
   "options": {
@@ -56,9 +57,26 @@
         "state": {
           "off": "Off",
           "ready": "Ready",
-          "startup": "Startup",
+          "startup": "Start up",
+          "hot_water": "Hot water",
+          "startup_2": "Start up (2)",
           "heating": "Heating",
-          "defrost": "Defrost"
+          "heat_pump_stop": "Heat pump stop",
+          "el_heating": "El heating",
+          "el_hot_water": "El hot water",
+          "forced_cold_pump": "Forced cold pump",
+          "wait": "Wait",
+          "defrost": "Defrost",
+          "air_defrost": "Air defrost",
+          "hotgas_defrost": "Hotgas defrost",
+          "drip_delay": "Drip delay",
+          "total_stop": "Total stop",
+          "el_heating_2": "El heating (2)",
+          "el_hot_water_2": "El hot water (2)",
+          "pump_exercise": "Pump exercize",
+          "startup_3": "Start up (3)",
+          "forced_running": "Forced running",
+          "manual": "Manual"
         }
       },
       "theat_supply": {
