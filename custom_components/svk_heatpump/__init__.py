@@ -37,6 +37,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # Create coordinator
         coordinator = SVKDataUpdateCoordinator(hass, entry)
         
+        # Load catalog asynchronously
+        await coordinator.async_load_catalog()
+        
         # Test connection
         try:
             setup_logger.debug(
