@@ -81,9 +81,6 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
         self.catalog = None
         self.enabled_entities = []
         
-        # Store current data state
-        self.data: Dict[str, Any] = {}
-        
         # Track last successful update time
         self.last_update_success = None
         
@@ -115,7 +112,7 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
         """Update data via library.
 
         Returns:
-            Dictionary mapping entity IDs to their transformed values.
+            Dictionary mapping entity unique IDs to their data.
 
         Raises:
             UpdateFailed: If an error occurs while updating.
@@ -157,18 +154,17 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
             raw_data = await self.api.async_read_values(entity_ids)
             
             # Transform and store data
-            transformed_data = {}
+            data_dict = {}
             for entity in self.enabled_entities:
                 entity_id = entity.id
                 if entity_id in raw_data:
                     raw_value = raw_data[entity_id]
                     # Apply value transformation based on catalog definition
                     transformed_value = transform_value(entity, raw_value)
-                    transformed_data[entity_id] = transformed_value
                     
                     # Store with unique ID for Home Assistant
                     unique_id = get_unique_id(self.host, entity_id)
-                    self.data[unique_id] = {
+                    data_dict[unique_id] = {
                         "value": transformed_value,
                         "raw_value": raw_value,
                         "entity": entity,
@@ -184,8 +180,8 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
             self._connection_state = "connected"
             self.last_update_success = self.hass.loop.time()
             
-            _LOGGER.debug("Successfully updated %d entities", len(transformed_data))
-            return transformed_data
+            _LOGGER.debug("Successfully updated %d entities", len(data_dict))
+            return data_dict
             
         except SVKAuthenticationError as ex:
             _LOGGER.error("Authentication error: %s", ex)
@@ -287,17 +283,20 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
             )
             
             if success:
+                # Get current data from parent class
+                current_data = self.data if self.data is not None else {}
+                
                 # Update local state if write was successful
                 unique_id = get_unique_id(self.host, entity_id)
-                if unique_id in self.data:
+                if unique_id in current_data:
                     # Apply transformation to the new value
                     transformed_value = transform_value(entity, value)
-                    self.data[unique_id]["value"] = transformed_value
-                    self.data[unique_id]["raw_value"] = value
-                    self.data[unique_id]["last_updated"] = self.hass.loop.time()
+                    current_data[unique_id]["value"] = transformed_value
+                    current_data[unique_id]["raw_value"] = value
+                    current_data[unique_id]["last_updated"] = self.hass.loop.time()
                 
                 # Notify listeners of data change
-                self.async_set_updated_data(self.data)
+                self.async_set_updated_data(current_data)
                 
                 # Reset failure counters on successful write
                 self._consecutive_failures = 0
@@ -406,7 +405,7 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
             The current value, or None if not available.
         """
         unique_id = get_unique_id(self.host, entity_id)
-        if unique_id in self.data:
+        if self.data is not None and unique_id in self.data:
             return self.data[unique_id]["value"]
         return None
 
@@ -420,7 +419,7 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
             The raw value, or None if not available.
         """
         unique_id = get_unique_id(self.host, entity_id)
-        if unique_id in self.data:
+        if self.data is not None and unique_id in self.data:
             return self.data[unique_id]["raw_value"]
         return None
 
@@ -434,7 +433,7 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
             The last update time as a timestamp, or None if not available.
         """
         unique_id = get_unique_id(self.host, entity_id)
-        if unique_id in self.data:
+        if self.data is not None and unique_id in self.data:
             return self.data[unique_id]["last_updated"]
         return None
 
