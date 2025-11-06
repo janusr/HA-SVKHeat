@@ -11,6 +11,7 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -35,6 +36,9 @@ class SVKSensor(CoordinatorEntity, SensorEntity):
         self._entry_id = entry_id
         self._entity = entity
         self._attr_unique_id = get_unique_id(coordinator.host, entity.id)
+        
+        # Set entity registry enabled default based on catalog enabled status
+        self._attr_entity_registry_enabled_default = entity.enabled
         
         # Set up entity name with translation key if available
         if entity.translation_key:
@@ -138,6 +142,35 @@ class SVKSensor(CoordinatorEntity, SensorEntity):
                 )
                 return False
             
+            # Note: We don't check catalog enabled status here because
+            # users should be able to enable catalog-disabled entities through the UI
+            # The data fetching logic will handle whether to actually fetch data for this entity
+            
+            # Check if entity is enabled by the user in the entity registry
+            try:
+                registry = er.async_get(self.hass)
+                # Try to find the entity by unique_id first, then by entity_id
+                entity_entry = registry.async_get_entity_id(
+                    "sensor", DOMAIN, self._attr_unique_id
+                )
+                
+                if entity_entry:
+                    # Get the full entity entry to check if it's disabled
+                    full_entity_entry = registry.async_get(entity_entry)
+                    if full_entity_entry and full_entity_entry.disabled:
+                        _LOGGER.debug(
+                            "Entity %s is disabled by the user",
+                            self._entity.id
+                        )
+                        return False
+            except Exception as ex:
+                _LOGGER.debug(
+                    "Error checking entity registry for %s: %s",
+                    self._entity.id, ex
+                )
+                # If we can't check the registry, assume it's enabled
+                pass
+            
             # Check if entity value is available
             value = self.coordinator.get_entity_value(self._entity.id)
             is_available = value is not None
@@ -208,6 +241,36 @@ class SVKSensor(CoordinatorEntity, SensorEntity):
                 "write_access": self._entity.write_access,
                 "error": str(ex)
             }
+    
+    async def async_entity_registry_updated(self) -> None:
+        """Handle entity registry updates (enable/disable events)."""
+        try:
+            # Get the current entity registry entry
+            registry = er.async_get(self.hass)
+            entity_entry = registry.async_get(self.entity_id)
+            
+            # Check if the entity was just enabled or disabled
+            was_disabled = hasattr(self, '_was_disabled') and self._was_disabled
+            is_disabled = entity_entry and entity_entry.disabled
+            
+            if was_disabled != is_disabled:
+                _LOGGER.info(
+                    "Entity %s registry status changed: disabled=%s->%s",
+                    self.entity_id, was_disabled, is_disabled
+                )
+                
+                # Update our tracking
+                self._was_disabled = is_disabled
+                
+                # Trigger a refresh of the coordinator to adjust fetching
+                if hasattr(self.coordinator, 'async_refresh_entity_registry_status'):
+                    await self.coordinator.async_refresh_entity_registry_status()
+            
+        except Exception as ex:
+            _LOGGER.error(
+                "Error handling entity registry update for %s: %s",
+                self.entity_id, ex
+            )
 
 
 async def async_setup_entry(
@@ -227,27 +290,33 @@ async def async_setup_entry(
             )
             return
         
-        # Get enabled entities from the catalog
-        enabled_entities = coordinator.enabled_entities
+        # Get all entities from the catalog (not just enabled ones)
+        all_entities = coordinator.catalog.get_all_entities()
         
-        if not enabled_entities:
+        if not all_entities:
             _LOGGER.warning(
-                "No enabled entities found for entry %s",
+                "No entities found in catalog for entry %s",
                 entry.entry_id
             )
             return
         
-        # Create sensor entities for each enabled entity
+        # Create sensor entities for all entities with platform "sensor"
         sensors: List[SVKSensor] = []
-        for entity in enabled_entities:
+        for entity in all_entities:
             try:
                 # Only create sensors for entities with platform "sensor"
                 if entity.platform == "sensor":
                     sensor = SVKSensor(coordinator, entry.entry_id, entity)
+                    
+                    # Initialize the disabled status tracking
+                    registry = er.async_get(hass)
+                    entity_entry = registry.async_get(sensor.entity_id)
+                    sensor._was_disabled = entity_entry and entity_entry.disabled
+                    
                     sensors.append(sensor)
                     _LOGGER.debug(
-                        "Created sensor for entity %s (%s)",
-                        entity.key, entity.id
+                        "Created sensor for entity %s (%s) - catalog_enabled: %s, user_disabled: %s",
+                        entity.key, entity.id, entity.enabled, sensor._was_disabled
                     )
             except Exception as ex:
                 _LOGGER.error(

@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import ConfigEntryNotReady, HomeAssistantError
 from homeassistant.helpers.typing import ConfigType
 
-from .const import DOMAIN, SERVICE_SET_VALUE, get_unique_id
+from .const import DOMAIN, SERVICE_SET_VALUE, SERVICE_REFRESH_ENTITIES, get_unique_id
 from .coordinator import SVKDataUpdateCoordinator
 from .config_flow import SVKHeatpumpOptionsFlow
 
@@ -16,7 +16,7 @@ PLATFORMS: list[Platform] = [Platform.SENSOR]
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up the SVK Heatpump component."""
+    """Set up SVK Heatpump component."""
     hass.data.setdefault(DOMAIN, {})
     return True
 
@@ -175,8 +175,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_get_options_flow(
     config_entry: ConfigEntry,
 ) -> SVKHeatpumpOptionsFlow:
-    """Create the options flow."""
+    """Create options flow."""
     return SVKHeatpumpOptionsFlow(config_entry)
+
+
+# Note: Migration is automatically handled by Home Assistant when the config flow is loaded
+# The async_migrate_entry function is defined in config_flow.py and will be called automatically
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -271,7 +275,7 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
 
 def get_coordinator(hass: HomeAssistant, entry_id: str) -> SVKDataUpdateCoordinator:
-    """Get the coordinator for a config entry.
+    """Get coordinator for a config entry.
     
     Args:
         hass: The Home Assistant instance.
@@ -281,13 +285,13 @@ def get_coordinator(hass: HomeAssistant, entry_id: str) -> SVKDataUpdateCoordina
         The SVKDataUpdateCoordinator instance.
         
     Raises:
-        KeyError: If the coordinator is not found.
+        KeyError: If coordinator is not found.
     """
     return hass.data[DOMAIN][entry_id]
 
 
 async def _async_setup_services(hass: HomeAssistant, coordinator: SVKDataUpdateCoordinator) -> None:
-    """Set up the services for the SVK Heatpump integration.
+    """Set up services for SVK Heatpump integration.
     
     Args:
         hass: The Home Assistant instance.
@@ -301,6 +305,15 @@ async def _async_setup_services(hass: HomeAssistant, coordinator: SVKDataUpdateC
         schema=_get_set_value_service_schema(),
         supports_response=True,
     )
+    
+    # Register the refresh_entities service
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_REFRESH_ENTITIES,
+        async_refresh_entities_service,
+        schema=_get_refresh_entities_service_schema(),
+        supports_response=True,
+    )
 
 
 async def _async_unload_services(hass: HomeAssistant) -> None:
@@ -312,6 +325,10 @@ async def _async_unload_services(hass: HomeAssistant) -> None:
     # Unregister the set_value service
     if hass.services.has_service(DOMAIN, SERVICE_SET_VALUE):
         hass.services.async_remove(DOMAIN, SERVICE_SET_VALUE)
+    
+    # Unregister the refresh_entities service
+    if hass.services.has_service(DOMAIN, SERVICE_REFRESH_ENTITIES):
+        hass.services.async_remove(DOMAIN, SERVICE_REFRESH_ENTITIES)
 
 
 def _get_set_value_service_schema():
@@ -513,3 +530,69 @@ async def async_set_value_service(call: ServiceCall) -> Dict[str, Any]:
         "success_count": len(results["success"]),
         "failed_count": len(results["failed"])
     }
+
+
+def _get_refresh_entities_service_schema():
+    """Get the schema for the refresh_entities service.
+    
+    Returns:
+        The service schema.
+    """
+    import voluptuous as vol
+    
+    return vol.Schema({})  # No parameters required
+
+
+async def async_refresh_entities_service(call: ServiceCall) -> Dict[str, Any]:
+    """Handle the refresh_entities service call.
+    
+    Args:
+        call: The service call.
+        
+    Returns:
+        A dictionary with the service result.
+        
+    Raises:
+        HomeAssistantError: If an error occurs during the operation.
+    """
+    import logging
+    service_logger = logging.getLogger(__name__ + ".service")
+    
+    hass = call.hass
+    service_logger.info("Refresh entities service called")
+    
+    # Check if DOMAIN is in hass.data
+    if DOMAIN not in hass.data:
+        error_msg = f"Domain {DOMAIN} not found in hass.data"
+        service_logger.error("Service call failed: %s", error_msg)
+        raise HomeAssistantError(error_msg)
+    
+    # Get the single coordinator (since we now only allow single instance)
+    if not hass.data[DOMAIN]:
+        error_msg = "No SVK Heatpump coordinator found. Is the integration configured?"
+        service_logger.error("Service call failed: %s", error_msg)
+        raise HomeAssistantError(error_msg)
+    
+    # Get the first (and only) coordinator from the domain data
+    coordinator = next(iter(hass.data[DOMAIN].values()))
+    
+    if not isinstance(coordinator, SVKDataUpdateCoordinator):
+        error_msg = "Invalid coordinator type found in hass.data"
+        service_logger.error("Service call failed: %s", error_msg)
+        raise HomeAssistantError(error_msg)
+    
+    try:
+        # Call the coordinator's refresh method
+        await coordinator.async_refresh_entity_registry_status()
+        
+        service_logger.info("Entity registry status refresh completed successfully")
+        
+        return {
+            "success": True,
+            "message": "Entity registry status refreshed successfully"
+        }
+        
+    except Exception as ex:
+        error_msg = f"Error refreshing entity registry status: {str(ex)}"
+        service_logger.error("Service call failed: %s", error_msg, exc_info=True)
+        raise HomeAssistantError(error_msg)

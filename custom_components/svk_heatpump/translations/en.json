@@ -28,6 +28,10 @@
       "cannot_connect": "Cannot connect to heat pump",
       "timeout": "Connection timeout",
       "invalid_fetch_interval": "Fetch interval must be between 10 and 300 seconds",
+      "invalid_host": "Invalid host",
+      "invalid_username": "Invalid username",
+      "invalid_password": "Invalid password",
+      "invalid_response": "Invalid response from heat pump",
       "unknown": "Unknown error"
     },
     "abort": {
@@ -39,15 +43,38 @@
     "step": {
       "init": {
         "title": "SVK Heatpump Options",
+        "description": "Select what you want to configure for your SVK heat pump"
+      },
+      "connection": {
+        "title": "Connection Settings",
+        "description": "Configure connection parameters for your SVK heat pump",
+        "data": {
+          "host": "Host/IP",
+          "username": "Username",
+          "password": "Password"
+        }
+      },
+      "options": {
+        "title": "Integration Options",
         "description": "Configure options for your SVK heat pump",
         "data": {
           "write_access": "Enable Write Access",
           "fetch_interval": "Fetch Interval (seconds)"
         }
+      },
+      "all": {
+        "title": "Configure All Settings",
+        "description": "Configure both connection and integration options"
       }
     },
     "error": {
-      "invalid_fetch_interval": "Fetch interval must be between 10 and 300 seconds"
+      "invalid_fetch_interval": "Fetch interval must be between 10 and 300 seconds",
+      "invalid_host": "Invalid host",
+      "invalid_username": "Invalid username",
+      "invalid_password": "Invalid password",
+      "invalid_response": "Invalid response from heat pump",
+      "save_failed": "Failed to save configuration. Please try again.",
+      "configuration_failed": "Failed to save configuration"
     }
   },
   "entity": {

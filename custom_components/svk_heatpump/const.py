@@ -34,6 +34,7 @@ ENDPOINT_WRITE = "/cgi-bin/rdb_edit.cgi"
 
 # Service names
 SERVICE_SET_VALUE = "set_value"
+SERVICE_REFRESH_ENTITIES = "refresh_entities"
 
 # Platform definitions
 PLATFORMS = [Platform.SENSOR]
@@ -99,6 +100,18 @@ class Catalog:
 
     def get_enabled_entities(self) -> List[CatalogEntity]:
         """Get all enabled entities from the catalog."""
+        return [entity for entity in self.sensors if entity.enabled]
+
+    def get_all_entities(self) -> List[CatalogEntity]:
+        """Get all entities from the catalog regardless of enabled status."""
+        return self.sensors
+
+    def get_fetchable_entities(self) -> List[CatalogEntity]:
+        """Get entities that should be actively fetched (both catalog-enabled and user-enabled).
+        
+        Returns entities that have enabled=True in the catalog, as these are the ones
+        that should be polled from the heat pump API.
+        """
         return [entity for entity in self.sensors if entity.enabled]
 
     def get_entity_by_id(self, entity_id: str) -> Optional[CatalogEntity]:

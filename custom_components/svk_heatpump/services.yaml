@@ -21,3 +21,8 @@
       required: true
       selector:
         text:
+
+.svk_heatpump.refresh_entities:
+  name: Refresh entities
+  description: Refresh entity registry status and update data fetching accordingly
+  fields: {}

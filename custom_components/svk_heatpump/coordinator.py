@@ -10,6 +10,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady, HomeAssistantError
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import (
@@ -62,12 +63,14 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
         self.username = config_entry.data[CONF_USERNAME]
         self.password = config_entry.data[CONF_PASSWORD]
         
-        # Get options with defaults
-        self.write_access = config_entry.data.get(
-            CONF_WRITE_ACCESS, DEFAULT_WRITE_ACCESS
+        # Get options with defaults from config_entry.options first, then fallback to data for migration
+        self.write_access = config_entry.options.get(
+            CONF_WRITE_ACCESS,
+            config_entry.data.get(CONF_WRITE_ACCESS, DEFAULT_WRITE_ACCESS)
         )
-        self.fetch_interval = config_entry.data.get(
-            CONF_FETCH_INTERVAL, DEFAULT_FETCH_INTERVAL
+        self.fetch_interval = config_entry.options.get(
+            CONF_FETCH_INTERVAL,
+            config_entry.data.get(CONF_FETCH_INTERVAL, DEFAULT_FETCH_INTERVAL)
         )
 
         # Initialize API client
@@ -132,8 +135,8 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
         
         try:
             # Check if catalog is available
-            if not self.catalog or not self.enabled_entities:
-                _LOGGER.warning("Catalog not available or no enabled entities")
+            if not self.catalog:
+                _LOGGER.warning("Catalog not available")
                 # Try to reload catalog
                 try:
                     self.catalog = await async_load_catalog()
@@ -142,11 +145,67 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
                     _LOGGER.error("Failed to reload catalog: %s", ex)
                     raise UpdateFailed(f"Catalog unavailable: {ex}")
             
-            # Get IDs of all enabled entities
-            entity_ids = [entity.id for entity in self.enabled_entities]
+            # Get ALL entities from catalog (both enabled and disabled)
+            all_entities = self.catalog.get_all_entities()
+            
+            # Filter entities based on user-enabled status in entity registry
+            registry = er.async_get(self.hass)
+            enabled_entities = []
+            
+            for entity in all_entities:
+                # Construct the expected entity ID using the same format as in sensor.py
+                # Use get_unique_id to ensure consistency
+                unique_id = get_unique_id(self.host, entity.id)
+                # Find the entity ID from the unique ID in the registry
+                entity_id = registry.async_get_entity_id("sensor", DOMAIN, unique_id)
+                
+                # Check if entity exists in registry and is enabled by user
+                try:
+                    entity_entry = registry.async_get(entity_id) if entity_id else None
+                    
+                    # Determine if entity should be fetched
+                    should_fetch = False
+                    
+                    if entity_entry is None:
+                        # Entity not in registry yet (first setup)
+                        # Only fetch if catalog-enabled
+                        should_fetch = entity.enabled
+                        _LOGGER.debug(
+                            "Entity %s not in registry, catalog_enabled=%s, will_fetch=%s",
+                            entity_id, entity.enabled, should_fetch
+                        )
+                    else:
+                        # Entity exists in registry
+                        if entity_entry.disabled:
+                            # User has disabled the entity
+                            should_fetch = False
+                            _LOGGER.debug(
+                                "Entity %s is disabled by user, skipping fetch",
+                                entity_id
+                            )
+                        else:
+                            # User has enabled the entity (entity_entry.disabled is False)
+                            # Always fetch if the user has enabled it, regardless of catalog status
+                            should_fetch = True
+                            _LOGGER.debug(
+                                "Entity %s is enabled by user, catalog_enabled=%s, will_fetch=%s",
+                                entity_id, entity.enabled, should_fetch
+                            )
+                    
+                    if should_fetch:
+                        enabled_entities.append(entity)
+                        
+                except Exception as ex:
+                    _LOGGER.warning("Error checking entity registry status for %s: %s", entity_id, ex)
+                    # Include entity if we can't determine status (fail-safe)
+                    # But only if it's catalog-enabled
+                    if entity.enabled:
+                        enabled_entities.append(entity)
+            
+            entity_ids = [entity.id for entity in enabled_entities]
             
             if not entity_ids:
-                _LOGGER.warning("No enabled entities found in catalog")
+                _LOGGER.warning("No enabled entities found (catalog + user enabled)")
                 self._connection_state = "error"
                 return {}
             
@@ -155,7 +214,7 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
             
             # Transform and store data
             data_dict = {}
-            for entity in self.enabled_entities:
+            for entity in enabled_entities:
                 entity_id = entity.id
                 if entity_id in raw_data:
                     raw_value = raw_data[entity_id]
@@ -475,6 +534,9 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
         """
         try:
             # Update configuration
+            old_write_access = self.write_access
+            old_fetch_interval = self.fetch_interval
+            
             self.write_access = options.get(CONF_WRITE_ACCESS, self.write_access)
             new_fetch_interval = options.get(CONF_FETCH_INTERVAL, self.fetch_interval)
             
@@ -489,17 +551,69 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
             self._last_failure_time = None
             self._extended_backoff_until = None
             
-            # Note: Config entry data is updated by the options flow
+            # Log changes
+            if old_write_access != self.write_access or old_fetch_interval != self.fetch_interval:
+                _LOGGER.info(
+                    "Updated configuration: write_access=%s->%s, fetch_interval=%d->%d",
+                    old_write_access, self.write_access,
+                    old_fetch_interval, self.fetch_interval,
+                )
+            
+            # Note: Config entry options are updated by the options flow
             # This avoids circular import issues
             
-            _LOGGER.info(
-                "Updated configuration: write_access=%s, fetch_interval=%d",
-                self.write_access,
-                self.fetch_interval,
-            )
         except Exception as ex:
             _LOGGER.error("Error updating configuration: %s", ex)
             raise HomeAssistantError(f"Failed to update configuration: {ex}")
+
+    async def async_update_connection(self, connection_data: Dict[str, Any]) -> None:
+        """Update connection parameters.
+
+        Args:
+            connection_data: The new connection parameters.
+        """
+        try:
+            # Store old values for logging
+            old_host = self.host
+            old_username = self.username
+            
+            # Update connection parameters
+            self.host = connection_data.get(CONF_HOST, self.host)
+            self.username = connection_data.get(CONF_USERNAME, self.username)
+            self.password = connection_data.get(CONF_PASSWORD, self.password)
+            
+            # Reinitialize API client with new connection parameters
+            self.api = SVKHeatpumpAPI(
+                host=self.host,
+                username=self.username,
+                password=self.password,
+            )
+            
+            # Reset failure counters when connection is updated
+            self._consecutive_failures = 0
+            self._last_failure_time = None
+            self._extended_backoff_until = None
+            self._connection_state = "disconnected"
+            
+            # Log changes
+            if old_host != self.host or old_username != self.username:
+                _LOGGER.info(
+                    "Updated connection parameters: host=%s->%s, username=%s->%s",
+                    old_host, self.host,
+                    old_username, self.username,
+                )
+            
+            # Test the new connection
+            try:
+                await self.async_test_connection()
+                _LOGGER.info("New connection test successful")
+            except Exception as ex:
+                _LOGGER.warning("New connection test failed: %s", ex)
+                # Don't raise here - let the next update cycle handle it
+            
+        except Exception as ex:
+            _LOGGER.error("Error updating connection parameters: %s", ex)
+            raise HomeAssistantError(f"Failed to update connection parameters: {ex}")
 
     async def async_shutdown(self) -> None:
         """Clean up resources when shutting down."""
@@ -539,3 +653,22 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
         """Mark reauthentication as complete."""
         self._reauth_in_progress = False
         _LOGGER.info("Reauthentication marked as complete")
+    
+    async def async_refresh_entity_registry_status(self) -> None:
+        """Force refresh of data to account for entity registry changes.
+        
+        This method should be called when entities are enabled/disabled by the user
+        to ensure the coordinator starts/stops fetching data for those entities.
+        """
+        _LOGGER.debug("Refreshing coordinator data due to entity registry changes")
+        try:
+            # Reset failure counters to ensure immediate update
+            self._consecutive_failures = 0
+            self._last_failure_time = None
+            self._extended_backoff_until = None
+            
+            # Force an immediate update
+            await self.async_request_refresh()
+            _LOGGER.debug("Entity registry status refresh initiated")
+        except Exception as ex:
+            _LOGGER.error("Error refreshing entity registry status: %s", ex)
