@@ -133,7 +133,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         
         # Register update listener for configuration changes
         try:
-            entry.async_on_unload(entry.add_update_listener(async_reload_entry))
+            entry.async_on_unload(entry.add_update_listener(_options_updated))
             setup_logger.debug(
                 "Update listener registered for entry %s",
                 entry.entry_id
@@ -270,6 +270,50 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     except Exception as ex:
         reload_logger.error(
             "Reload failed for entry %s: %s",
+            entry.entry_id, ex, exc_info=True
+        )
+
+
+async def _options_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Handle options update."""
+    import logging
+    options_logger = logging.getLogger(__name__ + ".options")
+    
+    options_logger.info(
+        "Options updated for SVK Heatpump integration entry %s",
+        entry.entry_id
+    )
+    
+    try:
+        # Get the coordinator for this entry
+        if DOMAIN not in hass.data or entry.entry_id not in hass.data[DOMAIN]:
+            options_logger.error(
+                "Coordinator not found for entry %s during options update",
+                entry.entry_id
+            )
+            return
+        
+        coordinator = hass.data[DOMAIN][entry.entry_id]
+        
+        # Update coordinator with new options
+        await coordinator.async_update_config(entry.options)
+        
+        options_logger.info(
+            "Coordinator updated with new options for entry %s",
+            entry.entry_id
+        )
+        
+        # Reload the entry to apply all changes
+        await hass.config_entries.async_reload(entry.entry_id)
+        
+        options_logger.info(
+            "Entry reloaded after options update for entry %s",
+            entry.entry_id
+        )
+        
+    except Exception as ex:
+        options_logger.error(
+            "Options update failed for entry %s: %s",
             entry.entry_id, ex, exc_info=True
         )
 

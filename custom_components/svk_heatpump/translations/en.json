@@ -15,12 +15,24 @@
         "description": "Configure options for your SVK heat pump",
         "data": {
           "write_access": "Enable Write Access",
-          "fetch_interval": "Fetch Interval (seconds)"
+          "fetch_interval": "Fetch Interval (seconds)",
+          "chunk_size": "Chunk Size",
+          "api_mode": "API Mode",
+          "request_timeout": "Request Timeout (seconds)"
         }
       },
       "reauth": {
         "title": "Reauthenticate SVK Heatpump",
         "description": "Please re-enter your credentials for the SVK heat pump"
+      },
+      "reconfigure": {
+        "title": "Reconfigure SVK Heatpump",
+        "description": "Update connection settings for your SVK heat pump",
+        "data": {
+          "host": "Host/IP",
+          "username": "Username",
+          "password": "Password"
+        }
       }
     },
     "error": {
@@ -28,6 +40,8 @@
       "cannot_connect": "Cannot connect to heat pump",
       "timeout": "Connection timeout",
       "invalid_fetch_interval": "Fetch interval must be between 10 and 300 seconds",
+      "invalid_chunk_size": "Chunk size must be between 5 and 100",
+      "invalid_request_timeout": "Request timeout must be between 5 and 60 seconds",
       "invalid_host": "Invalid host",
       "invalid_username": "Invalid username",
       "invalid_password": "Invalid password",
@@ -59,7 +73,10 @@
         "description": "Configure options for your SVK heat pump",
         "data": {
           "write_access": "Enable Write Access",
-          "fetch_interval": "Fetch Interval (seconds)"
+          "fetch_interval": "Fetch Interval (seconds)",
+          "chunk_size": "Chunk Size",
+          "api_mode": "API Mode",
+          "request_timeout": "Request Timeout (seconds)"
         }
       },
       "all": {
@@ -69,6 +86,8 @@
     },
     "error": {
       "invalid_fetch_interval": "Fetch interval must be between 10 and 300 seconds",
+      "invalid_chunk_size": "Chunk size must be between 5 and 100",
+      "invalid_request_timeout": "Request timeout must be between 5 and 60 seconds",
       "invalid_host": "Invalid host",
       "invalid_username": "Invalid username",
       "invalid_password": "Invalid password",

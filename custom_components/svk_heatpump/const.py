@@ -23,10 +23,16 @@ LOGGER = logging.getLogger(__package__)
 # Configuration keys
 CONF_WRITE_ACCESS = "write_access"
 CONF_FETCH_INTERVAL = "fetch_interval"
+CONF_CHUNK_SIZE = "chunk_size"
+CONF_API_MODE = "api_mode"
+CONF_REQUEST_TIMEOUT = "request_timeout"
 
 # Default values
 DEFAULT_WRITE_ACCESS = False
 DEFAULT_FETCH_INTERVAL = 30
+DEFAULT_CHUNK_SIZE = 25
+DEFAULT_API_MODE = "json"
+DEFAULT_REQUEST_TIMEOUT = 30
 
 # API endpoints
 ENDPOINT_READ = "/cgi-bin/json_values.cgi"
@@ -49,6 +55,9 @@ CONFIG_SCHEMA = {
     vol.Required(CONF_PASSWORD): str,
     vol.Optional(CONF_WRITE_ACCESS, default=DEFAULT_WRITE_ACCESS): bool,
     vol.Optional(CONF_FETCH_INTERVAL, default=DEFAULT_FETCH_INTERVAL): int,
+    vol.Optional(CONF_CHUNK_SIZE, default=DEFAULT_CHUNK_SIZE): vol.All(int, vol.Range(min=5, max=100)),
+    vol.Optional(CONF_API_MODE, default=DEFAULT_API_MODE): vol.In(["json", "html"]),
+    vol.Optional(CONF_REQUEST_TIMEOUT, default=DEFAULT_REQUEST_TIMEOUT): vol.All(int, vol.Range(min=5, max=60)),
 }
 
 

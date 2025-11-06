@@ -43,6 +43,9 @@ class SVKHeatpumpAPI:
         use_ssl: bool = False,
         timeout: float = 10.0,
         max_retries: int = 3,
+        chunk_size: int = 25,
+        api_mode: str = "json",
+        request_timeout: int = 30,
     ) -> None:
         """Initialize the API client.
         
@@ -53,6 +56,9 @@ class SVKHeatpumpAPI:
             use_ssl: Whether to use HTTPS (default: False)
             timeout: Request timeout in seconds (default: 10.0)
             max_retries: Maximum number of retries (default: 3)
+            chunk_size: Number of entities to request in a single batch (default: 25)
+            api_mode: API mode to use (json or html) (default: "json")
+            request_timeout: Request timeout in seconds (default: 30)
         """
         self.host = host
         self.username = username
@@ -60,6 +66,9 @@ class SVKHeatpumpAPI:
         self.use_ssl = use_ssl
         self.timeout = timeout
         self.max_retries = max_retries
+        self.chunk_size = chunk_size
+        self.api_mode = api_mode
+        self.request_timeout = request_timeout
         
         # Build base URL with protocol
         protocol = "https" if use_ssl else "http"
@@ -196,6 +205,8 @@ class SVKHeatpumpAPI:
         params = {"ids": ";".join(ids)}
         
         LOGGER.debug("Reading values for %d entities: %s", len(ids), ids[:5])  # Log first 5 IDs
+        LOGGER.debug("Using chunk_size=%d, api_mode=%s, request_timeout=%d",
+                    self.chunk_size, self.api_mode, self.request_timeout)
         
         last_exception = None
         start_time = time.time()
