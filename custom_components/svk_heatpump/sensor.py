@@ -300,12 +300,12 @@ async def async_setup_entry(
             )
             return
         
-        # Create sensor entities for all entities with platform "sensor"
+        # Create sensor entities only for enabled entities with platform "sensor"
         sensors: List[SVKSensor] = []
         for entity in all_entities:
             try:
-                # Only create sensors for entities with platform "sensor"
-                if entity.platform == "sensor":
+                # Only create sensors for entities with platform "sensor" AND enabled: true
+                if entity.platform == "sensor" and entity.enabled:
                     sensor = SVKSensor(coordinator, entry.entry_id, entity)
                     
                     # Initialize the disabled status tracking
@@ -317,6 +317,11 @@ async def async_setup_entry(
                     _LOGGER.debug(
                         "Created sensor for entity %s (%s) - catalog_enabled: %s, user_disabled: %s",
                         entity.key, entity.id, entity.enabled, sensor._was_disabled
+                    )
+                elif entity.platform == "sensor" and not entity.enabled:
+                    _LOGGER.debug(
+                        "Skipping disabled entity %s (%s) - catalog_enabled: %s",
+                        entity.key, entity.id, entity.enabled
                     )
             except Exception as ex:
                 _LOGGER.error(
