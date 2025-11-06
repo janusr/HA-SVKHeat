@@ -28,6 +28,10 @@
       "cannot_connect": "Kan ikke forbinde til varmepumpe",
       "timeout": "Forbindelse timeout",
       "invalid_fetch_interval": "Hent interval skal være mellem 10 og 300 sekunder",
+      "invalid_host": "Ugyldig vært",
+      "invalid_username": "Ugyldigt brugernavn",
+      "invalid_password": "Ugyldig adgangskode",
+      "invalid_response": "Ugyldigt svar fra varmepumpe",
       "unknown": "Ukendt fejl"
     },
     "abort": {
@@ -39,15 +43,38 @@
     "step": {
       "init": {
         "title": "SVK Varmepumpe Indstillinger",
+        "description": "Vælg hvad du vil konfigurere for din SVK varmepumpe"
+      },
+      "connection": {
+        "title": "Forbindelsesindstillinger",
+        "description": "Konfigurer forbindelsesparametre for din SVK varmepumpe",
+        "data": {
+          "host": "Vært/IP",
+          "username": "Brugernavn",
+          "password": "Adgangskode"
+        }
+      },
+      "options": {
+        "title": "Integrationsindstillinger",
         "description": "Konfigurer indstillinger for din SVK varmepumpe",
         "data": {
           "write_access": "Aktiver Skriveadgang",
           "fetch_interval": "Hent Interval (sekunder)"
         }
+      },
+      "all": {
+        "title": "Konfigurer Alle Indstillinger",
+        "description": "Konfigurer både forbindelses- og integrationsindstillinger"
       }
     },
     "error": {
-      "invalid_fetch_interval": "Hent interval skal være mellem 10 og 300 sekunder"
+      "invalid_fetch_interval": "Hent interval skal være mellem 10 og 300 sekunder",
+      "invalid_host": "Ugyldig vært",
+      "invalid_username": "Ugyldigt brugernavn",
+      "invalid_password": "Ugyldig adgangskode",
+      "invalid_response": "Ugyldigt svar fra varmepumpe",
+      "save_failed": "Kunne ikke gemme konfiguration. Prøv venligst igen.",
+      "configuration_failed": "Kunne ikke gemme konfiguration"
     }
   },
   "entity": {

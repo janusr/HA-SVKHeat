@@ -38,8 +38,26 @@
   "options": {
     "step": {
       "init": {
-        "title": "SVK Heatpump Options",
-        "description": "Configure options for your SVK heat pump",
+        "title": "SVK Heatpump Configuration",
+        "description": "What would you like to configure?",
+        "menu_options": {
+          "connection": "Connection settings (host, username, password)",
+          "options": "Integration options (write access, fetch interval)",
+          "all": "All settings"
+        }
+      },
+      "connection": {
+        "title": "Connection Settings",
+        "description": "Configure how Home Assistant connects to your SVK heat pump.",
+        "data": {
+          "host": "Host/IP",
+          "username": "Username",
+          "password": "Password"
+        }
+      },
+      "options": {
+        "title": "Integration Options",
+        "description": "Configure how the integration behaves.",
         "data": {
           "write_access": "Enable Write Access",
           "fetch_interval": "Fetch Interval (seconds)"
@@ -47,7 +65,16 @@
       }
     },
     "error": {
-      "invalid_fetch_interval": "Fetch interval must be between 10 and 300 seconds"
+      "invalid_fetch_interval": "Fetch interval must be between 10 and 300 seconds",
+      "invalid_host": "Invalid host address",
+      "invalid_username": "Invalid username",
+      "invalid_password": "Invalid password",
+      "invalid_auth": "Authentication failed",
+      "cannot_connect": "Cannot connect to heat pump",
+      "timeout": "Connection timeout",
+      "invalid_response": "Invalid response from heat pump",
+      "save_failed": "Failed to save configuration. Please try again.",
+      "unknown": "Unknown error"
     }
   }
 }

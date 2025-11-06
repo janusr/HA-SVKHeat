@@ -1,7 +1,7 @@
 {
   "domain": "svk_heatpump",
   "name": "SVK Heatpump",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "documentation": "https://github.com/janusr/HA-SVKHeat",
   "issue_tracker": "https://github.com/janusr/HA-SVKHeat/issues",
   "dependencies": [],
@@ -9,5 +9,6 @@
   "requirements": ["httpx>=0.27.0", "PyYAML", "aiofiles"],
   "config_flow": true,
   "iot_class": "local_polling",
+  "logo": "logo.png",
   "single_config_entry": true
 }

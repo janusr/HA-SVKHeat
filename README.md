@@ -1,5 +1,7 @@
 # SVK Heatpump
 
+![SVK Heatpump Logo](custom_components/svk_heatpump/logo.png)
+
 Home Assistant custom component for SVK Heatpump monitoring and control.
 
 ## Features
@@ -41,30 +43,6 @@ The integration requires the following configuration:
 - Home Assistant 2023.1 or newer
 - Python 3.12 or newer
 - httpx>=0.27.0
-
-## Development
-
-This project uses a development container with all necessary tools pre-configured. See `.devcontainer/devcontainer.json` for details.
-
-### Development Setup
-
-1. Clone this repository
-2. Open in VS Code with the Dev Containers extension
-3. The container will be built automatically with all dependencies
-
-### Testing
-
-Run tests with:
-```bash
-pytest
-```
-
-### Code Quality
-
-Code formatting and linting tools are configured:
-- Black for code formatting
-- Ruff for linting
-- MyPy for type checking
 
 ## License
 
