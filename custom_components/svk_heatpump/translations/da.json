@@ -31,7 +31,8 @@
       "unknown": "Ukendt fejl"
     },
     "abort": {
-      "reauth_successful": "Genautentificering succesfuld"
+      "reauth_successful": "Genautentificering succesfuld",
+      "single_instance_allowed": "Kun en enkelt instans af SVK Varmepumpe integrationen er tilladt."
     }
   },
   "options": {
@@ -57,8 +58,25 @@
           "off": "Slukket",
           "ready": "Klar",
           "startup": "Opstart",
+          "hot_water": "Varmtvand",
+          "startup_2": "Opstart (2)",
           "heating": "Opvarmning",
-          "defrost": "Optøning"
+          "heat_pump_stop": "Varmepumpe stop",
+          "el_heating": "El-opvarmning",
+          "el_hot_water": "El-varmtvand",
+          "forced_cold_pump": "Tvunget kold pumpe",
+          "wait": "Vent",
+          "defrost": "Optøning",
+          "air_defrost": "Luftoptøning",
+          "hotgas_defrost": "Hotgas-optøning",
+          "drip_delay": "Dryp-forsinkelse",
+          "total_stop": "Total stop",
+          "el_heating_2": "El-opvarmning (2)",
+          "el_hot_water_2": "El-varmtvand (2)",
+          "pump_exercise": "Pumpeøvelse",
+          "startup_3": "Opstart (3)",
+          "forced_running": "Tvunget drift",
+          "manual": "Manuel"
         }
       },
       "theat_supply": {

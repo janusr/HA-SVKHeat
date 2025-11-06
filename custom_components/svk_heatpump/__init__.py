@@ -369,20 +369,19 @@ async def async_set_value_service(call: ServiceCall) -> Dict[str, Any]:
         service_logger.error("Service call failed: %s", error_msg)
         raise HomeAssistantError(error_msg)
     
-    # Find the coordinator for the relevant config entry
-    coordinators = [
-        coordinator for coordinator in hass.data[DOMAIN].values()
-        if isinstance(coordinator, SVKDataUpdateCoordinator)
-    ]
-    
-    if not coordinators:
-        error_msg = "No SVK Heatpump coordinators found. Is the integration configured?"
+    # Get the single coordinator (since we now only allow single instance)
+    if not hass.data[DOMAIN]:
+        error_msg = "No SVK Heatpump coordinator found. Is the integration configured?"
         service_logger.error("Service call failed: %s", error_msg)
         raise HomeAssistantError(error_msg)
     
-    # For now, we'll use the first coordinator found
-    # In a more complex setup, we might need to match entities to specific coordinators
-    coordinator = coordinators[0]
+    # Get the first (and only) coordinator from the domain data
+    coordinator = next(iter(hass.data[DOMAIN].values()))
+    
+    if not isinstance(coordinator, SVKDataUpdateCoordinator):
+        error_msg = "Invalid coordinator type found in hass.data"
+        service_logger.error("Service call failed: %s", error_msg)
+        raise HomeAssistantError(error_msg)
     
     # Check if coordinator is in a state that allows writes
     if coordinator.is_reauth_in_progress():

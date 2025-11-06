@@ -31,7 +31,8 @@
       "unknown": "Unknown error"
     },
     "abort": {
-      "reauth_successful": "Reauthentication successful"
+      "reauth_successful": "Reauthentication successful",
+      "single_instance_allowed": "Only a single instance of SVK Heatpump integration is allowed."
     }
   },
   "options": {

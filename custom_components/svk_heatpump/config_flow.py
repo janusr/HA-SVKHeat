@@ -32,6 +32,10 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: Optional[Dict[str, Any]] = None
     ) -> FlowResult:
         """Handle the initial step."""
+        existing_entries = self._async_current_entries()
+        if existing_entries:
+            return self.async_abort(reason="single_instance_allowed")
+            
         errors: Dict[str, str] = {}
 
         if user_input is not None:

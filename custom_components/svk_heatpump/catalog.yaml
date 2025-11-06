@@ -16,8 +16,25 @@ sensors:
       "0": "off"
       "1": "ready"
       "2": "startup"
+      "3": "hot_water"
+      "4": "startup_2"
       "5": "heating"
-      "7": "defrost"
+      "6": "heat_pump_stop"
+      "7": "el_heating"
+      "8": "el_hot_water"
+      "9": "forced_cold_pump"
+      "10": "wait"
+      "11": "defrost"
+      "12": "air_defrost"
+      "13": "hotgas_defrost"
+      "14": "drip_delay"
+      "15": "total_stop"
+      "16": "el_heating_2"
+      "17": "el_hot_water_2"
+      "18": "pump_exercise"
+      "19": "startup_3"
+      "20": "forced_running"
+      "21": "manual"
     precision: 0
     translation_key: heatpump_state
 
@@ -112,7 +129,7 @@ sensors:
 
   - id: "262"
     key: tevap
-    enabled: true
+    enabled: false
     platform: sensor
     device_class: temperature
     unit_of_measurement: "°C"
@@ -145,7 +162,7 @@ sensors:
 
   - id: "364"
     key: solarpanel_state
-    enabled: true
+    enabled: false
     platform: sensor
     device_class: enum
     unit_of_measurement: ""
@@ -160,7 +177,7 @@ sensors:
 
   - id: "264"
     key: tsolar_panel
-    enabled: true
+    enabled: false
     platform: sensor
     device_class: temperature
     unit_of_measurement: "°C"
@@ -171,7 +188,7 @@ sensors:
 
   - id: "263"
     key: tsolar_water
-    enabled: true
+    enabled: false
     platform: sensor
     device_class: temperature
     unit_of_measurement: "°C"
