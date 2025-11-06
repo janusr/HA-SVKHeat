@@ -1,4 +1,98 @@
+# Roo AI agent files
 .roo/
+./AGENTS.md
 
-AGENTS.md
+# Home Assistant configuration and cache
 config/
+*.log
+home-assistant.log
+home-assistant_v2.db
+home-assistant_v2.db-journal
+*.db
+*.db-journal
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-*
+Atom/
+
+# Testing and coverage
+.coverage
+.pytest_cache/
+.tox/
+htmlcov/
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Environments
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Home Assistant specific
+.esphome/
+.esphomebuild/
+storage/
+.tts/
+www/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old

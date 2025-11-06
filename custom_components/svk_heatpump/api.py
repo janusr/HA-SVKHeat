@@ -1,9 +1,11 @@
 """API client for SVK Heatpump integration."""
 
 import asyncio
+import ipaddress
 import json
 import logging
 import re
+import ssl
 import time
 import xml.etree.ElementTree as ET
 from typing import Any, Dict, List, Optional, Union
@@ -66,21 +68,110 @@ class SVKHeatpumpAPI:
         # Set up authentication
         self._auth = httpx.DigestAuth(username, password)
         
-        # Configure client with reasonable defaults
-        self._client_config = {
-            "auth": self._auth,
-            "timeout": httpx.Timeout(timeout, connect=5.0),
-            "follow_redirects": True,
-            "headers": {
-                "User-Agent": "HomeAssistant-SVKHeatpump/1.0",
-                "Accept": "application/json, application/xml, text/plain",
-                "Connection": "keep-alive",
-            },
-        }
+        # Determine if SSL verification should be used
+        self._verify_ssl = self._should_verify_ssl(host)
+        
+        # Create persistent client
+        self._client: Optional[httpx.AsyncClient] = None
         
         # Track connection state
         self._last_success_time = None
         self._consecutive_failures = 0
+        self._client_initialized = False
+
+    def _should_verify_ssl(self, host: str) -> bool:
+        """Determine if SSL verification should be used based on host.
+        
+        Args:
+            host: The host/IP address to connect to
+            
+        Returns:
+            True if SSL verification should be used, False otherwise
+        """
+        try:
+            # Try to parse as IP address
+            ip = ipaddress.ip_address(host)
+            
+            # Check if it's a private/local IP address
+            if isinstance(ip, ipaddress.IPv4Address):
+                return not (ip.is_private or ip.is_loopback or ip.is_link_local)
+            elif isinstance(ip, ipaddress.IPv6Address):
+                return not (ip.is_private or ip.is_loopback or ip.is_link_local)
+        except ValueError:
+            # Not an IP address, treat as hostname
+            # For hostnames, we'll verify SSL unless it's a common local hostname
+            local_hostnames = [
+                "localhost",
+                "homeassistant.local",
+                "hassio.local",
+            ]
+            return not any(host.lower().startswith(local_name) for local_name in local_hostnames)
+        
+        # Default to verifying SSL for safety
+        return True
+
+    def _create_ssl_context(self) -> Optional[ssl.SSLContext]:
+        """Create an appropriate SSL context based on verification requirements.
+        
+        Returns:
+            SSL context if SSL is enabled, None otherwise
+        """
+        if not self.use_ssl:
+            return None
+            
+        if self._verify_ssl:
+            # Use default SSL context with verification
+            return None  # httpx will use default verification
+        else:
+            # Create unverified SSL context for local connections
+            context = ssl.create_default_context()
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+            return context
+
+    async def _get_client(self) -> httpx.AsyncClient:
+        """Get or create the persistent HTTP client.
+        
+        Returns:
+            The configured AsyncClient instance
+        """
+        if not self._client_initialized or self._client is None:
+            # Create SSL context if needed - run in executor to avoid blocking
+            ssl_context = None
+            if self.use_ssl:
+                ssl_context = await asyncio.to_thread(self._create_ssl_context)
+            
+            # Configure client with SSL settings
+            client_config = {
+                "auth": self._auth,
+                "timeout": httpx.Timeout(self.timeout, connect=5.0),
+                "follow_redirects": True,
+                "headers": {
+                    "User-Agent": "HomeAssistant-SVKHeatpump/1.0",
+                    "Accept": "application/json, application/xml, text/plain",
+                    "Connection": "keep-alive",
+                },
+            }
+            
+            # Add SSL configuration
+            if self.use_ssl:
+                if ssl_context:
+                    client_config["verify"] = ssl_context
+                else:
+                    client_config["verify"] = self._verify_ssl
+            
+            # Create the persistent client
+            self._client = httpx.AsyncClient(**client_config)
+            self._client_initialized = True
+            
+        return self._client
+
+    async def async_close(self) -> None:
+        """Close the HTTP client and clean up resources."""
+        if self._client:
+            await self._client.aclose()
+            self._client = None
+            self._client_initialized = False
 
     async def async_read_values(self, ids: List[str]) -> Dict[str, Any]:
         """Read values from the heat pump.
@@ -109,6 +200,9 @@ class SVKHeatpumpAPI:
         last_exception = None
         start_time = time.time()
         
+        # Get the persistent client
+        client = await self._get_client()
+        
         for attempt in range(self.max_retries + 1):
             try:
                 # Add jitter to avoid thundering herd
@@ -116,36 +210,35 @@ class SVKHeatpumpAPI:
                     jitter = min(0.5, 0.1 * attempt)
                     await asyncio.sleep(2 ** attempt + jitter)
                 
-                async with httpx.AsyncClient(**self._client_config) as client:
-                    LOGGER.debug("Attempting to read values (attempt %d/%d)", attempt + 1, self.max_retries + 1)
-                    response = await client.get(url, params=params)
-                    
-                    # Log response details for debugging
-                    LOGGER.debug(
-                        "Response status: %d, content-type: %s, content-length: %d",
-                        response.status_code,
-                        response.headers.get("content-type", "unknown"),
-                        len(response.content)
-                    )
-                    
-                    # Handle authentication errors
-                    if response.status_code == 401:
-                        self._consecutive_failures += 1
-                        raise SVKAuthenticationError("Authentication failed. Check credentials.")
-                    
-                    # Handle other HTTP errors
-                    response.raise_for_status()
-                    
-                    # Parse response based on content type
-                    result = await self._parse_response(response)
-                    
-                    # Reset failure counters on success
-                    self._consecutive_failures = 0
-                    self._last_success_time = time.time()
-                    
-                    LOGGER.debug("Successfully read %d values in %.2f seconds", len(result), time.time() - start_time)
-                    return result
-                    
+                LOGGER.debug("Attempting to read values (attempt %d/%d)", attempt + 1, self.max_retries + 1)
+                response = await client.get(url, params=params)
+                
+                # Log response details for debugging
+                LOGGER.debug(
+                    "Response status: %d, content-type: %s, content-length: %d",
+                    response.status_code,
+                    response.headers.get("content-type", "unknown"),
+                    len(response.content)
+                )
+                
+                # Handle authentication errors
+                if response.status_code == 401:
+                    self._consecutive_failures += 1
+                    raise SVKAuthenticationError("Authentication failed. Check credentials.")
+                
+                # Handle other HTTP errors
+                response.raise_for_status()
+                
+                # Parse response based on content type
+                result = await self._parse_response(response)
+                
+                # Reset failure counters on success
+                self._consecutive_failures = 0
+                self._last_success_time = time.time()
+                
+                LOGGER.debug("Successfully read %d values in %.2f seconds", len(result), time.time() - start_time)
+                return result
+                       
             except httpx.TimeoutException as ex:
                 last_exception = SVKTimeoutError(f"Request timed out after {self.timeout} seconds")
                 self._consecutive_failures += 1
@@ -241,6 +334,9 @@ class SVKHeatpumpAPI:
         last_exception = None
         start_time = time.time()
         
+        # Get the persistent client
+        client = await self._get_client()
+        
         for attempt in range(self.max_retries + 1):
             try:
                 # Add jitter to avoid thundering herd
@@ -248,62 +344,61 @@ class SVKHeatpumpAPI:
                     jitter = min(0.5, 0.1 * attempt)
                     await asyncio.sleep(2 ** attempt + jitter)
                 
-                async with httpx.AsyncClient(**self._client_config) as client:
-                    LOGGER.debug(
-                        "Attempting to write value (attempt %d/%d): itemno=%s, value=%s",
-                        attempt + 1, self.max_retries + 1, itemno, value
-                    )
-                    response = await client.get(url, params=params)
-                    
-                    # Log response details for debugging
-                    LOGGER.debug(
-                        "Write response status: %d, content-type: %s, content-length: %d",
-                        response.status_code,
-                        response.headers.get("content-type", "unknown"),
-                        len(response.content)
-                    )
-                    
-                    # Handle authentication errors
-                    if response.status_code == 401:
-                        self._consecutive_failures += 1
-                        raise SVKAuthenticationError("Authentication failed. Check credentials.")
-                    
-                    # Handle write permission errors
-                    if response.status_code == 403:
-                        self._consecutive_failures += 1
-                        raise SVKWriteAccessError("Write access denied. Check permissions.")
-                    
-                    # Check if operation was successful
-                    if response.status_code == 200:
-                        # Try to parse response to confirm success
-                        try:
-                            if response.headers.get("content-type", "").startswith("application/json"):
-                                result = response.json()
-                                success = result.get("success", True)
-                                if not success:
-                                    LOGGER.warning("Write operation returned success=false: %s", result)
-                            else:
-                                # For non-JSON responses, assume success if status is 200
-                                success = True
-                            
-                            # Reset failure counters on success
-                            self._consecutive_failures = 0
-                            self._last_success_time = time.time()
-                            
-                            LOGGER.debug(
-                                "Successfully wrote value %s to %s in %.2f seconds",
-                                value, itemno, time.time() - start_time
-                            )
-                            return success
-                        except (json.JSONDecodeError, KeyError) as ex:
-                            # If we can't parse the response, assume success based on status code
-                            LOGGER.debug("Could not parse write response, assuming success: %s", ex)
-                            self._consecutive_failures = 0
-                            self._last_success_time = time.time()
-                            return True
-                    else:
-                        response.raise_for_status()
+                LOGGER.debug(
+                    "Attempting to write value (attempt %d/%d): itemno=%s, value=%s",
+                    attempt + 1, self.max_retries + 1, itemno, value
+                )
+                response = await client.get(url, params=params)
+                
+                # Log response details for debugging
+                LOGGER.debug(
+                    "Write response status: %d, content-type: %s, content-length: %d",
+                    response.status_code,
+                    response.headers.get("content-type", "unknown"),
+                    len(response.content)
+                )
+                
+                # Handle authentication errors
+                if response.status_code == 401:
+                    self._consecutive_failures += 1
+                    raise SVKAuthenticationError("Authentication failed. Check credentials.")
+                
+                # Handle write permission errors
+                if response.status_code == 403:
+                    self._consecutive_failures += 1
+                    raise SVKWriteAccessError("Write access denied. Check permissions.")
+                
+                # Check if operation was successful
+                if response.status_code == 200:
+                    # Try to parse response to confirm success
+                    try:
+                        if response.headers.get("content-type", "").startswith("application/json"):
+                            result = response.json()
+                            success = result.get("success", True)
+                            if not success:
+                                LOGGER.warning("Write operation returned success=false: %s", result)
+                        else:
+                            # For non-JSON responses, assume success if status is 200
+                            success = True
                         
+                        # Reset failure counters on success
+                        self._consecutive_failures = 0
+                        self._last_success_time = time.time()
+                        
+                        LOGGER.debug(
+                            "Successfully wrote value %s to %s in %.2f seconds",
+                            value, itemno, time.time() - start_time
+                        )
+                        return success
+                    except (json.JSONDecodeError, KeyError) as ex:
+                        # If we can't parse the response, assume success based on status code
+                        LOGGER.debug("Could not parse write response, assuming success: %s", ex)
+                        self._consecutive_failures = 0
+                        self._last_success_time = time.time()
+                        return True
+                else:
+                    response.raise_for_status()
+                         
             except httpx.TimeoutException as ex:
                 last_exception = SVKTimeoutError(f"Write request timed out after {self.timeout} seconds")
                 self._consecutive_failures += 1

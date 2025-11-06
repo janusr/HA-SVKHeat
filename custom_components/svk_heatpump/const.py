@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, TypedDict, Union
 
+import aiofiles
 import voluptuous as vol
 import yaml
 from homeassistant.const import (
@@ -14,6 +15,7 @@ from homeassistant.const import (
     CONF_SCAN_INTERVAL,
     Platform,
 )
+from homeassistant.core import HomeAssistant
 
 DOMAIN = "svk_heatpump"
 LOGGER = logging.getLogger(__package__)
@@ -131,8 +133,8 @@ class Catalog:
         return catalog
 
 
-def load_catalog() -> Catalog:
-    """Load the catalog from the YAML file.
+async def async_load_catalog() -> Catalog:
+    """Load the catalog from the YAML file asynchronously.
     
     Returns:
         Catalog: The loaded catalog.
@@ -142,8 +144,9 @@ def load_catalog() -> Catalog:
         yaml.YAMLError: If the catalog file cannot be parsed.
     """
     try:
-        with open(CATALOG_FILE_PATH, "r", encoding="utf-8") as file:
-            data = yaml.safe_load(file)
+        async with aiofiles.open(CATALOG_FILE_PATH, "r", encoding="utf-8") as file:
+            content = await file.read()
+            data = yaml.safe_load(content)
             if not data:
                 LOGGER.error("Catalog file is empty")
                 return Catalog()
@@ -155,6 +158,22 @@ def load_catalog() -> Catalog:
     except yaml.YAMLError as error:
         LOGGER.error("Error parsing catalog file: %s", error)
         raise
+
+
+async def load_catalog(hass: Optional[HomeAssistant] = None) -> Catalog:
+    """Load the catalog from the YAML file asynchronously.
+    
+    Args:
+        hass: Optional HomeAssistant instance (kept for compatibility).
+        
+    Returns:
+        Catalog: The loaded catalog.
+        
+    Raises:
+        FileNotFoundError: If the catalog file is not found.
+        yaml.YAMLError: If the catalog file cannot be parsed.
+    """
+    return await async_load_catalog()
 
 
 def transform_value(entity: CatalogEntity, raw_value: Union[str, int, float]) -> Any:

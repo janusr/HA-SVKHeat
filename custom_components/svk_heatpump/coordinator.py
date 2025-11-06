@@ -26,6 +26,7 @@ from .const import (
     DEFAULT_FETCH_INTERVAL,
     DEFAULT_WRITE_ACCESS,
     DOMAIN,
+    async_load_catalog,
     get_unique_id,
     load_catalog,
     transform_value,
@@ -76,14 +77,9 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
             password=self.password,
         )
 
-        # Load catalog
-        try:
-            self.catalog = load_catalog()
-            self.enabled_entities = self.catalog.get_enabled_entities()
-        except Exception as ex:
-            _LOGGER.error("Failed to load catalog: %s", ex)
-            self.catalog = None
-            self.enabled_entities = []
+        # Catalog will be loaded asynchronously in async_setup
+        self.catalog = None
+        self.enabled_entities = []
         
         # Store current data state
         self.data: Dict[str, Any] = {}
@@ -104,6 +100,16 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
             name=DOMAIN,
             update_interval=timedelta(seconds=self.fetch_interval),
         )
+
+    async def async_load_catalog(self) -> None:
+        """Load the catalog asynchronously."""
+        try:
+            self.catalog = await load_catalog(self.hass)
+            self.enabled_entities = self.catalog.get_enabled_entities()
+        except Exception as ex:
+            _LOGGER.error("Failed to load catalog: %s", ex)
+            self.catalog = None
+            self.enabled_entities = []
 
     async def _async_update_data(self) -> Dict[str, Any]:
         """Update data via library.
@@ -133,7 +139,7 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
                 _LOGGER.warning("Catalog not available or no enabled entities")
                 # Try to reload catalog
                 try:
-                    self.catalog = load_catalog()
+                    self.catalog = await async_load_catalog()
                     self.enabled_entities = self.catalog.get_enabled_entities()
                 except Exception as ex:
                     _LOGGER.error("Failed to reload catalog: %s", ex)
@@ -500,7 +506,8 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
         """Clean up resources when shutting down."""
         try:
             _LOGGER.info("Shutting down SVK Heatpump coordinator")
-            # No specific cleanup needed for the API client as it uses context managers
+            # Close the API client to clean up resources
+            await self.api.async_close()
             await super().async_shutdown()
         except Exception as ex:
             _LOGGER.error("Error during shutdown: %s", ex)
