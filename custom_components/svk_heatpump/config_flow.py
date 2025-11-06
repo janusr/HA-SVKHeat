@@ -103,7 +103,7 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_HOST): vol.All(str, vol.Match(r'^[a-zA-Z0-9\.\-\:]+$')),
+                    vol.Required(CONF_HOST): str,
                     vol.Required(CONF_USERNAME): str,
                     vol.Required(CONF_PASSWORD): str,
                 }

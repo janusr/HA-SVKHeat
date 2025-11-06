@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import ConfigEntryNotReady, HomeAssistantError
 from homeassistant.helpers.typing import ConfigType
 
-from .const import DOMAIN, SERVICE_SET_VALUE, get_unique_id, async_load_catalog
+from .const import DOMAIN, SERVICE_SET_VALUE, get_unique_id
 from .coordinator import SVKDataUpdateCoordinator
 from .config_flow import SVKHeatpumpOptionsFlow
 
@@ -36,19 +36,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         
         # Create coordinator
         coordinator = SVKDataUpdateCoordinator(hass, entry)
-        
-        # Load catalog asynchronously
-        try:
-            setup_logger.debug("Loading catalog asynchronously")
-            coordinator.catalog = await async_load_catalog()
-            coordinator.enabled_entities = coordinator.catalog.get_enabled_entities()
-            setup_logger.info(
-                "Catalog loaded successfully with %d enabled entities",
-                len(coordinator.enabled_entities)
-            )
-        except Exception as ex:
-            setup_logger.error("Failed to load catalog: %s", ex)
-            raise ConfigEntryNotReady(f"Failed to load catalog: {ex}")
         
         # Test connection
         try:

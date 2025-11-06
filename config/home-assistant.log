@@ -1,60 +1,59 @@
-2025-11-05 20:53:17.598 WARNING (SyncWorker_0) [homeassistant.loader] We found a custom integration svk_heatpump which has not been tested by Home Assistant. This component might cause stability problems, be sure to disable it if you experience issues with Home Assistant
-2025-11-05 20:53:18.197 INFO (MainThread) [homeassistant.setup] Setting up system_log
-2025-11-05 20:53:18.279 INFO (MainThread) [homeassistant.setup] Setup of domain logger took 0.09 seconds
-2025-11-05 20:53:18.279 INFO (MainThread) [homeassistant.setup] Setup of domain system_log took 0.08 seconds
-2025-11-05 20:53:18.280 INFO (MainThread) [homeassistant.bootstrap] Setting up frontend: {'frontend'}
-2025-11-05 20:53:18.282 INFO (MainThread) [homeassistant.setup] Setting up http
-2025-11-05 20:53:18.287 INFO (MainThread) [homeassistant.setup] Setting up device_automation
-2025-11-05 20:53:18.288 INFO (MainThread) [homeassistant.setup] Setup of domain device_automation took 0.00 seconds
-2025-11-05 20:53:18.295 WARNING (MainThread) [aiohttp_fast_zlib] zlib_ng and isal are not available, falling back to zlib, performance will be degraded.
-2025-11-05 20:53:18.301 INFO (MainThread) [homeassistant.setup] Setup of domain http took 0.02 seconds
-2025-11-05 20:53:18.304 INFO (MainThread) [homeassistant.setup] Setting up auth
-2025-11-05 20:53:18.306 INFO (MainThread) [homeassistant.setup] Setup of domain auth took 0.00 seconds
-2025-11-05 20:53:18.308 INFO (MainThread) [homeassistant.setup] Setting up config
-2025-11-05 20:53:18.309 INFO (MainThread) [homeassistant.setup] Setup of domain config took 0.00 seconds
-2025-11-05 20:53:18.310 INFO (MainThread) [homeassistant.setup] Setting up diagnostics
-2025-11-05 20:53:18.313 INFO (MainThread) [homeassistant.setup] Setup of domain diagnostics took 0.00 seconds
-2025-11-05 20:53:18.314 INFO (MainThread) [homeassistant.setup] Setting up file_upload
-2025-11-05 20:53:18.315 INFO (MainThread) [homeassistant.setup] Setup of domain file_upload took 0.00 seconds
-2025-11-05 20:53:18.318 INFO (MainThread) [homeassistant.setup] Setting up repairs
-2025-11-05 20:53:18.320 INFO (MainThread) [homeassistant.setup] Setup of domain repairs took 0.00 seconds
-2025-11-05 20:53:18.321 INFO (MainThread) [homeassistant.setup] Setting up websocket_api
-2025-11-05 20:53:18.323 INFO (MainThread) [homeassistant.setup] Setup of domain websocket_api took 0.00 seconds
-2025-11-05 20:53:18.325 INFO (MainThread) [homeassistant.setup] Setting up api
-2025-11-05 20:53:18.327 INFO (MainThread) [homeassistant.setup] Setup of domain api took 0.00 seconds
-2025-11-05 20:53:18.329 INFO (MainThread) [homeassistant.setup] Setting up image_upload
-2025-11-05 20:53:18.333 INFO (MainThread) [homeassistant.setup] Setup of domain image_upload took 0.00 seconds
-2025-11-05 20:53:18.336 INFO (MainThread) [homeassistant.setup] Setting up search
-2025-11-05 20:53:18.337 INFO (MainThread) [homeassistant.setup] Setup of domain search took 0.00 seconds
-2025-11-05 20:53:18.338 INFO (MainThread) [homeassistant.setup] Setting up person
-2025-11-05 20:53:18.344 INFO (MainThread) [homeassistant.setup] Setup of domain person took 0.01 seconds
-2025-11-05 20:53:18.351 INFO (MainThread) [homeassistant.setup] Setting up onboarding
-2025-11-05 20:53:18.353 INFO (MainThread) [homeassistant.setup] Setup of domain onboarding took 0.00 seconds
-2025-11-05 20:53:18.355 INFO (MainThread) [homeassistant.setup] Setting up lovelace
-2025-11-05 20:53:18.360 INFO (MainThread) [homeassistant.setup] Setup of domain lovelace took 0.00 seconds
-2025-11-05 20:53:18.374 INFO (MainThread) [homeassistant.setup] Setting up frontend
-2025-11-05 20:53:18.380 INFO (MainThread) [homeassistant.setup] Setup of domain frontend took 0.01 seconds
-2025-11-05 20:53:18.385 INFO (MainThread) [homeassistant.bootstrap] Setting up recorder: {'recorder'}
-2025-11-05 20:53:18.386 INFO (MainThread) [homeassistant.setup] Setting up recorder
-2025-11-05 20:53:18.391 INFO (MainThread) [asyncio] <Server sockets=(<asyncio.TransportSocket fd=8, family=2, type=1, proto=6, laddr=('0.0.0.0', 8123)>, <asyncio.TransportSocket fd=9, family=10, type=1, proto=6, laddr=('::', 8123, 0, 0)>)> is serving
-2025-11-05 20:53:18.392 INFO (MainThread) [homeassistant.components.http] Now listening on port 8123
-2025-11-05 20:53:18.393 INFO (MainThread) [homeassistant.setup] Setup of domain http took 0.01 seconds
-2025-11-05 20:53:18.495 INFO (MainThread) [homeassistant.setup] Setup of domain recorder took 0.11 seconds
-2025-11-05 20:53:18.496 INFO (MainThread) [homeassistant.bootstrap] Setting up stage 1: {'network', 'zeroconf', 'ssdp', 'dhcp', 'http', 'websocket_api', 'bluetooth', 'repairs', 'cloud', 'webhook', 'auth', 'api', 'usb'}
-2025-11-05 20:53:18.497 INFO (MainThread) [homeassistant.setup] Setting up network
-2025-11-05 20:53:18.498 INFO (MainThread) [homeassistant.setup] Setup of domain network took 0.00 seconds
-2025-11-05 20:53:18.506 INFO (MainThread) [homeassistant.setup] Setting up webhook
-2025-11-05 20:53:18.507 INFO (MainThread) [homeassistant.setup] Setup of domain webhook took 0.00 seconds
-2025-11-05 20:53:18.533 INFO (MainThread) [homeassistant.setup] Setting up zeroconf
-2025-11-05 20:53:18.542 INFO (MainThread) [homeassistant.components.zeroconf] Starting Zeroconf broadcast
-2025-11-05 20:53:18.546 INFO (MainThread) [homeassistant.setup] Setup of domain zeroconf took 0.01 seconds
-2025-11-05 20:53:18.573 INFO (MainThread) [homeassistant.setup] Setting up ssdp
-2025-11-05 20:53:18.586 INFO (MainThread) [homeassistant.setup] Setup of domain ssdp took 0.01 seconds
-2025-11-05 20:53:18.648 INFO (MainThread) [homeassistant.setup] Setting up dhcp
-2025-11-05 20:53:18.648 INFO (MainThread) [homeassistant.setup] Setup of domain dhcp took 0.00 seconds
-2025-11-05 20:53:18.656 INFO (MainThread) [homeassistant.setup] Setting up usb
-2025-11-05 20:53:18.657 INFO (MainThread) [homeassistant.setup] Setup of domain usb took 0.00 seconds
-2025-11-05 20:53:18.909 ERROR (ImportExecutor_0) [homeassistant.components.camera.img_util] Error loading libturbojpeg; Camera snapshot performance will be sub-optimal
+2025-11-05 21:35:49.153 WARNING (SyncWorker_0) [homeassistant.loader] We found a custom integration svk_heatpump which has not been tested by Home Assistant. This component might cause stability problems, be sure to disable it if you experience issues with Home Assistant
+2025-11-05 21:35:49.825 INFO (MainThread) [homeassistant.setup] Setup of domain system_log took 0.06 seconds
+2025-11-05 21:35:49.826 INFO (MainThread) [homeassistant.setup] Setup of domain logger took 0.05 seconds
+2025-11-05 21:35:49.826 INFO (MainThread) [homeassistant.bootstrap] Setting up frontend: {'frontend'}
+2025-11-05 21:35:49.829 INFO (MainThread) [homeassistant.setup] Setting up http
+2025-11-05 21:35:49.834 INFO (MainThread) [homeassistant.setup] Setting up device_automation
+2025-11-05 21:35:49.834 INFO (MainThread) [homeassistant.setup] Setup of domain device_automation took 0.00 seconds
+2025-11-05 21:35:49.839 WARNING (MainThread) [aiohttp_fast_zlib] zlib_ng and isal are not available, falling back to zlib, performance will be degraded.
+2025-11-05 21:35:49.842 INFO (MainThread) [homeassistant.setup] Setup of domain http took 0.01 seconds
+2025-11-05 21:35:49.844 INFO (MainThread) [homeassistant.setup] Setting up auth
+2025-11-05 21:35:49.845 INFO (MainThread) [homeassistant.setup] Setup of domain auth took 0.00 seconds
+2025-11-05 21:35:49.846 INFO (MainThread) [homeassistant.setup] Setting up config
+2025-11-05 21:35:49.848 INFO (MainThread) [homeassistant.setup] Setup of domain config took 0.00 seconds
+2025-11-05 21:35:49.848 INFO (MainThread) [homeassistant.setup] Setting up diagnostics
+2025-11-05 21:35:49.850 INFO (MainThread) [homeassistant.setup] Setup of domain diagnostics took 0.00 seconds
+2025-11-05 21:35:49.851 INFO (MainThread) [homeassistant.setup] Setting up file_upload
+2025-11-05 21:35:49.851 INFO (MainThread) [homeassistant.setup] Setup of domain file_upload took 0.00 seconds
+2025-11-05 21:35:49.853 INFO (MainThread) [homeassistant.setup] Setting up repairs
+2025-11-05 21:35:49.854 INFO (MainThread) [homeassistant.setup] Setup of domain repairs took 0.00 seconds
+2025-11-05 21:35:49.856 INFO (MainThread) [homeassistant.setup] Setting up websocket_api
+2025-11-05 21:35:49.856 INFO (MainThread) [homeassistant.setup] Setup of domain websocket_api took 0.00 seconds
+2025-11-05 21:35:49.857 INFO (MainThread) [homeassistant.setup] Setting up api
+2025-11-05 21:35:49.858 INFO (MainThread) [homeassistant.setup] Setup of domain api took 0.00 seconds
+2025-11-05 21:35:49.858 INFO (MainThread) [homeassistant.setup] Setting up image_upload
+2025-11-05 21:35:49.861 INFO (MainThread) [homeassistant.setup] Setup of domain image_upload took 0.00 seconds
+2025-11-05 21:35:49.862 INFO (MainThread) [homeassistant.setup] Setting up search
+2025-11-05 21:35:49.862 INFO (MainThread) [homeassistant.setup] Setup of domain search took 0.00 seconds
+2025-11-05 21:35:49.863 INFO (MainThread) [homeassistant.setup] Setting up person
+2025-11-05 21:35:49.867 INFO (MainThread) [homeassistant.setup] Setup of domain person took 0.00 seconds
+2025-11-05 21:35:49.872 INFO (MainThread) [homeassistant.setup] Setting up onboarding
+2025-11-05 21:35:49.874 INFO (MainThread) [homeassistant.setup] Setup of domain onboarding took 0.00 seconds
+2025-11-05 21:35:49.874 INFO (MainThread) [homeassistant.setup] Setting up lovelace
+2025-11-05 21:35:49.877 INFO (MainThread) [homeassistant.setup] Setup of domain lovelace took 0.00 seconds
+2025-11-05 21:35:49.884 INFO (MainThread) [homeassistant.setup] Setting up frontend
+2025-11-05 21:35:49.887 INFO (MainThread) [homeassistant.setup] Setup of domain frontend took 0.00 seconds
+2025-11-05 21:35:49.890 INFO (MainThread) [homeassistant.bootstrap] Setting up recorder: {'recorder'}
+2025-11-05 21:35:49.890 INFO (MainThread) [homeassistant.setup] Setting up recorder
+2025-11-05 21:35:49.893 INFO (MainThread) [asyncio] <Server sockets=(<asyncio.TransportSocket fd=8, family=2, type=1, proto=6, laddr=('0.0.0.0', 8123)>, <asyncio.TransportSocket fd=9, family=10, type=1, proto=6, laddr=('::', 8123, 0, 0)>)> is serving
+2025-11-05 21:35:49.893 INFO (MainThread) [homeassistant.components.http] Now listening on port 8123
+2025-11-05 21:35:49.895 INFO (MainThread) [homeassistant.setup] Setup of domain http took 0.01 seconds
+2025-11-05 21:35:49.945 INFO (MainThread) [homeassistant.setup] Setup of domain recorder took 0.05 seconds
+2025-11-05 21:35:49.946 INFO (MainThread) [homeassistant.bootstrap] Setting up stage 1: {'zeroconf', 'network', 'auth', 'dhcp', 'websocket_api', 'usb', 'ssdp', 'api', 'bluetooth', 'http', 'cloud', 'webhook', 'repairs'}
+2025-11-05 21:35:49.947 INFO (MainThread) [homeassistant.setup] Setting up network
+2025-11-05 21:35:49.948 INFO (MainThread) [homeassistant.setup] Setup of domain network took 0.00 seconds
+2025-11-05 21:35:49.956 INFO (MainThread) [homeassistant.setup] Setting up webhook
+2025-11-05 21:35:49.957 INFO (MainThread) [homeassistant.setup] Setup of domain webhook took 0.00 seconds
+2025-11-05 21:35:49.979 INFO (MainThread) [homeassistant.setup] Setting up zeroconf
+2025-11-05 21:35:49.987 INFO (MainThread) [homeassistant.components.zeroconf] Starting Zeroconf broadcast
+2025-11-05 21:35:49.989 INFO (MainThread) [homeassistant.setup] Setup of domain zeroconf took 0.01 seconds
+2025-11-05 21:35:50.057 INFO (MainThread) [homeassistant.setup] Setting up dhcp
+2025-11-05 21:35:50.058 INFO (MainThread) [homeassistant.setup] Setup of domain dhcp took 0.00 seconds
+2025-11-05 21:35:50.065 INFO (MainThread) [homeassistant.setup] Setting up usb
+2025-11-05 21:35:50.067 INFO (MainThread) [homeassistant.setup] Setup of domain usb took 0.00 seconds
+2025-11-05 21:35:50.101 INFO (MainThread) [homeassistant.setup] Setting up ssdp
+2025-11-05 21:35:50.118 INFO (MainThread) [homeassistant.setup] Setup of domain ssdp took 0.02 seconds
+2025-11-05 21:35:50.383 ERROR (ImportExecutor_0) [homeassistant.components.camera.img_util] Error loading libturbojpeg; Camera snapshot performance will be sub-optimal
 Traceback (most recent call last):
   File "/home/vscode/.local/lib/python3.12/site-packages/homeassistant/components/camera/img_util.py", line 100, in __init__
     TurboJPEGSingleton.__instance = TurboJPEG()
@@ -66,9 +65,9 @@ Traceback (most recent call last):
     raise RuntimeError(
 RuntimeError: Unable to locate turbojpeg library automatically. You may specify the turbojpeg library path manually.
 e.g. jpeg = TurboJPEG(lib_path)
-2025-11-05 20:53:19.025 INFO (MainThread) [homeassistant.setup] Setting up cloud
-2025-11-05 20:53:19.032 INFO (MainThread) [homeassistant.setup] Setting up ffmpeg
-2025-11-05 20:53:19.035 ERROR (MainThread) [haffmpeg.core] FFmpeg fails [Errno 2] No such file or directory: 'ffmpeg'
+2025-11-05 21:35:50.534 INFO (MainThread) [homeassistant.setup] Setting up cloud
+2025-11-05 21:35:50.543 INFO (MainThread) [homeassistant.setup] Setting up ffmpeg
+2025-11-05 21:35:50.548 ERROR (MainThread) [haffmpeg.core] FFmpeg fails [Errno 2] No such file or directory: 'ffmpeg'
 Traceback (most recent call last):
   File "/home/vscode/.local/lib/python3.12/site-packages/haffmpeg/core.py", line 130, in open
     self._proc = await asyncio.create_subprocess_exec(
@@ -92,397 +91,227 @@ Traceback (most recent call last):
   File "/usr/local/lib/python3.12/subprocess.py", line 1955, in _execute_child
     raise child_exception_type(errno_num, err_msg, err_filename)
 FileNotFoundError: [Errno 2] No such file or directory: 'ffmpeg'
-2025-11-05 20:53:19.038 WARNING (MainThread) [haffmpeg.tools] Error starting FFmpeg.
-2025-11-05 20:53:19.038 INFO (MainThread) [homeassistant.setup] Setup of domain ffmpeg took 0.01 seconds
-2025-11-05 20:53:19.038 INFO (MainThread) [homeassistant.setup] Setting up tts
-2025-11-05 20:53:19.041 INFO (MainThread) [homeassistant.setup] Setup of domain cloud took 0.02 seconds
-2025-11-05 20:53:19.048 INFO (MainThread) [homeassistant.setup] Setup of domain tts took 0.01 seconds
-2025-11-05 20:53:19.088 INFO (MainThread) [homeassistant.setup] Setting up bluetooth
-2025-11-05 20:53:19.112 INFO (MainThread) [homeassistant.setup] Setup of domain bluetooth took 0.02 seconds
-2025-11-05 20:53:19.114 INFO (MainThread) [homeassistant.bootstrap] Setting up stage 2: {'config', 'device_automation', 'diagnostics', 'mobile_app', 'input_datetime', 'backup', 'tag', 'trace', 'media_source', 'ffmpeg', 'input_select', 'script', 'tts', 'counter', 'schedule', 'file_upload', 'image_upload', 'conversation', 'automation', 'sun', 'google_translate', 'logbook', 'application_credentials', 'stream', 'my', 'go2rtc', 'input_boolean', 'scene', 'shopping_list', 'timer', 'lovelace', 'svk_heatpump', 'stt', 'analytics', 'blueprint', 'system_health', 'energy', 'intent', 'onboarding', 'input_button', 'camera', 'history', 'hardware', 'default_config', 'homeassistant_alerts', 'zone', 'radio_browser', 'input_number', 'assist_pipeline', 'person', 'search', 'wake_word', 'input_text'}
-2025-11-05 20:53:19.115 INFO (MainThread) [homeassistant.setup] Setting up scene
-2025-11-05 20:53:19.119 INFO (MainThread) [homeassistant.setup] Setup of domain scene took 0.00 seconds
-2025-11-05 20:53:19.119 INFO (MainThread) [homeassistant.setup] Setting up stt
-2025-11-05 20:53:19.120 INFO (MainThread) [homeassistant.setup] Setup of domain stt took 0.00 seconds
-2025-11-05 20:53:19.120 INFO (MainThread) [homeassistant.setup] Setting up camera
-2025-11-05 20:53:19.122 INFO (MainThread) [homeassistant.setup] Setup of domain camera took 0.00 seconds
-2025-11-05 20:53:19.124 INFO (MainThread) [homeassistant.setup] Setting up wake_word
-2025-11-05 20:53:19.126 INFO (MainThread) [homeassistant.setup] Setup of domain wake_word took 0.00 seconds
-2025-11-05 20:53:19.129 INFO (MainThread) [homeassistant.setup] Setting up input_boolean
-2025-11-05 20:53:19.131 INFO (MainThread) [homeassistant.setup] Setup of domain input_boolean took 0.00 seconds
-2025-11-05 20:53:19.133 INFO (MainThread) [homeassistant.setup] Setting up timer
-2025-11-05 20:53:19.135 INFO (MainThread) [homeassistant.setup] Setup of domain timer took 0.00 seconds
-2025-11-05 20:53:19.146 INFO (MainThread) [homeassistant.setup] Setting up backup
-2025-11-05 20:53:19.160 INFO (MainThread) [homeassistant.setup] Setup of domain backup took 0.01 seconds
-2025-11-05 20:53:19.164 INFO (MainThread) [homeassistant.setup] Setting up trace
-2025-11-05 20:53:19.164 INFO (MainThread) [homeassistant.setup] Setup of domain trace took 0.00 seconds
-2025-11-05 20:53:19.166 INFO (MainThread) [homeassistant.setup] Setting up media_source
-2025-11-05 20:53:19.169 INFO (MainThread) [homeassistant.setup] Setup of domain media_source took 0.00 seconds
-2025-11-05 20:53:19.170 INFO (MainThread) [homeassistant.setup] Setting up input_select
-2025-11-05 20:53:19.174 INFO (MainThread) [homeassistant.setup] Setup of domain input_select took 0.00 seconds
-2025-11-05 20:53:19.175 INFO (MainThread) [homeassistant.setup] Setting up blueprint
-2025-11-05 20:53:19.176 INFO (MainThread) [homeassistant.setup] Setup of domain blueprint took 0.00 seconds
-2025-11-05 20:53:19.176 INFO (MainThread) [homeassistant.setup] Setting up script
-2025-11-05 20:53:19.178 INFO (MainThread) [homeassistant.setup] Setup of domain script took 0.00 seconds
-2025-11-05 20:53:19.179 INFO (MainThread) [homeassistant.setup] Setting up system_health
-2025-11-05 20:53:19.180 INFO (MainThread) [homeassistant.setup] Setup of domain system_health took 0.00 seconds
-2025-11-05 20:53:19.181 INFO (MainThread) [homeassistant.setup] Setting up history
-2025-11-05 20:53:19.181 INFO (MainThread) [homeassistant.setup] Setup of domain history took 0.00 seconds
-2025-11-05 20:53:19.182 INFO (MainThread) [homeassistant.setup] Setting up stream
-2025-11-05 20:53:19.184 INFO (MainThread) [homeassistant.setup] Setting up input_button
-2025-11-05 20:53:19.186 INFO (MainThread) [homeassistant.setup] Setup of domain input_button took 0.00 seconds
-2025-11-05 20:53:19.207 INFO (MainThread) [homeassistant.setup] Setting up logbook
-2025-11-05 20:53:19.209 INFO (MainThread) [homeassistant.setup] Setup of domain logbook took 0.00 seconds
-2025-11-05 20:53:19.210 INFO (MainThread) [homeassistant.setup] Setting up zone
-2025-11-05 20:53:19.212 INFO (MainThread) [homeassistant.setup] Setup of domain zone took 0.00 seconds
-2025-11-05 20:53:19.223 INFO (MainThread) [homeassistant.setup] Setting up input_number
-2025-11-05 20:53:19.229 INFO (MainThread) [homeassistant.setup] Setup of domain input_number took 0.01 seconds
-2025-11-05 20:53:19.230 INFO (MainThread) [homeassistant.setup] Setting up automation
-2025-11-05 20:53:19.241 INFO (MainThread) [homeassistant.setup] Setup of domain automation took 0.01 seconds
-2025-11-05 20:53:19.268 WARNING (MainThread) [asyncio] Executing <Task pending name='Task-1' coro=<setup_and_run_hass() running at /home/vscode/.local/lib/python3.12/site-packages/homeassistant/runner.py:122> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()] created at /usr/local/lib/python3.12/asyncio/tasks.py:712> cb=[_run_until_complete_cb() at /usr/local/lib/python3.12/asyncio/base_events.py:181] created at /usr/local/lib/python3.12/asyncio/tasks.py:695> took 0.156 seconds
-2025-11-05 20:53:19.279 INFO (MainThread) [homeassistant.components.scene] Setting up homeassistant.scene
-2025-11-05 20:53:19.282 INFO (MainThread) [homeassistant.setup] Setting up intent
-2025-11-05 20:53:19.283 INFO (MainThread) [homeassistant.setup] Setup of domain intent took 0.00 seconds
-2025-11-05 20:53:19.284 INFO (MainThread) [homeassistant.setup] Setting up go2rtc
-2025-11-05 20:53:19.285 INFO (MainThread) [homeassistant.setup] Setting up tag
-2025-11-05 20:53:19.286 INFO (MainThread) [homeassistant.setup] Setup of domain tag took 0.00 seconds
-2025-11-05 20:53:19.287 INFO (MainThread) [homeassistant.setup] Setting up shopping_list
-2025-11-05 20:53:19.287 INFO (MainThread) [homeassistant.setup] Setup of domain shopping_list took 0.00 seconds
-2025-11-05 20:53:19.288 INFO (MainThread) [homeassistant.setup] Setting up input_datetime
-2025-11-05 20:53:19.290 INFO (MainThread) [homeassistant.setup] Setup of domain input_datetime took 0.00 seconds
-2025-11-05 20:53:19.294 INFO (MainThread) [homeassistant.setup] Setup of domain stream took 0.11 seconds
-2025-11-05 20:53:19.295 INFO (MainThread) [homeassistant.setup] Setting up conversation
-2025-11-05 20:53:19.296 INFO (MainThread) [homeassistant.setup] Setup of domain conversation took 0.00 seconds
-2025-11-05 20:53:19.298 ERROR (MainThread) [homeassistant.components.go2rtc] Could not find go2rtc docker binary
-2025-11-05 20:53:19.299 ERROR (MainThread) [homeassistant.setup] Setup failed for 'go2rtc': Integration failed to initialize.
-2025-11-05 20:53:19.299 INFO (MainThread) [homeassistant.setup] Setup of domain go2rtc took 0.01 seconds
-2025-11-05 20:53:19.301 INFO (MainThread) [homeassistant.setup] Setting up assist_pipeline
-2025-11-05 20:53:19.306 INFO (MainThread) [homeassistant.setup] Setup of domain assist_pipeline took 0.00 seconds
-2025-11-05 20:53:19.353 INFO (MainThread) [homeassistant.setup] Setting up svk_heatpump
-2025-11-05 20:53:19.353 INFO (MainThread) [homeassistant.setup] Setup of domain svk_heatpump took 0.00 seconds
-2025-11-05 20:53:19.354 INFO (MainThread) [custom_components.svk_heatpump.setup] Setting up SVK Heatpump integration for entry 01K9AW9482RJ2AT9RVEKY87HXT
-2025-11-05 20:53:19.354 DEBUG (MainThread) [custom_components.svk_heatpump.setup] Loading catalog asynchronously
-2025-11-05 20:53:19.372 INFO (MainThread) [homeassistant.setup] Setting up energy
-2025-11-05 20:53:19.374 INFO (MainThread) [homeassistant.setup] Setting up sensor
-2025-11-05 20:53:19.375 INFO (MainThread) [homeassistant.setup] Setup of domain sensor took 0.00 seconds
-2025-11-05 20:53:19.377 INFO (MainThread) [homeassistant.setup] Setup of domain energy took 0.00 seconds
-2025-11-05 20:53:19.377 INFO (MainThread) [homeassistant.setup] Setting up counter
-2025-11-05 20:53:19.379 INFO (MainThread) [homeassistant.setup] Setup of domain counter took 0.00 seconds
-2025-11-05 20:53:19.380 INFO (MainThread) [homeassistant.setup] Setting up schedule
-2025-11-05 20:53:19.382 INFO (MainThread) [homeassistant.setup] Setup of domain schedule took 0.00 seconds
-2025-11-05 20:53:19.383 INFO (MainThread) [homeassistant.setup] Setting up hardware
-2025-11-05 20:53:19.494 WARNING (MainThread) [asyncio] Executing <Task pending name='setup component hardware' coro=<async_setup_component() running at /home/vscode/.local/lib/python3.12/site-packages/homeassistant/setup.py:165> wait_for=<Future pending cb=[_chain_future.<locals>._call_check_cancel() at /usr/local/lib/python3.12/asyncio/futures.py:389, <1 more>, Task.task_wakeup()] created at /usr/local/lib/python3.12/asyncio/base_events.py:448> cb=[set.remove(), gather.<locals>._done_callback() at /usr/local/lib/python3.12/asyncio/tasks.py:767] created at /home/vscode/.local/lib/python3.12/site-packages/homeassistant/util/async_.py:45> took 0.111 seconds
-2025-11-05 20:53:19.524 INFO (MainThread) [homeassistant.setup] Setting up homeassistant_alerts
-2025-11-05 20:53:19.525 INFO (MainThread) [homeassistant.setup] Setup of domain homeassistant_alerts took 0.00 seconds
-2025-11-05 20:53:19.528 INFO (MainThread) [homeassistant.setup] Setting up my
-2025-11-05 20:53:19.528 INFO (MainThread) [homeassistant.setup] Setup of domain my took 0.00 seconds
-2025-11-05 20:53:19.529 INFO (MainThread) [homeassistant.setup] Setting up sun
-2025-11-05 20:53:19.530 INFO (MainThread) [homeassistant.setup] Setup of domain sun took 0.00 seconds
-2025-11-05 20:53:19.533 INFO (MainThread) [homeassistant.components.sensor] Setting up sun.sensor
-2025-11-05 20:53:19.554 INFO (MainThread) [homeassistant.setup] Setup of domain hardware took 0.17 seconds
-2025-11-05 20:53:19.556 INFO (MainThread) [homeassistant.setup] Setting up radio_browser
-2025-11-05 20:53:19.556 INFO (MainThread) [homeassistant.setup] Setup of domain radio_browser took 0.00 seconds
-2025-11-05 20:53:19.561 INFO (MainThread) [homeassistant.setup] Setting up google_translate
-2025-11-05 20:53:19.561 INFO (MainThread) [homeassistant.setup] Setup of domain google_translate took 0.00 seconds
-2025-11-05 20:53:19.563 INFO (MainThread) [homeassistant.setup] Setting up application_credentials
-2025-11-05 20:53:19.564 INFO (MainThread) [homeassistant.setup] Setup of domain application_credentials took 0.00 seconds
-2025-11-05 20:53:19.565 INFO (MainThread) [homeassistant.setup] Setting up input_text
-2025-11-05 20:53:19.568 INFO (MainThread) [homeassistant.setup] Setup of domain input_text took 0.00 seconds
-2025-11-05 20:53:19.569 INFO (MainThread) [homeassistant.setup] Setting up todo
-2025-11-05 20:53:19.570 INFO (MainThread) [homeassistant.setup] Setup of domain todo took 0.00 seconds
-2025-11-05 20:53:19.571 INFO (MainThread) [homeassistant.components.todo] Setting up shopping_list.todo
-2025-11-05 20:53:19.575 INFO (MainThread) [custom_components.svk_heatpump.setup] Catalog loaded successfully with 15 enabled entities
-2025-11-05 20:53:19.576 DEBUG (MainThread) [custom_components.svk_heatpump.setup] Testing connection for entry 01K9AW9482RJ2AT9RVEKY87HXT
-2025-11-05 20:53:19.576 DEBUG (MainThread) [custom_components.svk_heatpump] Testing connection to http://192.168.50.9
-2025-11-05 20:53:19.576 DEBUG (MainThread) [custom_components.svk_heatpump] Reading values for 1 entities: ['1']
-2025-11-05 20:53:19.577 DEBUG (MainThread) [custom_components.svk_heatpump] Attempting to read values (attempt 1/4)
-2025-11-05 20:53:19.607 INFO (MainThread) [homeassistant.setup] Setting up mobile_app
-2025-11-05 20:53:19.608 INFO (MainThread) [homeassistant.setup] Setting up notify
-2025-11-05 20:53:19.609 INFO (MainThread) [homeassistant.setup] Setup of domain notify took 0.00 seconds
-2025-11-05 20:53:19.610 INFO (MainThread) [homeassistant.setup] Setup of domain mobile_app took 0.00 seconds
-2025-11-05 20:53:19.611 INFO (MainThread) [homeassistant.components.sensor] Setting up energy.sensor
-2025-11-05 20:53:19.612 INFO (MainThread) [homeassistant.setup] Setting up analytics
-2025-11-05 20:53:19.613 INFO (MainThread) [homeassistant.setup] Setup of domain analytics took 0.00 seconds
-2025-11-05 20:53:19.613 INFO (MainThread) [homeassistant.components.tts] Setting up google_translate.tts
-2025-11-05 20:53:19.615 INFO (MainThread) [homeassistant.components.notify] Setting up notify.mobile_app
-2025-11-05 20:53:19.615 ERROR (MainThread) [homeassistant.setup] Unable to set up dependencies of 'default_config'. Setup failed for dependencies: ['go2rtc']
-2025-11-05 20:53:19.616 ERROR (MainThread) [homeassistant.setup] Setup failed for 'default_config': Could not setup dependencies: go2rtc
-2025-11-05 20:53:19.737 DEBUG (MainThread) [custom_components.svk_heatpump] Response status: 200, content-type: text/html; charset=utf-8, content-length: 69
-2025-11-05 20:53:19.737 DEBUG (MainThread) [custom_components.svk_heatpump] Parsing response with content-type: text/html; charset=utf-8, length: 69
-2025-11-05 20:53:19.737 DEBUG (MainThread) [custom_components.svk_heatpump] Parsing text response: [{ "id" : "1", "name" : "Database.None", "value" : "Unknown type 0"}]
-2025-11-05 20:53:19.737 DEBUG (MainThread) [custom_components.svk_heatpump] Parsed text response with 0 values
-2025-11-05 20:53:19.737 DEBUG (MainThread) [custom_components.svk_heatpump] Successfully read 0 values in 0.16 seconds
-2025-11-05 20:53:19.738 DEBUG (MainThread) [custom_components.svk_heatpump] Connection test successful in 0.16 seconds
-2025-11-05 20:53:19.738 INFO (MainThread) [custom_components.svk_heatpump.coordinator] Connection test successful
-2025-11-05 20:53:19.738 INFO (MainThread) [custom_components.svk_heatpump.setup] Connection test successful for entry 01K9AW9482RJ2AT9RVEKY87HXT
-2025-11-05 20:53:19.738 DEBUG (MainThread) [custom_components.svk_heatpump.setup] Coordinator stored for entry 01K9AW9482RJ2AT9RVEKY87HXT
-2025-11-05 20:53:19.738 DEBUG (MainThread) [custom_components.svk_heatpump.setup] Performing first data refresh for entry 01K9AW9482RJ2AT9RVEKY87HXT
-2025-11-05 20:53:19.738 DEBUG (MainThread) [custom_components.svk_heatpump] Reading values for 15 entities: ['297', '253', '254', '255', '256']
-2025-11-05 20:53:19.739 DEBUG (MainThread) [custom_components.svk_heatpump] Attempting to read values (attempt 1/4)
-2025-11-05 20:53:19.871 DEBUG (MainThread) [custom_components.svk_heatpump] Response status: 200, content-type: text/html; charset=utf-8, content-length: 951
-2025-11-05 20:53:19.871 DEBUG (MainThread) [custom_components.svk_heatpump] Parsing response with content-type: text/html; charset=utf-8, length: 951
-2025-11-05 20:53:19.871 DEBUG (MainThread) [custom_components.svk_heatpump] Parsing text response: [{ "id" : "297", "name" : "HeatPump.State", "value" : "5"},
-{ "id" : "253", "name" : "Input.THeatSup
-2025-11-05 20:53:19.871 DEBUG (MainThread) [custom_components.svk_heatpump] Parsed text response with 2 values
-2025-11-05 20:53:19.871 DEBUG (MainThread) [custom_components.svk_heatpump] Successfully read 2 values in 0.13 seconds
-2025-11-05 20:53:19.871 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 297 not found in API response
-2025-11-05 20:53:19.871 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 253 not found in API response
-2025-11-05 20:53:19.871 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 254 not found in API response
-2025-11-05 20:53:19.871 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 255 not found in API response
-2025-11-05 20:53:19.871 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 256 not found in API response
-2025-11-05 20:53:19.871 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 257 not found in API response
-2025-11-05 20:53:19.871 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 259 not found in API response
-2025-11-05 20:53:19.871 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 260 not found in API response
-2025-11-05 20:53:19.871 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 261 not found in API response
-2025-11-05 20:53:19.872 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 262 not found in API response
-2025-11-05 20:53:19.872 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 420 not found in API response
-2025-11-05 20:53:19.872 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 386 not found in API response
-2025-11-05 20:53:19.872 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 364 not found in API response
-2025-11-05 20:53:19.872 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 264 not found in API response
-2025-11-05 20:53:19.872 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 263 not found in API response
-2025-11-05 20:53:19.872 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Successfully updated 0 entities
-2025-11-05 20:53:19.872 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Finished fetching svk_heatpump data in 0.133 seconds (success: 4507.824737181)
-2025-11-05 20:53:19.872 INFO (MainThread) [custom_components.svk_heatpump.setup] First data refresh successful for entry 01K9AW9482RJ2AT9RVEKY87HXT
-2025-11-05 20:53:19.872 DEBUG (MainThread) [custom_components.svk_heatpump.setup] Setting up platforms for entry 01K9AW9482RJ2AT9RVEKY87HXT
-2025-11-05 20:53:19.893 INFO (MainThread) [homeassistant.components.sensor] Setting up svk_heatpump.sensor
-2025-11-05 20:53:19.894 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Created sensor for entity heatpump_state (297)
-2025-11-05 20:53:19.895 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Created sensor for entity theat_supply (253)
-2025-11-05 20:53:19.895 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Created sensor for entity theat_return (254)
-2025-11-05 20:53:19.895 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Created sensor for entity twater_tank (255)
-2025-11-05 20:53:19.895 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Created sensor for entity tamb (256)
-2025-11-05 20:53:19.895 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Created sensor for entity troom (257)
-2025-11-05 20:53:19.895 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Created sensor for entity theat_tank (259)
-2025-11-05 20:53:19.895 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Created sensor for entity tcold_supply (260)
-2025-11-05 20:53:19.895 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Created sensor for entity tcold_return (261)
-2025-11-05 20:53:19.895 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Created sensor for entity tevap (262)
-2025-11-05 20:53:19.895 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Created sensor for entity heating_setpoint_act (420)
-2025-11-05 20:53:19.895 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Created sensor for entity hotwater_setpoint_act (386)
-2025-11-05 20:53:19.895 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Created sensor for entity solarpanel_state (364)
-2025-11-05 20:53:19.895 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Created sensor for entity tsolar_panel (264)
-2025-11-05 20:53:19.895 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Created sensor for entity tsolar_water (263)
-2025-11-05 20:53:19.895 INFO (MainThread) [custom_components.svk_heatpump.sensor] Adding 15 sensors for entry 01K9AW9482RJ2AT9RVEKY87HXT
-2025-11-05 20:53:19.906 DEBUG (MainThread) [custom_components.svk_heatpump] Reading values for 15 entities: ['297', '253', '254', '255', '256']
-2025-11-05 20:53:19.906 DEBUG (MainThread) [custom_components.svk_heatpump] Attempting to read values (attempt 1/4)
-2025-11-05 20:53:19.909 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 253 not available (value=None)
-2025-11-05 20:53:19.911 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 254 not available (value=None)
-2025-11-05 20:53:19.913 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 255 not available (value=None)
-2025-11-05 20:53:19.916 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 256 not available (value=None)
-2025-11-05 20:53:19.918 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 257 not available (value=None)
-2025-11-05 20:53:19.921 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 259 not available (value=None)
-2025-11-05 20:53:19.923 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 260 not available (value=None)
-2025-11-05 20:53:19.925 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 261 not available (value=None)
-2025-11-05 20:53:19.927 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 262 not available (value=None)
-2025-11-05 20:53:19.929 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 420 not available (value=None)
-2025-11-05 20:53:19.931 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 386 not available (value=None)
-2025-11-05 20:53:19.934 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 364 not available (value=None)
-2025-11-05 20:53:19.936 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 264 not available (value=None)
-2025-11-05 20:53:19.938 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 263 not available (value=None)
-2025-11-05 20:53:20.052 DEBUG (MainThread) [custom_components.svk_heatpump] Response status: 200, content-type: text/html; charset=utf-8, content-length: 951
-2025-11-05 20:53:20.052 DEBUG (MainThread) [custom_components.svk_heatpump] Parsing response with content-type: text/html; charset=utf-8, length: 951
-2025-11-05 20:53:20.052 DEBUG (MainThread) [custom_components.svk_heatpump] Parsing text response: [{ "id" : "297", "name" : "HeatPump.State", "value" : "5"},
-{ "id" : "253", "name" : "Input.THeatSup
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump] Parsed text response with 2 values
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump] Successfully read 2 values in 0.15 seconds
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 297 not found in API response
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 253 not found in API response
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 254 not found in API response
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 255 not found in API response
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 256 not found in API response
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 257 not found in API response
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 259 not found in API response
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 260 not found in API response
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 261 not found in API response
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 262 not found in API response
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 420 not found in API response
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 386 not found in API response
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 364 not found in API response
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 264 not found in API response
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 263 not found in API response
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Successfully updated 0 entities
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Finished fetching svk_heatpump data in 0.147 seconds (success: 4508.006311328)
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 253 not available (value=None)
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 254 not available (value=None)
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 255 not available (value=None)
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 256 not available (value=None)
-2025-11-05 20:53:20.053 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 257 not available (value=None)
-2025-11-05 20:53:20.054 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 259 not available (value=None)
-2025-11-05 20:53:20.054 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 260 not available (value=None)
-2025-11-05 20:53:20.054 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 261 not available (value=None)
-2025-11-05 20:53:20.054 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 262 not available (value=None)
-2025-11-05 20:53:20.054 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 420 not available (value=None)
-2025-11-05 20:53:20.054 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 386 not available (value=None)
-2025-11-05 20:53:20.054 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 364 not available (value=None)
-2025-11-05 20:53:20.054 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 264 not available (value=None)
-2025-11-05 20:53:20.054 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 263 not available (value=None)
-2025-11-05 20:53:20.054 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 297 not available (value=None)
-2025-11-05 20:53:20.055 INFO (MainThread) [custom_components.svk_heatpump.setup] Platforms setup successful for entry 01K9AW9482RJ2AT9RVEKY87HXT
-2025-11-05 20:53:20.055 DEBUG (MainThread) [custom_components.svk_heatpump.setup] Setting up services for entry 01K9AW9482RJ2AT9RVEKY87HXT
-2025-11-05 20:53:20.056 INFO (MainThread) [custom_components.svk_heatpump.setup] Services setup successful for entry 01K9AW9482RJ2AT9RVEKY87HXT
-2025-11-05 20:53:20.056 DEBUG (MainThread) [custom_components.svk_heatpump.setup] Update listener registered for entry 01K9AW9482RJ2AT9RVEKY87HXT
-2025-11-05 20:53:20.056 DEBUG (MainThread) [custom_components.svk_heatpump.setup] Cleanup functions registered for entry 01K9AW9482RJ2AT9RVEKY87HXT
-2025-11-05 20:53:20.056 INFO (MainThread) [custom_components.svk_heatpump.setup] Setup completed successfully for entry 01K9AW9482RJ2AT9RVEKY87HXT
-2025-11-05 20:53:20.057 INFO (MainThread) [homeassistant.bootstrap] Home Assistant initialized in 2.47s
-2025-11-05 20:53:20.057 WARNING (MainThread) [homeassistant.bootstrap] Support for the running Python version 3.12.12 is deprecated and will be removed in Home Assistant 2025.2; Please upgrade Python to 3.13
-2025-11-05 20:53:20.057 INFO (MainThread) [homeassistant.core] Starting Home Assistant
-2025-11-05 20:53:20.123 INFO (MainThread) [asyncio] <Server sockets=(<asyncio.TransportSocket fd=17, family=2, type=1, proto=6, laddr=('172.18.0.2', 40000)>,)> is serving
-2025-11-05 20:53:20.258 ERROR (SyncWorker_0) [aiodhcpwatcher] Cannot watch for dhcp packets without a functional packet filter: libpcap is not available. Cannot compile filter !
-2025-11-05 20:53:51.605 DEBUG (MainThread) [custom_components.svk_heatpump] Reading values for 15 entities: ['297', '253', '254', '255', '256']
-2025-11-05 20:53:51.606 DEBUG (MainThread) [custom_components.svk_heatpump] Attempting to read values (attempt 1/4)
-2025-11-05 20:53:51.714 DEBUG (MainThread) [custom_components.svk_heatpump] Response status: 200, content-type: text/html; charset=utf-8, content-length: 952
-2025-11-05 20:53:51.714 DEBUG (MainThread) [custom_components.svk_heatpump] Parsing response with content-type: text/html; charset=utf-8, length: 952
-2025-11-05 20:53:51.714 DEBUG (MainThread) [custom_components.svk_heatpump] Parsing text response: [{ "id" : "297", "name" : "HeatPump.State", "value" : "10"},
-{ "id" : "253", "name" : "Input.THeatSu
-2025-11-05 20:53:51.714 DEBUG (MainThread) [custom_components.svk_heatpump] Parsed text response with 2 values
-2025-11-05 20:53:51.714 DEBUG (MainThread) [custom_components.svk_heatpump] Successfully read 2 values in 0.11 seconds
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 297 not found in API response
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 253 not found in API response
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 254 not found in API response
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 255 not found in API response
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 256 not found in API response
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 257 not found in API response
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 259 not found in API response
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 260 not found in API response
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 261 not found in API response
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 262 not found in API response
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 420 not found in API response
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 386 not found in API response
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 364 not found in API response
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 264 not found in API response
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 263 not found in API response
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Successfully updated 0 entities
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Finished fetching svk_heatpump data in 0.110 seconds (success: 4538.575630679)
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 253 not available (value=None)
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 254 not available (value=None)
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 255 not available (value=None)
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 256 not available (value=None)
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 257 not available (value=None)
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 259 not available (value=None)
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 260 not available (value=None)
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 261 not available (value=None)
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 262 not available (value=None)
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 420 not available (value=None)
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 386 not available (value=None)
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 364 not available (value=None)
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 264 not available (value=None)
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 263 not available (value=None)
-2025-11-05 20:53:51.715 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 297 not available (value=None)
-2025-11-05 20:54:22.699 DEBUG (MainThread) [custom_components.svk_heatpump] Reading values for 15 entities: ['297', '253', '254', '255', '256']
-2025-11-05 20:54:22.701 DEBUG (MainThread) [custom_components.svk_heatpump] Attempting to read values (attempt 1/4)
-2025-11-05 20:54:22.833 DEBUG (MainThread) [custom_components.svk_heatpump] Response status: 200, content-type: text/html; charset=utf-8, content-length: 953
-2025-11-05 20:54:22.833 DEBUG (MainThread) [custom_components.svk_heatpump] Parsing response with content-type: text/html; charset=utf-8, length: 953
-2025-11-05 20:54:22.833 DEBUG (MainThread) [custom_components.svk_heatpump] Parsing text response: [{ "id" : "297", "name" : "HeatPump.State", "value" : "10"},
-{ "id" : "253", "name" : "Input.THeatSu
-2025-11-05 20:54:22.833 DEBUG (MainThread) [custom_components.svk_heatpump] Parsed text response with 2 values
-2025-11-05 20:54:22.833 DEBUG (MainThread) [custom_components.svk_heatpump] Successfully read 2 values in 0.13 seconds
-2025-11-05 20:54:22.833 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 297 not found in API response
-2025-11-05 20:54:22.833 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 253 not found in API response
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 254 not found in API response
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 255 not found in API response
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 256 not found in API response
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 257 not found in API response
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 259 not found in API response
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 260 not found in API response
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 261 not found in API response
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 262 not found in API response
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 420 not found in API response
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 386 not found in API response
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 364 not found in API response
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 264 not found in API response
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 263 not found in API response
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Successfully updated 0 entities
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Finished fetching svk_heatpump data in 0.134 seconds (success: 4568.60068607)
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 253 not available (value=None)
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 254 not available (value=None)
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 255 not available (value=None)
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 256 not available (value=None)
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 257 not available (value=None)
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 259 not available (value=None)
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 260 not available (value=None)
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 261 not available (value=None)
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 262 not available (value=None)
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 420 not available (value=None)
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 386 not available (value=None)
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 364 not available (value=None)
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 264 not available (value=None)
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 263 not available (value=None)
-2025-11-05 20:54:22.834 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 297 not available (value=None)
-2025-11-05 20:54:53.734 DEBUG (MainThread) [custom_components.svk_heatpump] Reading values for 15 entities: ['297', '253', '254', '255', '256']
-2025-11-05 20:54:53.735 DEBUG (MainThread) [custom_components.svk_heatpump] Attempting to read values (attempt 1/4)
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump] Response status: 200, content-type: text/html; charset=utf-8, content-length: 953
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump] Parsing response with content-type: text/html; charset=utf-8, length: 953
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump] Parsing text response: [{ "id" : "297", "name" : "HeatPump.State", "value" : "10"},
-{ "id" : "253", "name" : "Input.THeatSu
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump] Parsed text response with 2 values
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump] Successfully read 2 values in 0.13 seconds
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 297 not found in API response
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 253 not found in API response
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 254 not found in API response
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 255 not found in API response
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 256 not found in API response
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 257 not found in API response
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 259 not found in API response
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 260 not found in API response
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 261 not found in API response
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 262 not found in API response
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 420 not found in API response
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 386 not found in API response
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 364 not found in API response
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 264 not found in API response
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 263 not found in API response
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Successfully updated 0 entities
-2025-11-05 20:54:53.864 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Finished fetching svk_heatpump data in 0.131 seconds (success: 4598.596751239)
-2025-11-05 20:54:53.865 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 253 not available (value=None)
-2025-11-05 20:54:53.865 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 254 not available (value=None)
-2025-11-05 20:54:53.865 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 255 not available (value=None)
-2025-11-05 20:54:53.865 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 256 not available (value=None)
-2025-11-05 20:54:53.865 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 257 not available (value=None)
-2025-11-05 20:54:53.865 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 259 not available (value=None)
-2025-11-05 20:54:53.865 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 260 not available (value=None)
-2025-11-05 20:54:53.865 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 261 not available (value=None)
-2025-11-05 20:54:53.865 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 262 not available (value=None)
-2025-11-05 20:54:53.865 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 420 not available (value=None)
-2025-11-05 20:54:53.865 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 386 not available (value=None)
-2025-11-05 20:54:53.865 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 364 not available (value=None)
-2025-11-05 20:54:53.865 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 264 not available (value=None)
-2025-11-05 20:54:53.865 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 263 not available (value=None)
-2025-11-05 20:54:53.865 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 297 not available (value=None)
-2025-11-05 20:55:24.892 DEBUG (MainThread) [custom_components.svk_heatpump] Reading values for 15 entities: ['297', '253', '254', '255', '256']
-2025-11-05 20:55:24.895 DEBUG (MainThread) [custom_components.svk_heatpump] Attempting to read values (attempt 1/4)
-2025-11-05 20:55:25.030 DEBUG (MainThread) [custom_components.svk_heatpump] Response status: 200, content-type: text/html; charset=utf-8, content-length: 953
-2025-11-05 20:55:25.030 DEBUG (MainThread) [custom_components.svk_heatpump] Parsing response with content-type: text/html; charset=utf-8, length: 953
-2025-11-05 20:55:25.030 DEBUG (MainThread) [custom_components.svk_heatpump] Parsing text response: [{ "id" : "297", "name" : "HeatPump.State", "value" : "10"},
-{ "id" : "253", "name" : "Input.THeatSu
-2025-11-05 20:55:25.030 DEBUG (MainThread) [custom_components.svk_heatpump] Parsed text response with 2 values
-2025-11-05 20:55:25.030 DEBUG (MainThread) [custom_components.svk_heatpump] Successfully read 2 values in 0.14 seconds
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 297 not found in API response
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 253 not found in API response
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 254 not found in API response
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 255 not found in API response
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 256 not found in API response
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 257 not found in API response
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 259 not found in API response
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 260 not found in API response
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 261 not found in API response
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 262 not found in API response
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 420 not found in API response
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 386 not found in API response
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 364 not found in API response
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 264 not found in API response
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Entity 263 not found in API response
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Successfully updated 0 entities
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.coordinator] Finished fetching svk_heatpump data in 0.139 seconds (success: 4628.605632299)
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 253 not available (value=None)
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 254 not available (value=None)
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 255 not available (value=None)
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 256 not available (value=None)
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 257 not available (value=None)
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 259 not available (value=None)
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 260 not available (value=None)
-2025-11-05 20:55:25.031 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 261 not available (value=None)
-2025-11-05 20:55:25.032 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 262 not available (value=None)
-2025-11-05 20:55:25.032 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 420 not available (value=None)
-2025-11-05 20:55:25.032 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 386 not available (value=None)
-2025-11-05 20:55:25.032 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 364 not available (value=None)
-2025-11-05 20:55:25.032 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 264 not available (value=None)
-2025-11-05 20:55:25.032 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 263 not available (value=None)
-2025-11-05 20:55:25.032 DEBUG (MainThread) [custom_components.svk_heatpump.sensor] Entity 297 not available (value=None)
+2025-11-05 21:35:50.551 WARNING (MainThread) [haffmpeg.tools] Error starting FFmpeg.
+2025-11-05 21:35:50.551 INFO (MainThread) [homeassistant.setup] Setup of domain ffmpeg took 0.01 seconds
+2025-11-05 21:35:50.552 INFO (MainThread) [homeassistant.setup] Setting up tts
+2025-11-05 21:35:50.554 INFO (MainThread) [homeassistant.setup] Setup of domain cloud took 0.02 seconds
+2025-11-05 21:35:50.562 INFO (MainThread) [homeassistant.setup] Setup of domain tts took 0.01 seconds
+2025-11-05 21:35:50.616 INFO (MainThread) [homeassistant.setup] Setting up bluetooth
+2025-11-05 21:35:50.648 INFO (MainThread) [homeassistant.setup] Setup of domain bluetooth took 0.03 seconds
+2025-11-05 21:35:50.651 INFO (MainThread) [homeassistant.bootstrap] Setting up stage 2: {'assist_pipeline', 'script', 'tts', 'ffmpeg', 'radio_browser', 'input_button', 'application_credentials', 'zone', 'input_select', 'tag', 'wake_word', 'automation', 'intent', 'blueprint', 'system_health', 'input_number', 'shopping_list', 'conversation', 'logbook', 'counter', 'stt', 'history', 'backup', 'scene', 'diagnostics', 'onboarding', 'trace', 'person', 'energy', 'schedule', 'default_config', 'search', 'google_translate', 'my', 'hardware', 'lovelace', 'camera', 'file_upload', 'sun', 'timer', 'analytics', 'input_datetime', 'input_text', 'go2rtc', 'mobile_app', 'stream', 'media_source', 'input_boolean', 'homeassistant_alerts', 'device_automation', 'image_upload', 'config'}
+2025-11-05 21:35:50.652 INFO (MainThread) [homeassistant.setup] Setting up camera
+2025-11-05 21:35:50.655 INFO (MainThread) [homeassistant.setup] Setup of domain camera took 0.00 seconds
+2025-11-05 21:35:50.657 INFO (MainThread) [homeassistant.setup] Setting up wake_word
+2025-11-05 21:35:50.658 INFO (MainThread) [homeassistant.setup] Setup of domain wake_word took 0.00 seconds
+2025-11-05 21:35:50.659 INFO (MainThread) [homeassistant.setup] Setting up stt
+2025-11-05 21:35:50.660 INFO (MainThread) [homeassistant.setup] Setup of domain stt took 0.00 seconds
+2025-11-05 21:35:50.661 INFO (MainThread) [homeassistant.setup] Setting up scene
+2025-11-05 21:35:50.669 INFO (MainThread) [homeassistant.setup] Setup of domain scene took 0.01 seconds
+2025-11-05 21:35:50.670 INFO (MainThread) [homeassistant.setup] Setting up trace
+2025-11-05 21:35:50.671 INFO (MainThread) [homeassistant.setup] Setup of domain trace took 0.00 seconds
+2025-11-05 21:35:50.672 INFO (MainThread) [homeassistant.setup] Setting up blueprint
+2025-11-05 21:35:50.672 INFO (MainThread) [homeassistant.setup] Setup of domain blueprint took 0.00 seconds
+2025-11-05 21:35:50.673 INFO (MainThread) [homeassistant.setup] Setting up script
+2025-11-05 21:35:50.675 INFO (MainThread) [homeassistant.setup] Setup of domain script took 0.00 seconds
+2025-11-05 21:35:50.676 INFO (MainThread) [homeassistant.setup] Setting up history
+2025-11-05 21:35:50.677 INFO (MainThread) [homeassistant.setup] Setup of domain history took 0.00 seconds
+2025-11-05 21:35:50.684 INFO (MainThread) [homeassistant.setup] Setting up logbook
+2025-11-05 21:35:50.689 INFO (MainThread) [homeassistant.setup] Setup of domain logbook took 0.00 seconds
+2025-11-05 21:35:50.691 INFO (MainThread) [homeassistant.setup] Setting up media_source
+2025-11-05 21:35:50.698 INFO (MainThread) [homeassistant.setup] Setup of domain media_source took 0.01 seconds
+2025-11-05 21:35:50.702 INFO (MainThread) [homeassistant.setup] Setting up stream
+2025-11-05 21:35:50.765 INFO (MainThread) [homeassistant.setup] Setting up input_button
+2025-11-05 21:35:50.776 INFO (MainThread) [homeassistant.setup] Setup of domain input_button took 0.01 seconds
+2025-11-05 21:35:50.782 INFO (MainThread) [homeassistant.setup] Setting up zone
+2025-11-05 21:35:50.789 INFO (MainThread) [homeassistant.setup] Setup of domain zone took 0.01 seconds
+2025-11-05 21:35:50.792 INFO (MainThread) [homeassistant.setup] Setting up input_select
+2025-11-05 21:35:50.796 INFO (MainThread) [homeassistant.setup] Setup of domain input_select took 0.00 seconds
+2025-11-05 21:35:50.799 INFO (MainThread) [homeassistant.setup] Setting up timer
+2025-11-05 21:35:50.815 INFO (MainThread) [homeassistant.setup] Setup of domain timer took 0.02 seconds
+2025-11-05 21:35:50.854 INFO (MainThread) [homeassistant.setup] Setting up automation
+2025-11-05 21:35:50.898 INFO (MainThread) [homeassistant.setup] Setup of domain automation took 0.04 seconds
+2025-11-05 21:35:50.909 INFO (MainThread) [homeassistant.setup] Setting up system_health
+2025-11-05 21:35:50.912 INFO (MainThread) [homeassistant.setup] Setup of domain system_health took 0.00 seconds
+2025-11-05 21:35:50.915 INFO (MainThread) [homeassistant.setup] Setting up input_number
+2025-11-05 21:35:50.920 INFO (MainThread) [homeassistant.setup] Setup of domain input_number took 0.00 seconds
+2025-11-05 21:35:50.936 INFO (MainThread) [homeassistant.setup] Setting up input_boolean
+2025-11-05 21:35:50.942 INFO (MainThread) [homeassistant.setup] Setup of domain input_boolean took 0.01 seconds
+2025-11-05 21:35:50.945 INFO (MainThread) [homeassistant.setup] Setting up backup
+2025-11-05 21:35:51.062 INFO (MainThread) [homeassistant.setup] Setup of domain backup took 0.12 seconds
+2025-11-05 21:35:51.119 WARNING (MainThread) [asyncio] Executing <Task pending name='Task-1' coro=<setup_and_run_hass() running at /home/vscode/.local/lib/python3.12/site-packages/homeassistant/runner.py:122> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()] created at /usr/local/lib/python3.12/asyncio/tasks.py:712> cb=[_run_until_complete_cb() at /usr/local/lib/python3.12/asyncio/base_events.py:181] created at /usr/local/lib/python3.12/asyncio/tasks.py:695> took 0.471 seconds
+2025-11-05 21:35:51.133 INFO (MainThread) [homeassistant.setup] Setting up intent
+2025-11-05 21:35:51.139 INFO (MainThread) [homeassistant.setup] Setup of domain intent took 0.01 seconds
+2025-11-05 21:35:51.141 INFO (MainThread) [homeassistant.components.scene] Setting up homeassistant.scene
+2025-11-05 21:35:51.151 INFO (MainThread) [homeassistant.setup] Setting up energy
+2025-11-05 21:35:51.155 INFO (MainThread) [homeassistant.setup] Setting up sensor
+2025-11-05 21:35:51.157 INFO (MainThread) [homeassistant.setup] Setup of domain sensor took 0.00 seconds
+2025-11-05 21:35:51.161 INFO (MainThread) [homeassistant.setup] Setup of domain energy took 0.01 seconds
+2025-11-05 21:35:51.163 INFO (MainThread) [homeassistant.setup] Setting up schedule
+2025-11-05 21:35:51.169 INFO (MainThread) [homeassistant.setup] Setup of domain schedule took 0.01 seconds
+2025-11-05 21:35:51.170 INFO (MainThread) [homeassistant.setup] Setting up go2rtc
+2025-11-05 21:35:51.173 INFO (MainThread) [homeassistant.setup] Setting up homeassistant_alerts
+2025-11-05 21:35:51.175 INFO (MainThread) [homeassistant.setup] Setup of domain homeassistant_alerts took 0.00 seconds
+2025-11-05 21:35:51.184 INFO (MainThread) [homeassistant.setup] Setup of domain stream took 0.48 seconds
+2025-11-05 21:35:51.193 INFO (MainThread) [homeassistant.setup] Setting up tag
+2025-11-05 21:35:51.198 INFO (MainThread) [homeassistant.setup] Setup of domain tag took 0.00 seconds
+2025-11-05 21:35:51.200 INFO (MainThread) [homeassistant.setup] Setting up my
+2025-11-05 21:35:51.201 INFO (MainThread) [homeassistant.setup] Setup of domain my took 0.00 seconds
+2025-11-05 21:35:51.203 INFO (MainThread) [homeassistant.setup] Setting up sun
+2025-11-05 21:35:51.204 INFO (MainThread) [homeassistant.setup] Setup of domain sun took 0.00 seconds
+2025-11-05 21:35:51.218 INFO (MainThread) [homeassistant.components.sensor] Setting up sun.sensor
+2025-11-05 21:35:51.251 INFO (MainThread) [homeassistant.setup] Setting up conversation
+2025-11-05 21:35:51.254 INFO (MainThread) [homeassistant.setup] Setup of domain conversation took 0.00 seconds
+2025-11-05 21:35:51.256 INFO (MainThread) [homeassistant.setup] Setting up radio_browser
+2025-11-05 21:35:51.257 INFO (MainThread) [homeassistant.setup] Setup of domain radio_browser took 0.00 seconds
+2025-11-05 21:35:51.265 INFO (MainThread) [homeassistant.setup] Setting up google_translate
+2025-11-05 21:35:51.266 INFO (MainThread) [homeassistant.setup] Setup of domain google_translate took 0.00 seconds
+2025-11-05 21:35:51.270 ERROR (MainThread) [homeassistant.components.go2rtc] Could not find go2rtc docker binary
+2025-11-05 21:35:51.271 ERROR (MainThread) [homeassistant.setup] Setup failed for 'go2rtc': Integration failed to initialize.
+2025-11-05 21:35:51.271 INFO (MainThread) [homeassistant.setup] Setup of domain go2rtc took 0.10 seconds
+2025-11-05 21:35:51.277 INFO (MainThread) [homeassistant.setup] Setting up hardware
+2025-11-05 21:35:51.287 INFO (MainThread) [homeassistant.setup] Setting up application_credentials
+2025-11-05 21:35:51.293 INFO (MainThread) [homeassistant.setup] Setup of domain application_credentials took 0.01 seconds
+2025-11-05 21:35:51.306 INFO (MainThread) [homeassistant.setup] Setting up input_datetime
+2025-11-05 21:35:51.318 INFO (MainThread) [homeassistant.setup] Setup of domain input_datetime took 0.01 seconds
+2025-11-05 21:35:51.321 INFO (MainThread) [homeassistant.setup] Setting up input_text
+2025-11-05 21:35:51.325 INFO (MainThread) [homeassistant.setup] Setup of domain input_text took 0.00 seconds
+2025-11-05 21:35:51.327 INFO (MainThread) [homeassistant.setup] Setting up shopping_list
+2025-11-05 21:35:51.327 INFO (MainThread) [homeassistant.setup] Setup of domain shopping_list took 0.00 seconds
+2025-11-05 21:35:51.332 INFO (MainThread) [homeassistant.setup] Setting up counter
+2025-11-05 21:35:51.334 INFO (MainThread) [homeassistant.setup] Setup of domain counter took 0.00 seconds
+2025-11-05 21:35:51.336 INFO (MainThread) [homeassistant.components.sensor] Setting up energy.sensor
+2025-11-05 21:35:51.345 INFO (MainThread) [homeassistant.setup] Setting up assist_pipeline
+2025-11-05 21:35:51.348 INFO (MainThread) [homeassistant.setup] Setup of domain assist_pipeline took 0.00 seconds
+2025-11-05 21:35:51.351 INFO (MainThread) [homeassistant.setup] Setting up analytics
+2025-11-05 21:35:51.353 INFO (MainThread) [homeassistant.setup] Setup of domain analytics took 0.00 seconds
+2025-11-05 21:35:51.355 INFO (MainThread) [homeassistant.setup] Setup of domain hardware took 0.08 seconds
+2025-11-05 21:35:51.355 INFO (MainThread) [homeassistant.components.tts] Setting up google_translate.tts
+2025-11-05 21:35:51.514 WARNING (MainThread) [asyncio] Executing <Task pending name='config entry setup Radio Browser radio_browser 01K9AVZZ2SPXG2EWQGK19G1JZ5' coro=<ConfigEntry.async_setup_locked() running at /home/vscode/.local/lib/python3.12/site-packages/homeassistant/config_entries.py:788> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /usr/local/lib/python3.12/asyncio/tasks.py:922, Task.task_wakeup()] created at /usr/local/lib/python3.12/asyncio/base_events.py:448> cb=[gather.<locals>._done_callback() at /usr/local/lib/python3.12/asyncio/tasks.py:767] created at /home/vscode/.local/lib/python3.12/site-packages/homeassistant/util/async_.py:45> took 0.151 seconds
+2025-11-05 21:35:51.540 INFO (MainThread) [homeassistant.setup] Setting up mobile_app
+2025-11-05 21:35:51.553 INFO (MainThread) [homeassistant.setup] Setting up notify
+2025-11-05 21:35:51.554 INFO (MainThread) [homeassistant.setup] Setup of domain notify took 0.00 seconds
+2025-11-05 21:35:51.556 INFO (MainThread) [homeassistant.setup] Setup of domain mobile_app took 0.02 seconds
+2025-11-05 21:35:51.557 INFO (MainThread) [homeassistant.components.notify] Setting up notify.mobile_app
+2025-11-05 21:35:51.563 INFO (MainThread) [homeassistant.setup] Setting up todo
+2025-11-05 21:35:51.566 INFO (MainThread) [homeassistant.setup] Setup of domain todo took 0.00 seconds
+2025-11-05 21:35:51.568 INFO (MainThread) [homeassistant.components.todo] Setting up shopping_list.todo
+2025-11-05 21:35:51.573 ERROR (MainThread) [homeassistant.setup] Unable to set up dependencies of 'default_config'. Setup failed for dependencies: ['go2rtc']
+2025-11-05 21:35:51.573 ERROR (MainThread) [homeassistant.setup] Setup failed for 'default_config': Could not setup dependencies: go2rtc
+2025-11-05 21:35:51.633 INFO (MainThread) [homeassistant.bootstrap] Home Assistant initialized in 2.49s
+2025-11-05 21:35:51.634 WARNING (MainThread) [homeassistant.bootstrap] Support for the running Python version 3.12.12 is deprecated and will be removed in Home Assistant 2025.2; Please upgrade Python to 3.13
+2025-11-05 21:35:51.635 INFO (MainThread) [homeassistant.core] Starting Home Assistant
+2025-11-05 21:35:51.876 INFO (MainThread) [asyncio] <Server sockets=(<asyncio.TransportSocket fd=24, family=2, type=1, proto=6, laddr=('172.18.0.2', 40000)>,)> is serving
+2025-11-05 21:35:52.055 ERROR (SyncWorker_0) [aiodhcpwatcher] Cannot watch for dhcp packets without a functional packet filter: libpcap is not available. Cannot compile filter !
+2025-11-05 21:36:22.760 INFO (SyncWorker_1) [homeassistant.loader] Loaded demo from homeassistant.components.demo
+2025-11-05 21:36:22.762 INFO (SyncWorker_1) [homeassistant.loader] Loaded random from homeassistant.components.random
+2025-11-05 21:36:22.762 INFO (SyncWorker_1) [homeassistant.loader] Loaded growatt_server from homeassistant.components.growatt_server
+2025-11-05 21:36:22.763 INFO (SyncWorker_1) [homeassistant.loader] Loaded generic_thermostat from homeassistant.components.generic_thermostat
+2025-11-05 21:36:22.764 INFO (SyncWorker_1) [homeassistant.loader] Loaded generic from homeassistant.components.generic
+2025-11-05 21:36:22.764 INFO (SyncWorker_1) [homeassistant.loader] Loaded trend from homeassistant.components.trend
+2025-11-05 21:36:22.765 INFO (SyncWorker_1) [homeassistant.loader] Loaded derivative from homeassistant.components.derivative
+2025-11-05 21:36:22.766 INFO (SyncWorker_1) [homeassistant.loader] Loaded proximity from homeassistant.components.proximity
+2025-11-05 21:36:22.766 INFO (SyncWorker_1) [homeassistant.loader] Loaded alert from homeassistant.components.alert
+2025-11-05 21:36:22.767 INFO (SyncWorker_1) [homeassistant.loader] Loaded holiday from homeassistant.components.holiday
+2025-11-05 21:36:22.767 INFO (SyncWorker_1) [homeassistant.loader] Loaded nextbus from homeassistant.components.nextbus
+2025-11-05 21:36:22.768 INFO (SyncWorker_1) [homeassistant.loader] Loaded filter from homeassistant.components.filter
+2025-11-05 21:36:22.768 INFO (SyncWorker_1) [homeassistant.loader] Loaded nmap_tracker from homeassistant.components.nmap_tracker
+2025-11-05 21:36:22.769 INFO (SyncWorker_1) [homeassistant.loader] Loaded generic_hygrostat from homeassistant.components.generic_hygrostat
+2025-11-05 21:36:22.769 INFO (SyncWorker_1) [homeassistant.loader] Loaded energenie_power_sockets from homeassistant.components.energenie_power_sockets
+2025-11-05 21:36:22.770 INFO (SyncWorker_1) [homeassistant.loader] Loaded cert_expiry from homeassistant.components.cert_expiry
+2025-11-05 21:36:22.771 INFO (SyncWorker_1) [homeassistant.loader] Loaded statistics from homeassistant.components.statistics
+2025-11-05 21:36:22.771 INFO (SyncWorker_1) [homeassistant.loader] Loaded tod from homeassistant.components.tod
+2025-11-05 21:36:22.772 INFO (SyncWorker_1) [homeassistant.loader] Loaded local_ip from homeassistant.components.local_ip
+2025-11-05 21:36:22.773 INFO (SyncWorker_1) [homeassistant.loader] Loaded cpuspeed from homeassistant.components.cpuspeed
+2025-11-05 21:36:22.773 INFO (SyncWorker_1) [homeassistant.loader] Loaded uptime from homeassistant.components.uptime
+2025-11-05 21:36:22.774 INFO (SyncWorker_1) [homeassistant.loader] Loaded integration from homeassistant.components.integration
+2025-11-05 21:36:22.774 INFO (SyncWorker_1) [homeassistant.loader] Loaded garages_amsterdam from homeassistant.components.garages_amsterdam
+2025-11-05 21:36:22.775 INFO (SyncWorker_1) [homeassistant.loader] Loaded homekit_controller from homeassistant.components.homekit_controller
+2025-11-05 21:36:22.776 INFO (SyncWorker_1) [homeassistant.loader] Loaded history_stats from homeassistant.components.history_stats
+2025-11-05 21:36:22.776 INFO (SyncWorker_1) [homeassistant.loader] Loaded mold_indicator from homeassistant.components.mold_indicator
+2025-11-05 21:36:22.777 INFO (SyncWorker_1) [homeassistant.loader] Loaded aurora from homeassistant.components.aurora
+2025-11-05 21:36:22.777 INFO (SyncWorker_1) [homeassistant.loader] Loaded local_calendar from homeassistant.components.local_calendar
+2025-11-05 21:36:22.778 INFO (SyncWorker_1) [homeassistant.loader] Loaded local_todo from homeassistant.components.local_todo
+2025-11-05 21:36:22.779 INFO (SyncWorker_1) [homeassistant.loader] Loaded moehlenhoff_alpha2 from homeassistant.components.moehlenhoff_alpha2
+2025-11-05 21:36:22.779 INFO (SyncWorker_1) [homeassistant.loader] Loaded rpi_power from homeassistant.components.rpi_power
+2025-11-05 21:36:22.780 INFO (SyncWorker_1) [homeassistant.loader] Loaded min_max from homeassistant.components.min_max
+2025-11-05 21:36:22.780 INFO (SyncWorker_1) [homeassistant.loader] Loaded moon from homeassistant.components.moon
+2025-11-05 21:36:22.781 INFO (SyncWorker_1) [homeassistant.loader] Loaded utility_meter from homeassistant.components.utility_meter
+2025-11-05 21:36:22.782 INFO (SyncWorker_1) [homeassistant.loader] Loaded version from homeassistant.components.version
+2025-11-05 21:36:22.783 INFO (SyncWorker_1) [homeassistant.loader] Loaded filesize from homeassistant.components.filesize
+2025-11-05 21:36:22.783 INFO (SyncWorker_1) [homeassistant.loader] Loaded waze_travel_time from homeassistant.components.waze_travel_time
+2025-11-05 21:36:22.784 INFO (SyncWorker_1) [homeassistant.loader] Loaded plant from homeassistant.components.plant
+2025-11-05 21:36:22.785 INFO (SyncWorker_1) [homeassistant.loader] Loaded google_travel_time from homeassistant.components.google_travel_time
+2025-11-05 21:36:22.786 INFO (SyncWorker_1) [homeassistant.loader] Loaded threshold from homeassistant.components.threshold
+2025-11-05 21:36:22.787 INFO (SyncWorker_1) [homeassistant.loader] Loaded zodiac from homeassistant.components.zodiac
+2025-11-05 21:36:22.788 INFO (SyncWorker_1) [homeassistant.loader] Loaded emulated_roku from homeassistant.components.emulated_roku
+2025-11-05 21:36:22.789 INFO (SyncWorker_1) [homeassistant.loader] Loaded workday from homeassistant.components.workday
+2025-11-05 21:36:22.790 INFO (SyncWorker_1) [homeassistant.loader] Loaded season from homeassistant.components.season
+2025-11-05 21:36:22.790 INFO (SyncWorker_1) [homeassistant.loader] Loaded time_date from homeassistant.components.time_date
+2025-11-05 21:36:22.791 INFO (SyncWorker_1) [homeassistant.loader] Loaded islamic_prayer_times from homeassistant.components.islamic_prayer_times
+2025-11-05 21:36:26.730 ERROR (MainThread) [aiohttp.server] Error handling request
+Traceback (most recent call last):
+  File "/home/vscode/.local/lib/python3.12/site-packages/aiohttp/web_protocol.py", line 480, in _handle_request
+    resp = await request_handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vscode/.local/lib/python3.12/site-packages/aiohttp/web_app.py", line 569, in _handle
+    return await handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vscode/.local/lib/python3.12/site-packages/aiohttp/web_middlewares.py", line 117, in impl
+    return await handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vscode/.local/lib/python3.12/site-packages/homeassistant/components/http/security_filter.py", line 92, in security_filter_middleware
+    return await handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vscode/.local/lib/python3.12/site-packages/homeassistant/components/http/forwarded.py", line 83, in forwarded_middleware
+    return await handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vscode/.local/lib/python3.12/site-packages/homeassistant/components/http/request_context.py", line 26, in request_context_middleware
+    return await handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vscode/.local/lib/python3.12/site-packages/homeassistant/components/http/ban.py", line 86, in ban_middleware
+    return await handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vscode/.local/lib/python3.12/site-packages/homeassistant/components/http/auth.py", line 242, in auth_middleware
+    return await handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vscode/.local/lib/python3.12/site-packages/homeassistant/components/http/headers.py", line 32, in headers_middleware
+    response = await handler(request)
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vscode/.local/lib/python3.12/site-packages/homeassistant/helpers/http.py", line 73, in handle
+    result = await handler(request, **request.match_info)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vscode/.local/lib/python3.12/site-packages/homeassistant/components/http/decorators.py", line 81, in with_admin
+    return await func(self, request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vscode/.local/lib/python3.12/site-packages/homeassistant/components/http/data_validator.py", line 74, in wrapper
+    return await method(view, request, data, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vscode/.local/lib/python3.12/site-packages/homeassistant/components/config/config_entries.py", line 172, in post
+    return await self._post_impl(request, data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vscode/.local/lib/python3.12/site-packages/homeassistant/components/config/config_entries.py", line 179, in _post_impl
+    return await super()._post_impl(request, data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vscode/.local/lib/python3.12/site-packages/homeassistant/helpers/data_entry_flow.py", line 93, in _post_impl
+    result = self._prepare_result_json(result)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vscode/.local/lib/python3.12/site-packages/homeassistant/components/config/config_entries.py", line 199, in _prepare_result_json
+    return _prepare_config_flow_result_json(result, super()._prepare_result_json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vscode/.local/lib/python3.12/site-packages/homeassistant/components/config/config_entries.py", line 135, in _prepare_config_flow_result_json
+    return prepare_result_json(result)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vscode/.local/lib/python3.12/site-packages/homeassistant/helpers/data_entry_flow.py", line 52, in _prepare_result_json
+    data["data_schema"] = voluptuous_serialize.convert(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vscode/.local/lib/python3.12/site-packages/voluptuous_serialize/__init__.py", line 40, in convert
+    pval = convert(value, custom_serializer=custom_serializer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vscode/.local/lib/python3.12/site-packages/voluptuous_serialize/__init__.py", line 58, in convert
+    val.update(convert(validator, custom_serializer=custom_serializer))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vscode/.local/lib/python3.12/site-packages/voluptuous_serialize/__init__.py", line 120, in convert
+    if issubclass(schema, Enum):
+       ^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: issubclass() arg 1 must be a class
+2025-11-06 06:10:04.944 INFO (Recorder) [homeassistant.components.recorder.pool.RecorderPool] Pool recreating

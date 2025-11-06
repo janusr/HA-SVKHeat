@@ -27,7 +27,6 @@ from .const import (
     DEFAULT_WRITE_ACCESS,
     DOMAIN,
     get_unique_id,
-    async_load_catalog,
     load_catalog,
     transform_value,
 )
@@ -77,9 +76,14 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
             password=self.password,
         )
 
-        # Load catalog - will be loaded asynchronously in async_setup
-        self.catalog = None
-        self.enabled_entities = []
+        # Load catalog
+        try:
+            self.catalog = load_catalog()
+            self.enabled_entities = self.catalog.get_enabled_entities()
+        except Exception as ex:
+            _LOGGER.error("Failed to load catalog: %s", ex)
+            self.catalog = None
+            self.enabled_entities = []
         
         # Store current data state
         self.data: Dict[str, Any] = {}
@@ -127,9 +131,9 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
             # Check if catalog is available
             if not self.catalog or not self.enabled_entities:
                 _LOGGER.warning("Catalog not available or no enabled entities")
-                # Try to reload catalog asynchronously
+                # Try to reload catalog
                 try:
-                    self.catalog = await async_load_catalog()
+                    self.catalog = load_catalog()
                     self.enabled_entities = self.catalog.get_enabled_entities()
                 except Exception as ex:
                     _LOGGER.error("Failed to reload catalog: %s", ex)
