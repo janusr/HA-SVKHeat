@@ -196,3 +196,138 @@ sensors:
     icon: "mdi:water-thermometer"
     precision: 1
     translation_key: tsolar_water
+
+  # Writable Entities
+  - id: "137"
+    key: user_language
+    enabled: true
+    platform: sensor
+    device_class: enum
+    unit_of_measurement: ""
+    state_class: ""
+    icon: "mdi:translate"
+    write_access: true
+    value_map:
+      "0": "english"
+      "1": "german"
+      "2": "francais"
+      "3": "suomi"
+      "4": "espanol"
+      "5": "dansk"
+      "6": "nederlands"
+      "7": "portugues"
+      "8": "italiano"
+    precision: 0
+    translation_key: user_language
+
+  - id: "193"
+    key: heat_sp_ctrl_troom_set
+    enabled: true
+    platform: sensor
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    icon: "mdi:thermometer-chevron-up"
+    write_access: true
+    precision: 1
+    translation_key: heat_sp_ctrl_troom_set
+
+  - id: "383"
+    key: hot_water_set_point
+    enabled: true
+    platform: sensor
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    icon: "mdi:water-boiler"
+    write_access: true
+    precision: 1
+    translation_key: hot_water_set_point
+
+  - id: "196"
+    key: heat_sp_ctrl_toff_set
+    enabled: true
+    platform: sensor
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    icon: "mdi:thermometer-chevron-down"
+    write_access: true
+    precision: 1
+    translation_key: heat_sp_ctrl_toff_set
+
+  - id: "278"
+    key: parameters_season_mode
+    enabled: true
+    platform: sensor
+    device_class: enum
+    unit_of_measurement: ""
+    state_class: ""
+    icon: "mdi:calendar"
+    write_access: true
+    value_map:
+      "0": "summer"
+      "1": "winter"
+      "2": "auto"
+    precision: 0
+    translation_key: parameters_season_mode
+
+  - id: "113"
+    key: time_year
+    enabled: false
+    platform: sensor
+    device_class: timestamp
+    unit_of_measurement: ""
+    state_class: ""
+    icon: "mdi:calendar"
+    write_access: true
+    precision: 0
+    translation_key: time_year
+
+  - id: "112"
+    key: time_month
+    enabled: false
+    platform: sensor
+    device_class: timestamp
+    unit_of_measurement: ""
+    state_class: ""
+    icon: "mdi:calendar-month"
+    write_access: true
+    precision: 0
+    translation_key: time_month
+
+  - id: "110"
+    key: time_day
+    enabled: false
+    platform: sensor
+    device_class: timestamp
+    unit_of_measurement: ""
+    state_class: ""
+    icon: "mdi:calendar-today"
+    write_access: true
+    precision: 0
+    translation_key: time_day
+
+  - id: "109"
+    key: time_hour
+    enabled: false
+    platform: sensor
+    device_class: timestamp
+    unit_of_measurement: ""
+    state_class: ""
+    icon: "mdi:clock-time-four"
+    write_access: true
+    precision: 0
+    translation_key: time_hour
+
+  - id: "108"
+    key: time_minute
+    enabled: false
+    platform: sensor
+    device_class: timestamp
+    unit_of_measurement: ""
+    state_class: ""
+    icon: "mdi:clock-time-two"
+    write_access: true
+    precision: 0
+    translation_key: time_minute

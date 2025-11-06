@@ -152,6 +152,52 @@
       },
       "tsolar_water": {
         "name": "Solvandstemperatur"
+      },
+      "user_language": {
+        "name": "Brugersprog",
+        "state": {
+          "english": "Engelsk",
+          "german": "Tysk",
+          "francais": "Fransk",
+          "suomi": "Finsk",
+          "espanol": "Spansk",
+          "dansk": "Dansk",
+          "nederlands": "Hollandsk",
+          "portugues": "Portugisisk",
+          "italiano": "Italiensk"
+        }
+      },
+      "heat_sp_ctrl_troom_set": {
+        "name": "Rumtemperatur Indstilling"
+      },
+      "hot_water_set_point": {
+        "name": "Varmvands Indstilling"
+      },
+      "heat_sp_ctrl_toff_set": {
+        "name": "Temperatur Forskydning"
+      },
+      "parameters_season_mode": {
+        "name": "Sæson Tilstand",
+        "state": {
+          "winter": "Vinter",
+          "summer": "Sommer",
+          "auto": "Auto"
+        }
+      },
+      "time_year": {
+        "name": "År"
+      },
+      "time_month": {
+        "name": "Måned"
+      },
+      "time_day": {
+        "name": "Dag"
+      },
+      "time_hour": {
+        "name": "Time"
+      },
+      "time_minute": {
+        "name": "Minut"
       }
     }
   },
