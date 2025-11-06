@@ -24,8 +24,14 @@ from .api import (
 from .const import (
     CONF_FETCH_INTERVAL,
     CONF_WRITE_ACCESS,
+    CONF_CHUNK_SIZE,
+    CONF_API_MODE,
+    CONF_REQUEST_TIMEOUT,
     DEFAULT_FETCH_INTERVAL,
     DEFAULT_WRITE_ACCESS,
+    DEFAULT_CHUNK_SIZE,
+    DEFAULT_API_MODE,
+    DEFAULT_REQUEST_TIMEOUT,
     DOMAIN,
     async_load_catalog,
     get_unique_id,
@@ -72,12 +78,27 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
             CONF_FETCH_INTERVAL,
             config_entry.data.get(CONF_FETCH_INTERVAL, DEFAULT_FETCH_INTERVAL)
         )
+        self.chunk_size = config_entry.options.get(
+            CONF_CHUNK_SIZE,
+            config_entry.data.get(CONF_CHUNK_SIZE, DEFAULT_CHUNK_SIZE)
+        )
+        self.api_mode = config_entry.options.get(
+            CONF_API_MODE,
+            config_entry.data.get(CONF_API_MODE, DEFAULT_API_MODE)
+        )
+        self.request_timeout = config_entry.options.get(
+            CONF_REQUEST_TIMEOUT,
+            config_entry.data.get(CONF_REQUEST_TIMEOUT, DEFAULT_REQUEST_TIMEOUT)
+        )
 
         # Initialize API client
         self.api = SVKHeatpumpAPI(
             host=self.host,
             username=self.username,
             password=self.password,
+            chunk_size=self.chunk_size,
+            api_mode=self.api_mode,
+            request_timeout=self.request_timeout,
         )
 
         # Catalog will be loaded asynchronously in async_setup
@@ -535,12 +556,19 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
             options: The new configuration options.
         """
         try:
-            # Update configuration
+            # Store old values for logging
             old_write_access = self.write_access
             old_fetch_interval = self.fetch_interval
+            old_chunk_size = self.chunk_size
+            old_api_mode = self.api_mode
+            old_request_timeout = self.request_timeout
             
+            # Update configuration
             self.write_access = options.get(CONF_WRITE_ACCESS, self.write_access)
             new_fetch_interval = options.get(CONF_FETCH_INTERVAL, self.fetch_interval)
+            new_chunk_size = options.get(CONF_CHUNK_SIZE, self.chunk_size)
+            new_api_mode = options.get(CONF_API_MODE, self.api_mode)
+            new_request_timeout = options.get(CONF_REQUEST_TIMEOUT, self.request_timeout)
             
             # Update fetch interval if changed
             if new_fetch_interval != self.fetch_interval:
@@ -548,17 +576,51 @@ class SVKDataUpdateCoordinator(DataUpdateCoordinator):
                 self.update_interval = timedelta(seconds=self.fetch_interval)
                 _LOGGER.info("Updated fetch interval to %d seconds", self.fetch_interval)
             
+            # Update API client if relevant parameters changed
+            api_params_changed = (
+                new_chunk_size != self.chunk_size or
+                new_api_mode != self.api_mode or
+                new_request_timeout != self.request_timeout
+            )
+            
+            if api_params_changed:
+                self.chunk_size = new_chunk_size
+                self.api_mode = new_api_mode
+                self.request_timeout = new_request_timeout
+                
+                # Reinitialize API client with new parameters
+                self.api = SVKHeatpumpAPI(
+                    host=self.host,
+                    username=self.username,
+                    password=self.password,
+                    chunk_size=self.chunk_size,
+                    api_mode=self.api_mode,
+                    request_timeout=self.request_timeout,
+                )
+                _LOGGER.info(
+                    "Updated API client: chunk_size=%d->%d, api_mode=%s->%s, request_timeout=%d->%d",
+                    old_chunk_size, self.chunk_size,
+                    old_api_mode, self.api_mode,
+                    old_request_timeout, self.request_timeout
+                )
+            
             # Reset failure counters when configuration is updated
             self._consecutive_failures = 0
             self._last_failure_time = None
             self._extended_backoff_until = None
             
             # Log changes
-            if old_write_access != self.write_access or old_fetch_interval != self.fetch_interval:
+            if (old_write_access != self.write_access or
+                old_fetch_interval != self.fetch_interval or
+                api_params_changed):
                 _LOGGER.info(
-                    "Updated configuration: write_access=%s->%s, fetch_interval=%d->%d",
+                    "Updated configuration: write_access=%s->%s, fetch_interval=%d->%d, "
+                    "chunk_size=%d->%d, api_mode=%s->%s, request_timeout=%d->%d",
                     old_write_access, self.write_access,
                     old_fetch_interval, self.fetch_interval,
+                    old_chunk_size, self.chunk_size,
+                    old_api_mode, self.api_mode,
+                    old_request_timeout, self.request_timeout,
                 )
             
             # Note: Config entry options are updated by the options flow

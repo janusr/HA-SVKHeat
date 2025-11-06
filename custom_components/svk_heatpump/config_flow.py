@@ -12,7 +12,19 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
 
 from .api import SVKHeatpumpAPI, SVKAuthenticationError, SVKConnectionError, SVKTimeoutError, SVKInvalidResponseError
-from .const import CONF_FETCH_INTERVAL, CONF_WRITE_ACCESS, DOMAIN, DEFAULT_FETCH_INTERVAL, DEFAULT_WRITE_ACCESS
+from .const import (
+    CONF_FETCH_INTERVAL,
+    CONF_WRITE_ACCESS,
+    CONF_CHUNK_SIZE,
+    CONF_API_MODE,
+    CONF_REQUEST_TIMEOUT,
+    DOMAIN,
+    DEFAULT_FETCH_INTERVAL,
+    DEFAULT_WRITE_ACCESS,
+    DEFAULT_CHUNK_SIZE,
+    DEFAULT_API_MODE,
+    DEFAULT_REQUEST_TIMEOUT,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,22 +39,34 @@ async def async_migrate_entry(
         # Extract options from data
         old_data = dict(config_entry.data)
         
+        # Create new data with only connection parameters
+        new_data = {
+            CONF_HOST: old_data.get(CONF_HOST),
+            CONF_USERNAME: old_data.get(CONF_USERNAME),
+            CONF_PASSWORD: old_data.get(CONF_PASSWORD),
+        }
+        
+        # Create options with all configuration parameters
         options = {
             CONF_WRITE_ACCESS: old_data.pop(CONF_WRITE_ACCESS, DEFAULT_WRITE_ACCESS),
             CONF_FETCH_INTERVAL: old_data.pop(CONF_FETCH_INTERVAL, DEFAULT_FETCH_INTERVAL),
+            # Add new options with defaults for backward compatibility
+            CONF_CHUNK_SIZE: DEFAULT_CHUNK_SIZE,
+            CONF_API_MODE: DEFAULT_API_MODE,
+            CONF_REQUEST_TIMEOUT: DEFAULT_REQUEST_TIMEOUT,
         }
         
         # Update entry with separated data and options
         hass.config_entries.async_update_entry(
             config_entry,
-            data=old_data,
+            data=new_data,
             options=options,
             version=2
         )
         
         _LOGGER.info(
             "Migration completed: data=%s, options=%s",
-            old_data,
+            new_data,
             options
         )
         
@@ -162,9 +186,23 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             # Validate options
             fetch_interval = user_input.get(CONF_FETCH_INTERVAL, DEFAULT_FETCH_INTERVAL)
+            chunk_size = user_input.get(CONF_CHUNK_SIZE, DEFAULT_CHUNK_SIZE)
+            api_mode = user_input.get(CONF_API_MODE, DEFAULT_API_MODE)
+            request_timeout = user_input.get(CONF_REQUEST_TIMEOUT, DEFAULT_REQUEST_TIMEOUT)
             
             # Validate fetch interval
             if not isinstance(fetch_interval, int) or fetch_interval < 10 or fetch_interval > 300:
+                errors = {"base": "invalid_fetch_interval"}
+            # Validate chunk size
+            elif not isinstance(chunk_size, int) or chunk_size < 5 or chunk_size > 100:
+                errors = {"base": "invalid_chunk_size"}
+            # Validate request timeout
+            elif not isinstance(request_timeout, int) or request_timeout < 5 or request_timeout > 60:
+                errors = {"base": "invalid_request_timeout"}
+            else:
+                errors = {}
+            
+            if errors:
                 return self.async_show_form(
                     step_id="options",
                     data_schema=vol.Schema(
@@ -175,19 +213,31 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             vol.Optional(
                                 CONF_FETCH_INTERVAL, default=DEFAULT_FETCH_INTERVAL
                             ): vol.All(int, vol.Range(min=10, max=300)),
+                            vol.Optional(
+                                CONF_CHUNK_SIZE, default=DEFAULT_CHUNK_SIZE
+                            ): vol.All(int, vol.Range(min=5, max=100)),
+                            vol.Optional(
+                                CONF_API_MODE, default=DEFAULT_API_MODE
+                            ): vol.In(["json", "html"]),
+                            vol.Optional(
+                                CONF_REQUEST_TIMEOUT, default=DEFAULT_REQUEST_TIMEOUT
+                            ): vol.All(int, vol.Range(min=5, max=60)),
                         }
                     ),
-                    errors={"base": "invalid_fetch_interval"},
+                    errors=errors,
                 )
             
             try:
                 # Create the config entry with core connection data only
                 # Options will be stored separately
                 _LOGGER.info(
-                    "Creating config entry for host %s with write_access=%s, fetch_interval=%d",
+                    "Creating config entry for host %s with write_access=%s, fetch_interval=%d, chunk_size=%d, api_mode=%s, request_timeout=%d",
                     self._host,
                     user_input[CONF_WRITE_ACCESS],
-                    fetch_interval
+                    fetch_interval,
+                    chunk_size,
+                    api_mode,
+                    request_timeout
                 )
                 
                 return self.async_create_entry(
@@ -200,6 +250,9 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     options={
                         CONF_WRITE_ACCESS: user_input[CONF_WRITE_ACCESS],
                         CONF_FETCH_INTERVAL: fetch_interval,
+                        CONF_CHUNK_SIZE: chunk_size,
+                        CONF_API_MODE: api_mode,
+                        CONF_REQUEST_TIMEOUT: request_timeout,
                     },
                 )
             except Exception as ex:
@@ -217,6 +270,15 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             vol.Optional(
                                 CONF_FETCH_INTERVAL, default=DEFAULT_FETCH_INTERVAL
                             ): vol.All(int, vol.Range(min=10, max=300)),
+                            vol.Optional(
+                                CONF_CHUNK_SIZE, default=DEFAULT_CHUNK_SIZE
+                            ): vol.All(int, vol.Range(min=5, max=100)),
+                            vol.Optional(
+                                CONF_API_MODE, default=DEFAULT_API_MODE
+                            ): vol.In(["json", "html"]),
+                            vol.Optional(
+                                CONF_REQUEST_TIMEOUT, default=DEFAULT_REQUEST_TIMEOUT
+                            ): vol.All(int, vol.Range(min=5, max=60)),
                         }
                     ),
                     errors={"base": "unknown"},
@@ -232,6 +294,15 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Optional(
                         CONF_FETCH_INTERVAL, default=DEFAULT_FETCH_INTERVAL
                     ): vol.All(int, vol.Range(min=10, max=300)),
+                    vol.Optional(
+                        CONF_CHUNK_SIZE, default=DEFAULT_CHUNK_SIZE
+                    ): vol.All(int, vol.Range(min=5, max=100)),
+                    vol.Optional(
+                        CONF_API_MODE, default=DEFAULT_API_MODE
+                    ): vol.In(["json", "html"]),
+                    vol.Optional(
+                        CONF_REQUEST_TIMEOUT, default=DEFAULT_REQUEST_TIMEOUT
+                    ): vol.All(int, vol.Range(min=5, max=60)),
                 }
             ),
         )
@@ -350,6 +421,116 @@ class SVKHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 {
                     vol.Required(CONF_USERNAME): str,
                     vol.Required(CONF_PASSWORD): str,
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_reconfigure(
+        self, user_input: Optional[Dict[str, Any]] = None
+    ) -> FlowResult:
+        """Handle reconfiguration step."""
+        # Get the existing entry to reconfigure
+        reconfigure_entry = self._get_reconfigure_entry()
+        if not reconfigure_entry:
+            return self.async_abort(reason="cannot_reconfigure")
+            
+        # Get current values from the entry
+        current_host = reconfigure_entry.data.get(CONF_HOST, "")
+        current_username = reconfigure_entry.data.get(CONF_USERNAME, "")
+        current_password = reconfigure_entry.data.get(CONF_PASSWORD, "")
+        
+        errors: Dict[str, str] = {}
+
+        if user_input is not None:
+            host = user_input[CONF_HOST]
+            username = user_input[CONF_USERNAME]
+            password = user_input[CONF_PASSWORD]
+
+            # Validate input
+            if not host.strip():
+                errors["base"] = "invalid_host"
+            elif not username.strip():
+                errors["base"] = "invalid_username"
+            elif not password.strip():
+                errors["base"] = "invalid_password"
+            else:
+                # Validate connection with new settings
+                try:
+                    _LOGGER.debug(
+                        "Testing reconfigure connection for host %s with user %s",
+                        host, username
+                    )
+                    
+                    api = SVKHeatpumpAPI(
+                        host=host,
+                        username=username,
+                        password=password
+                    )
+                    await api.async_test_connection()
+                    
+                    # If connection is successful, update the entry
+                    _LOGGER.info(
+                        "Reconfigure connection test successful for host %s",
+                        host
+                    )
+                    
+                    # Update entry data with new connection settings
+                    new_data = dict(reconfigure_entry.data)
+                    new_data.update({
+                        CONF_HOST: host,
+                        CONF_USERNAME: username,
+                        CONF_PASSWORD: password,
+                    })
+                    
+                    # Update the entry and reload it
+                    await self.hass.config_entries.async_update_reload_and_abort(
+                        reconfigure_entry, data=new_data
+                    )
+                    
+                    _LOGGER.info(
+                        "Reconfiguration successful for entry %s",
+                        reconfigure_entry.entry_id
+                    )
+                    
+                except SVKAuthenticationError as ex:
+                    _LOGGER.error(
+                        "Authentication error during reconfigure: %s",
+                        ex
+                    )
+                    errors["base"] = "invalid_auth"
+                except SVKConnectionError as ex:
+                    _LOGGER.error(
+                        "Connection error during reconfigure: %s",
+                        ex
+                    )
+                    errors["base"] = "cannot_connect"
+                except SVKTimeoutError as ex:
+                    _LOGGER.error(
+                        "Timeout error during reconfigure: %s",
+                        ex
+                    )
+                    errors["base"] = "timeout"
+                except SVKInvalidResponseError as ex:
+                    _LOGGER.error(
+                        "Invalid response during reconfigure: %s",
+                        ex
+                    )
+                    errors["base"] = "invalid_response"
+                except Exception as ex:  # pragma: no cover
+                    _LOGGER.error(
+                        "Unexpected error during reconfigure: %s",
+                        ex, exc_info=True
+                    )
+                    errors["base"] = "unknown"
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_HOST, default=current_host): str,
+                    vol.Required(CONF_USERNAME, default=current_username): str,
+                    vol.Required(CONF_PASSWORD, default=current_password): str,
                 }
             ),
             errors=errors,
@@ -504,15 +685,27 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
             # Validate the options
             write_access = user_input.get(CONF_WRITE_ACCESS, DEFAULT_WRITE_ACCESS)
             fetch_interval = user_input.get(CONF_FETCH_INTERVAL, DEFAULT_FETCH_INTERVAL)
+            chunk_size = user_input.get(CONF_CHUNK_SIZE, DEFAULT_CHUNK_SIZE)
+            api_mode = user_input.get(CONF_API_MODE, DEFAULT_API_MODE)
+            request_timeout = user_input.get(CONF_REQUEST_TIMEOUT, DEFAULT_REQUEST_TIMEOUT)
             
             # Validate fetch interval range
             if not isinstance(fetch_interval, int) or fetch_interval < 10 or fetch_interval > 300:
                 errors["base"] = "invalid_fetch_interval"
+            # Validate chunk size range
+            elif not isinstance(chunk_size, int) or chunk_size < 5 or chunk_size > 100:
+                errors["base"] = "invalid_chunk_size"
+            # Validate request timeout range
+            elif not isinstance(request_timeout, int) or request_timeout < 5 or request_timeout > 60:
+                errors["base"] = "invalid_request_timeout"
             else:
                 # Store options data
                 self._options_data = {
                     CONF_WRITE_ACCESS: write_access,
                     CONF_FETCH_INTERVAL: fetch_interval,
+                    CONF_CHUNK_SIZE: chunk_size,
+                    CONF_API_MODE: api_mode,
+                    CONF_REQUEST_TIMEOUT: request_timeout,
                 }
                 
                 # Save and exit
@@ -527,6 +720,18 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
             CONF_FETCH_INTERVAL,
             self.config_entry.data.get(CONF_FETCH_INTERVAL, DEFAULT_FETCH_INTERVAL)
         )
+        current_chunk_size = self.config_entry.options.get(
+            CONF_CHUNK_SIZE,
+            self.config_entry.data.get(CONF_CHUNK_SIZE, DEFAULT_CHUNK_SIZE)
+        )
+        current_api_mode = self.config_entry.options.get(
+            CONF_API_MODE,
+            self.config_entry.data.get(CONF_API_MODE, DEFAULT_API_MODE)
+        )
+        current_request_timeout = self.config_entry.options.get(
+            CONF_REQUEST_TIMEOUT,
+            self.config_entry.data.get(CONF_REQUEST_TIMEOUT, DEFAULT_REQUEST_TIMEOUT)
+        )
 
         return self.async_show_form(
             step_id="options",
@@ -538,6 +743,15 @@ class SVKHeatpumpOptionsFlow(config_entries.OptionsFlow):
                     vol.Optional(
                         CONF_FETCH_INTERVAL, default=current_fetch_interval
                     ): vol.All(int, vol.Range(min=10, max=300)),
+                    vol.Optional(
+                        CONF_CHUNK_SIZE, default=current_chunk_size
+                    ): vol.All(int, vol.Range(min=5, max=100)),
+                    vol.Optional(
+                        CONF_API_MODE, default=current_api_mode
+                    ): vol.In(["json", "html"]),
+                    vol.Optional(
+                        CONF_REQUEST_TIMEOUT, default=current_request_timeout
+                    ): vol.All(int, vol.Range(min=5, max=60)),
                 }
             ),
             errors=errors,

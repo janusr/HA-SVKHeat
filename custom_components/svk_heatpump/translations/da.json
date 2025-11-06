@@ -15,12 +15,24 @@
         "description": "Konfigurer indstillinger for din SVK varmepumpe",
         "data": {
           "write_access": "Aktiver Skriveadgang",
-          "fetch_interval": "Hent Interval (sekunder)"
+          "fetch_interval": "Hent Interval (sekunder)",
+          "chunk_size": "Chunk Størrelse",
+          "api_mode": "API Tilstand",
+          "request_timeout": "Anmodning Timeout (sekunder)"
         }
       },
       "reauth": {
         "title": "Genautentificer SVK Varmepumpe",
         "description": "Indtast venligst dine loginoplysninger igen til SVK varmepumpen"
+      },
+      "reconfigure": {
+        "title": "Genkonfigurer SVK Varmepumpe",
+        "description": "Opdater forbindelsesindstillinger for din SVK varmepumpe",
+        "data": {
+          "host": "Vært/IP",
+          "username": "Brugernavn",
+          "password": "Adgangskode"
+        }
       }
     },
     "error": {
@@ -28,6 +40,8 @@
       "cannot_connect": "Kan ikke forbinde til varmepumpe",
       "timeout": "Forbindelse timeout",
       "invalid_fetch_interval": "Hent interval skal være mellem 10 og 300 sekunder",
+      "invalid_chunk_size": "Chunk størrelse skal være mellem 5 og 100",
+      "invalid_request_timeout": "Anmodning timeout skal være mellem 5 og 60 sekunder",
       "invalid_host": "Ugyldig vært",
       "invalid_username": "Ugyldigt brugernavn",
       "invalid_password": "Ugyldig adgangskode",
@@ -59,7 +73,10 @@
         "description": "Konfigurer indstillinger for din SVK varmepumpe",
         "data": {
           "write_access": "Aktiver Skriveadgang",
-          "fetch_interval": "Hent Interval (sekunder)"
+          "fetch_interval": "Hent Interval (sekunder)",
+          "chunk_size": "Chunk Størrelse",
+          "api_mode": "API Tilstand",
+          "request_timeout": "Anmodning Timeout (sekunder)"
         }
       },
       "all": {
@@ -69,6 +86,8 @@
     },
     "error": {
       "invalid_fetch_interval": "Hent interval skal være mellem 10 og 300 sekunder",
+      "invalid_chunk_size": "Chunk størrelse skal være mellem 5 og 100",
+      "invalid_request_timeout": "Anmodning timeout skal være mellem 5 og 60 sekunder",
       "invalid_host": "Ugyldig vært",
       "invalid_username": "Ugyldigt brugernavn",
       "invalid_password": "Ugyldig adgangskode",
